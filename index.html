@@ -93,11 +93,16 @@
   /* family members */
   #members{display:flex;flex-direction:column;gap:8px}
   .mrow{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;align-items:center}
+  /* 16px keeps iOS from auto-zooming the page when this input is focused */
   .mrow .mage{
-    font-size:13px;font-weight:600;color:var(--ink2);text-align:center;
+    width:100%;font-size:16px;font-weight:600;color:var(--ink);text-align:center;
     background:var(--surface2);border:1px solid var(--line);border-radius:10px;
-    padding:11px 4px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    padding:11px 4px;font-family:inherit;font-variant-numeric:tabular-nums;
   }
+  .mrow .mage::-webkit-outer-spin-button,
+  .mrow .mage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .mrow .mage{-moz-appearance:textfield;appearance:textfield}
+  .mrow .mage::placeholder{color:var(--ink2);font-weight:600}
   .mrow .mage.bad{color:var(--warn)}
   .mrow .mdel{
     border:1px solid var(--line);background:var(--surface2);color:var(--ink2);
@@ -195,7 +200,7 @@
 
     <!-- FAMILY members -->
     <div class="field hidden" id="familyBlock">
-      <label class="lbl">Members &nbsp;·&nbsp; date of birth each <span class="aux" id="sizeTag"></span></label>
+      <label class="lbl">Members &nbsp;·&nbsp; date of birth <em style="text-transform:none;letter-spacing:0;font-style:normal">or just the age</em> <span class="aux" id="sizeTag"></span></label>
       <div id="members"></div>
       <button class="addmember" id="addMember" type="button">+ Add member</button>
     </div>
@@ -325,32 +330,57 @@ function switchMode(){
 $('addMember').onclick = ()=>{ addMember(); renderMembers(); calc(); };
 function addMember(){ members.push({id:++mid, dob:null, age:null}); }
 
+/* Size bucket + caption. Kept separate so a date edit never rebuilds the rows. */
+function updateSizeTag(){
+  const autoSize = members.length>=3 ? '3+' : '1&2';
+  if(state.mode==='family'){ state.size=autoSize; paintGroup($('segSize'),autoSize); }
+  $('sizeTag').textContent = state.mode==='family'
+    ? members.length+' member'+(members.length!==1?'s':'')+' · size '+autoSize : '';
+}
+
+/* Full rebuild — ONLY on add / remove / mode switch.
+   Never call this from a date or age input handler: replacing the row while
+   the user is typing closes the mobile date picker mid-entry. */
 function renderMembers(){
   const box=$('members');
   box.innerHTML='';
+  const todayISO=new Date().toISOString().slice(0,10);
   members.forEach((m,i)=>{
     const row=document.createElement('div');
     row.className='mrow';
-    const ageTxt = m.age===null ? 'age —' : (m.age<0?'future':'age '+m.age);
     row.innerHTML =
-      '<input type="date" class="mdate" aria-label="Member '+(i+1)+' date of birth" value="'+(m.dob||'')+'">'+
-      '<div class="mage'+(m.age!==null&&m.age<0?' bad':'')+'">'+esc(ageTxt)+'</div>'+
+      '<input type="date" class="mdate" aria-label="Member '+(i+1)+' date of birth" value="'+(m.dob||'')+'" min="1920-01-01" max="'+todayISO+'">'+
+      '<input type="number" class="mage'+(m.age!==null&&m.age<0?' bad':'')+'" inputmode="numeric" min="0" max="99" placeholder="age" '+
+        'aria-label="Member '+(i+1)+' age" value="'+(m.age!==null&&m.age>=0?m.age:'')+'">'+
       '<button class="mdel" type="button" aria-label="Remove member '+(i+1)+'"'+(members.length<=1?' disabled':'')+'>×</button>';
+
     const date=row.querySelector('.mdate');
+    const ageBox=row.querySelector('.mage');
+
+    /* Date changed -> fill the age box in place. No rebuild. */
     date.addEventListener('change', ()=>{
-      m.dob=date.value||null; m.age=ageFromDob(date.value);
-      renderMembers(); calc();
+      m.dob=date.value||null;
+      m.age=ageFromDob(date.value);
+      ageBox.value = (m.age!==null && m.age>=0) ? m.age : '';
+      ageBox.classList.toggle('bad', m.age!==null && m.age<0);
+      updateSizeTag(); calc();
     });
+
+    /* Age typed directly -> faster than the picker on a phone. No rebuild. */
+    ageBox.addEventListener('input', ()=>{
+      const v=parseInt(ageBox.value,10);
+      m.age = Number.isFinite(v) ? v : null;
+      m.dob = null; date.value='';
+      ageBox.classList.remove('bad');
+      updateSizeTag(); calc();
+    });
+
     row.querySelector('.mdel').onclick=()=>{
       members=members.filter(x=>x.id!==m.id); renderMembers(); calc();
     };
     box.appendChild(row);
   });
-  // auto size from member count
-  const autoSize = members.length>=3 ? '3+' : '1&2';
-  if(state.mode==='family'){ state.size=autoSize; paintGroup($('segSize'),autoSize); }
-  $('sizeTag').textContent = state.mode==='family'
-    ? members.length+' member'+(members.length!==1?'s':'')+' · size '+autoSize : '';
+  updateSizeTag();
 }
 
 /* ---- pricing ---- */
