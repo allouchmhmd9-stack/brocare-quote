@@ -116,6 +116,27 @@
   }
   .addmember:hover{background:var(--accent-soft)}
 
+  /* "More information" — plain-language guide to the four care tiers */
+  details.info{
+    margin-top:9px;border:1px solid var(--line);border-radius:10px;
+    background:var(--surface2);overflow:hidden;
+  }
+  details.info summary{
+    cursor:pointer;list-style:none;padding:11px 12px;
+    font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--accent);display:flex;align-items:center;
+  }
+  details.info summary::-webkit-details-marker{display:none}
+  details.info summary::after{content:"▾";margin-left:auto;font-size:10px;transition:transform .15s}
+  details.info[open] summary::after{transform:rotate(180deg)}
+  details.info summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .infobody{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+  .infobody p{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
+  .infobody p.tier b{color:var(--accent);font-weight:800}
+  .infobody p.note{
+    color:var(--ink2);font-size:12px;border-top:1px solid var(--line);padding-top:9px;margin-top:1px;
+  }
+
   details.adv{border-top:1px solid var(--line);margin-top:13px;padding-top:11px}
   details.adv summary{
     cursor:pointer;list-style:none;font-size:12px;font-weight:700;letter-spacing:.07em;
@@ -208,6 +229,17 @@
     <div class="field">
       <label class="lbl">Coverage level</label>
       <div class="levels" id="levels" role="group" aria-label="Coverage level"></div>
+
+      <details class="info">
+        <summary>More information</summary>
+        <div class="infobody">
+          <p class="tier"><b>Prime</b> — Full hospital network and the highest limits. Nothing excluded, except Bellevue on Class SP.</p>
+          <p class="tier"><b>Smart Plus</b> — Keeps AUBMC. Excludes CMC, Rizk, Saint John and Bellevue.</p>
+          <p class="tier"><b>Smart</b> — Same as Smart Plus but <em>also drops AUBMC</em>, and prosthesis limits are lower.</p>
+          <p class="tier"><b>Essential</b> — Smallest network: also excludes KMC. Class SP only. Bariatric surgery not covered, and a $50 co-pay on emergencies not followed by admission.</p>
+          <p class="note">A / B / SP is the hospitalisation class and sets the money limits — organ transplant is covered to $60,000 / $40,000 / $20,000 a year respectively. Prime · Smart Plus · Smart · Essential set which hospitals you can use.</p>
+        </div>
+      </details>
     </div>
 
     <div class="field">
