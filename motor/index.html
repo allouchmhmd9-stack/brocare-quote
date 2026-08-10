@@ -1,0 +1,696 @@
+<meta charset="utf-8">
+<title>Brocare · Motor Quoter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
+    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
+    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
+    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A; --warn-soft:#B4540A14;
+    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
+      --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
+      --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
+      --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E; --warn-soft:#F0A35E1A;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
+    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
+    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
+    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A; --warn-soft:#B4540A14;
+    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
+    --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
+    --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
+    --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E; --warn-soft:#F0A35E1A;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:16px 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:540px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+  .brandbar{display:flex;align-items:center;gap:11px;padding:4px 2px 2px}
+  .logo{
+    width:38px;height:38px;border-radius:11px;flex:none;
+    background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--brand)));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:19px;letter-spacing:-.02em;box-shadow:var(--shadow);
+  }
+  .brandtext{display:flex;flex-direction:column;line-height:1.15}
+  .brandname{font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--brand)}
+  .brandname b{color:var(--accent);font-weight:800}
+  .brandsub{font-size:12px;font-weight:600;color:var(--ink2)}
+  .tariff-tag{margin-left:auto;font-size:10.5px;color:var(--ink2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;text-align:right}
+
+  /* steps */
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .step.off{opacity:.45}
+  .step.off .stepbody{display:none}
+  .stephead{display:flex;align-items:center;gap:10px;padding:13px 14px}
+  .stepnum{
+    width:23px;height:23px;border-radius:50%;flex:none;background:var(--surface2);color:var(--ink2);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+  }
+  .step.done .stepnum{background:var(--accent);color:var(--accent-ink)}
+  .steptitle{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+  .stepecho{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--accent);text-align:right}
+  .stepbody{padding:0 14px 14px;display:flex;flex-direction:column;gap:13px}
+
+  .field{display:flex;flex-direction:column;gap:7px}
+  label.lbl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
+  .hint{font-size:12px;color:var(--ink2)}
+
+  .seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+  .seg button{
+    flex:1 1 auto;min-width:72px;border:0;background:transparent;color:var(--ink2);
+    font:600 14px/1 inherit;font-family:inherit;padding:11px 6px;border-radius:8px;cursor:pointer;
+    transition:background .12s,color .12s;
+  }
+  .seg button.on{background:var(--accent);color:var(--accent-ink)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+  input[type=number],input[type=text],select{
+    width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    border-radius:10px;padding:12px;font:600 16px/1.2 inherit;font-family:inherit;font-variant-numeric:tabular-nums;
+  }
+  input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .valwrap{position:relative}
+  .valwrap .cur{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink2);font-weight:700;pointer-events:none}
+  .valwrap input{padding-left:26px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button{
+    border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    font:600 13px/1 inherit;font-family:inherit;padding:9px 11px;border-radius:999px;cursor:pointer;
+  }
+  .chips button.on{background:var(--warn);border-color:var(--warn);color:#fff}
+
+  /* product options */
+  .opts{display:flex;flex-direction:column;gap:9px}
+  .opt{
+    border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:13px;
+    display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;
+    font-family:inherit;color:var(--ink);transition:border-color .12s,background .12s;
+  }
+  .opt:hover{border-color:var(--accent)}
+  .opt.on{border-color:var(--accent);background:var(--accent-soft)}
+  .opt.dead{opacity:.55;cursor:not-allowed}
+  .opt.dead:hover{border-color:var(--line)}
+  .optname{font-size:15px;font-weight:700}
+  .optmeta{font-size:12px;color:var(--ink2);margin-top:2px}
+  .optdelta{font-size:11.5px;font-weight:700;color:var(--accent);margin-top:5px}
+  .optprice{margin-left:auto;text-align:right;font-size:19px;font-weight:800;color:var(--price);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .optprice small{display:block;font-size:11px;font-weight:600;color:var(--ink2)}
+  .optprice.na{font-size:13px;font-weight:700;color:var(--ink2);white-space:normal;max-width:130px}
+
+  .alert{
+    border-radius:11px;padding:12px 13px;font-size:13.5px;font-weight:600;line-height:1.4;
+    background:var(--warn-soft);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);
+  }
+
+  /* summary */
+  .sum-head{padding:15px 16px 13px;border-bottom:1px solid var(--line)}
+  .sum-sub{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
+  .sum-big{font-size:40px;font-weight:800;letter-spacing:-.02em;color:var(--price);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+  .sum-big .per{font-size:15px;font-weight:600;color:var(--ink2)}
+  .sum-rows{padding:11px 16px 14px;display:flex;flex-direction:column;gap:7px}
+  .srow{display:flex;justify-content:space-between;gap:12px;font-size:14.5px}
+  .srow .k{color:var(--ink2)}
+  .srow .v{font-weight:600;text-align:right}
+  .srow.calc{border-top:1px solid var(--line);padding-top:9px;margin-top:2px;color:var(--ink2);font-size:13px}
+  .copybtn{
+    margin:0 16px 15px;padding:12px;border-radius:10px;border:1px solid var(--accent);
+    background:transparent;color:var(--accent);font:700 14px/1 inherit;font-family:inherit;cursor:pointer;
+  }
+  .copybtn:hover{background:var(--accent-soft)}
+
+  .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:0 8px;line-height:1.5}
+  .foot b{font-weight:700}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div class="brandbar">
+    <div class="logo" aria-hidden="true">B</div>
+    <div class="brandtext">
+      <span class="brandname"><b>Bro</b>care</span>
+      <span class="brandsub">Motor All Risk Quoter</span>
+    </div>
+    <span class="tariff-tag">April 2026<br>tariff</span>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="step" id="s1">
+    <div class="stephead"><span class="stepnum">1</span><span class="steptitle">Vehicle</span><span class="stepecho" id="e1"></span></div>
+    <div class="stepbody">
+      <div class="field">
+        <label class="lbl" for="value">Vehicle value (USD)</label>
+        <div class="valwrap"><span class="cur">$</span><input type="number" id="value" inputmode="numeric" min="0" step="500" placeholder="35000"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="year">Year of make</label>
+        <select id="year"><option value="">Select year…</option></select>
+      </div>
+      <div class="field">
+        <label class="lbl">Fuel type</label>
+        <div class="seg" id="segFuel" role="group" aria-label="Fuel type">
+          <button data-v="Gasoline" class="on">Gasoline</button>
+          <button data-v="Hybrid">Hybrid</button>
+          <button data-v="Electric">Electric</button>
+        </div>
+        <span class="hint">Recorded on the quote — no rate difference under the current tariff.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step off" id="s2">
+    <div class="stephead"><span class="stepnum">2</span><span class="steptitle">Eligibility check</span><span class="stepecho" id="e2"></span></div>
+    <div class="stepbody">
+      <div class="field">
+        <label class="lbl" for="brand">Make</label>
+        <select id="brand"><option value="">Select make…</option></select>
+      </div>
+      <div class="field hidden" id="modelField">
+        <label class="lbl">Model — tap if it matches</label>
+        <div class="chips" id="modelChips"></div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="driverAge">Driver age</label>
+        <input type="number" id="driverAge" inputmode="numeric" min="16" max="99" placeholder="e.g. 34">
+      </div>
+      <div id="eligAlert"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step off" id="s3">
+    <div class="stephead"><span class="stepnum">3</span><span class="steptitle">Choose cover</span><span class="stepecho" id="e3"></span></div>
+    <div class="stepbody">
+      <div class="opts" id="opts"></div>
+      <span class="hint" id="agencyHint"></span>
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="step off" id="s4">
+    <div class="sum-head">
+      <div class="sum-sub">Annual premium</div>
+      <div class="sum-big" id="sumBig">—</div>
+    </div>
+    <div class="sum-rows" id="sumRows"></div>
+    <button class="copybtn" id="copyBtn" type="button">Copy quote for client</button>
+  </section>
+
+  
+<!--BROCARE-DOC-HANDOFF-->
+<style>
+#broPanel{margin-top:14px}
+#broPanel .bh{font-weight:700;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+#broPanel .bf{margin-bottom:10px}
+#broPanel .bf label{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:4px;font-weight:600}
+#broPanel input{width:100%;font:inherit;font-size:13px;padding:9px 11px;border-radius:9px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);box-sizing:border-box}
+#broPanel input:focus{outline:2px solid var(--accent);outline-offset:1px}
+#broPanel .drow{display:grid;grid-template-columns:1fr 120px auto;gap:7px;align-items:center;margin-bottom:7px}
+#broPanel .x{border:0;background:transparent;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 7px;line-height:1}
+#broPanel .x:hover{color:#C0392B}
+#broPanel .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+#broPanel button.act{flex:1 1 auto;min-width:110px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;
+  padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+#broPanel button.act:hover{border-color:var(--accent)}
+#broPanel button.act.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#broPanel .addb{font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+#broPanel .tot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:11px 0 3px;border-top:1px solid var(--line);margin-top:11px;font-size:12.5px;color:var(--ink2)}
+#broPanel .tot b{font-size:19px;color:var(--price);font-variant-numeric:tabular-nums}
+#broPanel .warn{font-size:11.5px;color:var(--warn);margin-top:8px;display:none}
+</style>
+
+<div class="card" id="broPanel">
+  <div class="bh">Discounts &amp; document</div>
+
+  <div class="bf">
+    <label for="broClient">Client name (prints on the document)</label>
+    <input id="broClient" type="text" placeholder="e.g. Rida Family">
+  </div>
+
+  <div id="broDiscs"></div>
+  <button type="button" class="addb" id="broAdd">+ Add discount</button>
+
+  <div class="tot"><span>Quoted price</span><span id="broQuoted">&mdash;</span></div>
+  <div class="bf" style="margin-top:10px">
+    <label for="broFinal">Final price you are confirming (USD)</label>
+    <input id="broFinal" type="number" step="1" min="0">
+  </div>
+  <div class="warn" id="broWarn">Get a price above first &mdash; the quoter has nothing to hand over yet.</div>
+
+  <div class="btns">
+    <button type="button" class="act pri" id="broOffer">Send offer</button>
+    <button type="button" class="act" id="broCompare">Comparison</button>
+    <button type="button" class="act" id="broInvoice">Create invoice</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STUDIO = "../brocare-docs/index.html", MODE = "motor";
+  var $ = function(i){return document.getElementById(i);};
+  var discs = [];
+
+  function digits(t){ var m = String(t||'').replace(/[^0-9.]/g,''); return m? Math.round(parseFloat(m)) : 0; }
+
+  function fmtDob(v){
+    if(!v) return '';
+    var d = new Date(v+'T00:00:00');
+    if(isNaN(d)) return '';
+    return d.getDate()+' '+d.toLocaleString('en-GB',{month:'short'})+' '+d.getFullYear();
+  }
+
+  /* Read what the quoter has already rendered - no hooks into its maths. */
+  function readQuote(){
+    if(MODE==='health'){
+      var big = $('priceBig'), sub = $('priceSub');
+      var total = big ? digits(big.textContent) : 0;
+      var lvl = '', ambTxt = '';
+      var on = document.querySelector('#levels [aria-pressed="true"], #levels .on, #levels .active');
+      if(on) lvl = on.textContent.trim();
+      var amb = document.querySelector('#segAmb [aria-pressed="true"], #segAmb .on, #segAmb .active');
+      if(amb) ambTxt = amb.textContent.trim();
+      var dobs = [];
+      document.querySelectorAll('#members input[type=date]').forEach(function(el){
+        var s = fmtDob(el.value); if(s) dobs.push(s);
+      });
+      var d1 = document.querySelector('#dob');
+      if(!dobs.length && d1){ var s1 = fmtDob(d1.value); if(s1) dobs.push(s1); }
+      /* The quoter's own label ("Total owed / year") is internal wording -
+         build a sub-line fit to print on a client document instead. */
+      var subTxt = sub ? sub.textContent.trim() : '';
+      var mm = subTxt.match(/(\d+)\s*member/);
+      var cnt = mm ? mm[1] : String(Math.max(1, dobs.length));
+      var niceSub = 'Medical insurance \u00b7 ' + cnt + ' member' + (cnt==='1' ? '' : 's');
+      if(ambTxt && /^\d+%$/.test(ambTxt)) ambTxt = ambTxt + ' covered';
+      return { total: total,
+        sub: niceSub,
+        chips: [ {k:'Plan', v: lvl || '\u2014'}, {k:'Out-patient', v: ambTxt || '\u2014'} ],
+        members: dobs.join(' \u00b7 '),
+        cover: 'Medical insurance' };
+    }
+    var sb = $('sumBig');
+    var total2 = sb ? digits(sb.textContent) : 0;
+    var brand = $('brand') ? ($('brand').value||'') : '';
+    var mc = document.querySelector('#modelChips [aria-pressed="true"], #modelChips .on, #modelChips .active');
+    var model = mc ? mc.textContent.trim() : '';
+    var year = $('year') ? ($('year').value||'') : '';
+    var val  = $('value') ? digits($('value').value) : 0;
+    var veh = [brand, model, year].filter(Boolean).join(' ');
+    return { total: total2,
+      sub: veh || 'Motor insurance',
+      chips: [ {k:'Vehicle', v: veh || '\u2014'},
+               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2014'} ],
+      members: '', cover: 'Motor insurance' };
+  }
+
+  function discTotal(){ return discs.reduce(function(s,d){ return s + (Number(d.amt)||0); }, 0); }
+
+  function paint(){
+    $('broDiscs').innerHTML = discs.map(function(d,i){
+      return '<div class="drow">'+
+        '<input data-i="'+i+'" data-f="label" value="'+String(d.label).replace(/"/g,'&quot;')+'" placeholder="Discount name">'+
+        '<input data-i="'+i+'" data-f="amt" type="number" value="'+(d.amt||0)+'" placeholder="0">'+
+        '<button type="button" class="x" data-x="'+i+'" aria-label="Remove">&times;</button></div>';
+    }).join('');
+    $('broDiscs').querySelectorAll('input').forEach(function(el){
+      el.addEventListener('input', function(){
+        var d = discs[+el.dataset.i];
+        d[el.dataset.f] = el.dataset.f==='amt' ? Number(el.value) : el.value;
+        syncFinal();
+      });
+    });
+    $('broDiscs').querySelectorAll('[data-x]').forEach(function(b){
+      b.onclick = function(){ discs.splice(+b.dataset.x,1); paint(); syncFinal(); };
+    });
+  }
+
+  function syncFinal(){
+    var q = readQuote();
+    var net = Math.max(0, q.total - discTotal());
+    if(!$('broFinal').dataset.touched) $('broFinal').value = net || '';
+    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2014';
+  }
+
+  $('broFinal').addEventListener('input', function(){ this.dataset.touched='1'; });
+  $('broAdd').onclick = function(){ discs.push({label:'Discount', amt:0}); paint(); syncFinal(); };
+
+  function go(type){
+    var q = readQuote();
+    var price = Number($('broFinal').value||0) || q.total;
+    if(!price){ $('broWarn').style.display='block'; return; }
+    $('broWarn').style.display='none';
+    var today = new Date().toISOString().slice(0,10);
+    var pre = MODE==='health' ? 'BRC-H-' : 'BRC-M-';
+    var tail = String(Date.now()).slice(-4);
+
+    var p = { type:type, line:(MODE==='health'?'medical':'motor'),
+      client: ($('broClient').value||'').trim() || 'Client',
+      sub: q.sub, ref: pre + new Date().getFullYear() + '-' + tail,
+      issued: today, validDays: 14,
+      price: price, priceLabel:'Annual premium', per:'/ year',
+      chips: q.chips, members: q.members,
+      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
+                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
+      invNo: 'INV-' + new Date().getFullYear() + '-' + tail
+    };
+    if(type==='comparison'){
+      p.options = [{name:'Option A', tag:'', price:price},{name:'Option B', tag:'', price:price}];
+      p.rows = [{label:'Cover', values:['','']}];
+      p.recommended = -1;
+    }
+    var json = JSON.stringify(p);
+    var bytes = new TextEncoder().encode(json);
+    var bin = ''; bytes.forEach(function(b){ bin += String.fromCharCode(b); });
+    window.open(STUDIO + '#data=' + btoa(bin), '_blank');
+  }
+
+  $('broOffer').onclick   = function(){ go('card'); };
+  $('broCompare').onclick = function(){ go('comparison'); };
+  $('broInvoice').onclick = function(){ go('invoice'); };
+
+  paint(); syncFinal();
+  setInterval(syncFinal, 900);   /* keep in step as the quoter recalculates */
+})();
+</script>
+
+<div class="foot">
+    Prepared by <b>Brocare</b> · Private cars · Fidelity Motor All Risk, April 2026.<br>
+    Rates exclude bodily injury (MBY) cover. Indicative only — no cover until risk acceptance from Fidelity.
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   TARIFF DATA — Fidelity Motor All Risk, April 1st 2026
+   Premium = vehicle value x rate%, floored at the product minimum.
+   Edit only this block when rates change.
+   ============================================================ */
+const TARIFF = {
+  products:[
+    { id:'prime', name:'Prime Drive', min:785, agency:true,
+      note:'Widest cover · agency dealer repair · no depreciation on new spare parts',
+      bands:[[0,19999],[20000,49999],[50000,99999],[100000,300000]],
+      years:[
+        { from:2023, to:2026, rates:[3.75,3.25,2.65,2.50] },
+        { from:2020, to:2022, rates:[4.25,3.75,3.00,2.75] },
+        { from:2018, to:2019, rates:[null,4.50,3.50,2.95] }
+      ] },
+    { id:'smart', name:'Smart Drive', min:675, agency:false,
+      note:'Comprehensive cover · depreciation scale on spare parts',
+      bands:[[0,49999],[50000,99999],[100000,300000]],
+      years:[
+        { from:2023, to:2026, rates:[2.50,2.25,2.00] },
+        { from:2020, to:2022, rates:[3.00,2.50,2.25] },
+        { from:2018, to:2019, rates:[3.50,3.00,2.75] },
+        { from:2010, to:2017, rates:[3.80,3.25,3.00] }
+      ] },
+    { id:'collision', name:'Collision', min:405, agency:false,
+      note:'Collision damage cover',
+      bands:[[0,Infinity]],
+      years:[
+        { from:2016, to:2026, rates:[1.75] },
+        { from:2005, to:2015, rates:[2.00] }
+      ] },
+    { id:'total', name:'Total Loss', min:305, agency:false,
+      note:'Total loss cover only',
+      bands:[[0,Infinity]],
+      years:[
+        { from:2016, to:2026, rates:[1.25] },
+        { from:2005, to:2015, rates:[1.75] }
+      ] }
+  ],
+  maxValue:300000,
+  /* Sports & luxury vehicles that must be referred to Fidelity */
+  sports:{
+    'Acura':'ALL','Aston Martin':'ALL','Bentley':'ALL','Bugatti':'ALL','Ferrari':'ALL',
+    'Lamborghini':'ALL','Lotus':'ALL','McLaren':'ALL','Porsche':'ALL','Rolls Royce':'ALL',
+    'Audi':['RS models','R8'],
+    'BMW':['M models','GT'],
+    'Chevrolet':['Camaro','Corvette'],
+    'Dodge':['Viper','SRT','Demon','Challenger'],
+    'Ford':['Mustang'],
+    'Infiniti':['G35','G37'],
+    'Jeep':['SRT'],
+    'Maserati':['MC20'],
+    'Mercedes':['SLR','AMG (excl. SUV)','Maybach','Brabus'],
+    'Mitsubishi':['Evolution'],
+    'Nissan':['350Z','370Z','GTR','Skyline'],
+    'Volkswagen':['GTI-R']
+  },
+  otherMakes:['Toyota','Honda','Hyundai','Kia','Mazda','Suzuki','Renault','Peugeot','Citroen','Fiat',
+              'Volvo','Land Rover','Range Rover','Mini','Seat','Skoda','Tesla','BYD','Chery','MG','Geely',
+              'GMC','Cadillac','Lexus','Genesis','Subaru','Isuzu','Other make'],
+  /* Minimum driver age by vehicle value */
+  driverRules:[
+    { min:50000, max:100000, age:21 },
+    { min:100001, max:Infinity, age:26 }
+  ],
+  sportsMinAge:30
+};
+
+const S = { value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
+
+const $ = id => document.getElementById(id);
+const money = n => '$' + Math.round(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- populate selects ---------- */
+(function initYears(){
+  const sel=$('year');
+  for(let y=2026;y>=2005;y--){
+    const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o);
+  }
+})();
+(function initBrands(){
+  const sel=$('brand');
+  const g1=document.createElement('optgroup'); g1.label='Sports / luxury — referral';
+  Object.keys(TARIFF.sports).forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g1.appendChild(o); });
+  const g2=document.createElement('optgroup'); g2.label='Other makes';
+  TARIFF.otherMakes.forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g2.appendChild(o); });
+  sel.appendChild(g1); sel.appendChild(g2);
+})();
+
+/* ---------- rating engine ---------- */
+function bandIndex(product, value){
+  for(let i=0;i<product.bands.length;i++){
+    const b=product.bands[i];
+    if(value>=b[0] && value<=b[1]) return i;
+  }
+  return -1;
+}
+function quote(product, value, year){
+  if(value>TARIFF.maxValue) return {na:'Refer to Fidelity'};
+  const yr=product.years.find(y=>year>=y.from && year<=y.to);
+  if(!yr) return {na:'Year not covered'};
+  const bi=bandIndex(product,value);
+  if(bi<0) return {na:'Value not in tariff'};
+  const rate=yr.rates[bi];
+  if(rate===null||rate===undefined) return {na:'Not available'};
+  const raw=value*rate/100;
+  const premium=Math.max(raw,product.min);
+  return {rate:rate, raw:raw, premium:premium, atMin:premium>raw};
+}
+
+/* ---------- eligibility ---------- */
+function eligibility(){
+  if(S.sports){
+    let m='This make/model is on Fidelity’s sports & luxury list — it must be referred to Fidelity for a quote.';
+    if(S.driverAge!==null && S.driverAge<TARIFF.sportsMinAge) m+=' Driver must also be at least '+TARIFF.sportsMinAge+'.';
+    return {block:m};
+  }
+  if(S.value!==null && S.value>TARIFF.maxValue){
+    return {block:'Vehicle value is above $300,000 — refer to Fidelity for a quote.'};
+  }
+  if(S.value!==null && S.driverAge!==null){
+    for(const r of TARIFF.driverRules){
+      if(S.value>=r.min && S.value<=r.max && S.driverAge<r.age){
+        const range = r.max===Infinity ? 'above $100,000' : '$'+r.min.toLocaleString()+'–$'+r.max.toLocaleString();
+        return {block:'No claim is covered for a driver under '+r.age+' on a vehicle valued '+range+'. This risk cannot be quoted here.'};
+      }
+    }
+  }
+  return {block:null};
+}
+
+/* ---------- wiring ---------- */
+$('value').addEventListener('input', function(e){
+  const v=parseFloat(e.target.value);
+  S.value=(Number.isFinite(v)&&v>0)?v:null;
+  render();
+});
+$('year').addEventListener('change', function(e){
+  S.year=e.target.value?parseInt(e.target.value,10):null; render();
+});
+$('driverAge').addEventListener('input', function(e){
+  const v=parseInt(e.target.value,10);
+  S.driverAge=Number.isFinite(v)?v:null; render();
+});
+$('segFuel').querySelectorAll('button').forEach(function(b){
+  b.onclick=function(){
+    S.fuel=b.dataset.v;
+    $('segFuel').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  };
+});
+$('brand').addEventListener('change', function(e){
+  S.brand=e.target.value; S.models=[]; S.product=null;
+  const entry=TARIFF.sports[S.brand];
+  const box=$('modelChips'), field=$('modelField');
+  box.innerHTML='';
+  if(Array.isArray(entry)){
+    field.classList.remove('hidden');
+    S.sports=false;
+    entry.forEach(function(m){
+      const b=document.createElement('button'); b.type='button'; b.textContent=m;
+      b.onclick=function(){
+        b.classList.toggle('on');
+        S.models=Array.from(box.querySelectorAll('button.on')).map(x=>x.textContent);
+        S.sports=S.models.length>0;
+        render();
+      };
+      box.appendChild(b);
+    });
+  } else {
+    field.classList.add('hidden');
+    S.sports = (entry==='ALL');
+  }
+  render();
+});
+
+/* ---------- render ---------- */
+function render(){
+  const step1ok = S.value!==null && S.year!==null;
+  $('e1').textContent = (S.value!==null?money(S.value):'') + ((S.value!==null&&S.year)?' · ':'') + (S.year||'');
+  $('s1').classList.toggle('done', step1ok);
+
+  $('s2').classList.toggle('off', !step1ok);
+  const elig=eligibility();
+  $('eligAlert').innerHTML = elig.block ? '<div class="alert">'+esc(elig.block)+'</div>' : '';
+  const step2ok = step1ok && S.brand!=='' && S.driverAge!==null && !elig.block;
+  $('s2').classList.toggle('done', step2ok);
+  $('e2').textContent = S.brand ? (S.brand + (S.driverAge!==null?(' · driver '+S.driverAge):'')) : '';
+
+  $('s3').classList.toggle('off', !step2ok);
+  if(step2ok){ buildOptions(); }
+  else { S.product=null; $('opts').innerHTML=''; $('agencyHint').textContent=''; }
+  $('s3').classList.toggle('done', !!S.product);
+  const prod=TARIFF.products.find(p=>p.id===S.product);
+  $('e3').textContent = prod?prod.name:'';
+
+  $('s4').classList.toggle('off', !S.product);
+  if(S.product) buildSummary();
+}
+
+/* What agency repair costs = the Prime Drive premium over Smart Drive,
+   since agency repair is only available on Prime Drive. */
+function agencyUplift(){
+  const prime=TARIFF.products.find(p=>p.id==='prime');
+  const smart=TARIFF.products.find(p=>p.id==='smart');
+  const qp=quote(prime,S.value,S.year), qs=quote(smart,S.value,S.year);
+  if(qp.premium===undefined||qs.premium===undefined) return null;
+  return qp.premium-qs.premium;
+}
+
+function buildOptions(){
+  const box=$('opts'); box.innerHTML='';
+  const uplift=agencyUplift();
+  let anyAgency=false;
+  TARIFF.products.forEach(function(p){
+    const q=quote(p,S.value,S.year);
+    const ok = q.premium!==undefined;
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='opt'+(S.product===p.id?' on':'')+(ok?'':' dead');
+    const price = ok
+      ? '<div class="optprice">'+money(q.premium)+'<small>'+q.rate.toFixed(2)+'%'+(q.atMin?' · minimum':'')+'</small></div>'
+      : '<div class="optprice na">'+esc(q.na)+'</div>';
+    const delta = (p.id==='prime' && ok && uplift!==null)
+      ? '<div class="optdelta">+'+money(uplift)+' over Smart Drive — this is what agency repair costs</div>' : '';
+    btn.innerHTML='<div><div class="optname">'+esc(p.name)+'</div><div class="optmeta">'+esc(p.note)+'</div>'+delta+'</div>'+price;
+    if(ok){
+      if(p.agency) anyAgency=true;
+      btn.onclick=function(){ S.product=p.id; render(); };
+    }
+    box.appendChild(btn);
+  });
+  $('agencyHint').textContent = anyAgency
+    ? 'Agency dealer repair is only available on Prime Drive — it is not sold as an add-on to the other covers.'
+    : '';
+}
+
+function buildSummary(){
+  const p=TARIFF.products.find(x=>x.id===S.product);
+  const q=quote(p,S.value,S.year);
+  $('sumBig').innerHTML = money(q.premium)+' <span class="per">/ year</span>';
+  const rows=[
+    ['Vehicle', S.brand + (S.models.length?(' '+S.models.join(', ')):'') + ' · ' + S.year],
+    ['Declared value', money(S.value)],
+    ['Fuel', S.fuel],
+    ['Driver age', String(S.driverAge)],
+    ['Cover', p.name],
+    ['Agency repair', p.agency?'Included':'Not available on this cover']
+  ];
+  const up=agencyUplift();
+  if(p.agency && up!==null) rows.push(['— cost of that agency repair', '+'+money(up)+' vs Smart Drive']);
+  let html=rows.map(r=>'<div class="srow"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
+  html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
+        + '<span class="v">'+(q.atMin?('minimum '+money(p.min)):money(q.raw))+'</span></div>';
+  $('sumRows').innerHTML=html;
+}
+
+$('copyBtn').onclick=function(){
+  const p=TARIFF.products.find(x=>x.id===S.product);
+  if(!p) return;
+  const q=quote(p,S.value,S.year);
+  const txt=[
+    'BROCARE — Motor All Risk quote',
+    '',
+    'Vehicle: '+S.brand+(S.models.length?(' '+S.models.join(', ')):'')+' · '+S.year,
+    'Declared value: '+money(S.value),
+    'Fuel: '+S.fuel,
+    'Driver age: '+S.driverAge,
+    'Cover: '+p.name+(p.agency?' (agency dealer repair included)':''),
+    (p.agency && agencyUplift()!==null) ? 'Agency repair costs +'+money(agencyUplift())+' vs Smart Drive.' : '',
+    '',
+    'ANNUAL PREMIUM: '+money(q.premium),
+    '',
+    'Excludes bodily injury (MBY) cover. Indicative only —',
+    'no cover until risk acceptance from Fidelity.',
+    'Fidelity Motor All Risk tariff, April 2026.'
+  ].join('\n');
+  const done=function(){
+    const b=$('copyBtn'), old=b.textContent;
+    b.textContent='Copied ✓'; setTimeout(function(){ b.textContent=old; },1600);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(function(){ window.prompt('Copy the quote:', txt); });
+  } else { window.prompt('Copy the quote:', txt); }
+};
+
+render();
+</script>

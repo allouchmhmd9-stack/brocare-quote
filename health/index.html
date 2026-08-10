@@ -1,0 +1,730 @@
+<meta charset="utf-8">
+<title>Brocare · Health Quoter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
+    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
+    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
+    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A;
+    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
+      --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
+      --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
+      --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
+    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
+    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
+    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A;
+    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
+    --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
+    --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
+    --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:16px 16px calc(28px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+  /* brand header */
+  .brandbar{display:flex;align-items:center;gap:11px;padding:4px 2px 2px}
+  .logo{
+    width:38px;height:38px;border-radius:11px;flex:none;
+    background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--brand)));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:19px;letter-spacing:-.02em;
+    box-shadow:var(--shadow);
+  }
+  .brandtext{display:flex;flex-direction:column;line-height:1.15}
+  .brandname{font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--brand)}
+  .brandname b{color:var(--accent);font-weight:800}
+  .brandsub{font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.02em}
+  .tariff-tag{margin-left:auto;font-size:10.5px;color:var(--ink2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;text-align:right}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field + .field{margin-top:13px}
+  label.lbl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
+  .lbl .aux{float:right;text-transform:none;letter-spacing:0;font-weight:600;color:var(--accent)}
+
+  .seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
+  .seg button{
+    flex:1;border:0;background:transparent;color:var(--ink2);
+    font:600 14px/1 inherit;font-family:inherit;padding:11px 4px;border-radius:8px;cursor:pointer;
+    transition:background .12s,color .12s;white-space:nowrap;
+  }
+  .seg button.on{background:var(--accent);color:var(--accent-ink)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+  .levels{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .levels button{
+    border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    font:600 14px/1.2 inherit;font-family:inherit;padding:12px 8px;border-radius:10px;cursor:pointer;
+    transition:border-color .12s,background .12s,color .12s;
+  }
+  .levels button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .levels button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+  .agegrid{display:grid;grid-template-columns:110px 1fr;gap:8px}
+  input[type=number],input[type=date]{
+    width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    border-radius:10px;padding:11px 12px;font:600 16px/1 inherit;font-family:inherit;
+    font-variant-numeric:tabular-nums;
+  }
+  input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .agehint{font-size:12px;color:var(--ink2);margin-top:5px;min-height:15px}
+
+  /* family members */
+  #members{display:flex;flex-direction:column;gap:8px}
+  .mrow{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;align-items:center}
+  /* 16px keeps iOS from auto-zooming the page when this input is focused */
+  .mrow .mage{
+    width:100%;font-size:16px;font-weight:600;color:var(--ink);text-align:center;
+    background:var(--surface2);border:1px solid var(--line);border-radius:10px;
+    padding:11px 4px;font-family:inherit;font-variant-numeric:tabular-nums;
+  }
+  .mrow .mage::-webkit-outer-spin-button,
+  .mrow .mage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .mrow .mage{-moz-appearance:textfield;appearance:textfield}
+  .mrow .mage::placeholder{color:var(--ink2);font-weight:600}
+  .mrow .mage.bad{color:var(--warn)}
+  .mrow .mdel{
+    border:1px solid var(--line);background:var(--surface2);color:var(--ink2);
+    border-radius:10px;padding:11px 0;font:600 16px/1 inherit;cursor:pointer;
+  }
+  .mrow .mdel:hover{color:var(--warn);border-color:var(--warn)}
+  .mrow .mdel:disabled{opacity:.35;cursor:not-allowed}
+  .addmember{
+    margin-top:9px;width:100%;border:1px dashed var(--line);background:transparent;color:var(--accent);
+    font:700 14px/1 inherit;font-family:inherit;padding:12px;border-radius:10px;cursor:pointer;
+  }
+  .addmember:hover{background:var(--accent-soft)}
+
+  /* "More information" — plain-language guide to the four care tiers */
+  details.info{
+    margin-top:9px;border:1px solid var(--line);border-radius:10px;
+    background:var(--surface2);overflow:hidden;
+  }
+  details.info summary{
+    cursor:pointer;list-style:none;padding:11px 12px;
+    font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--accent);display:flex;align-items:center;
+  }
+  details.info summary::-webkit-details-marker{display:none}
+  details.info summary::after{content:"▾";margin-left:auto;font-size:10px;transition:transform .15s}
+  details.info[open] summary::after{transform:rotate(180deg)}
+  details.info summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .infobody{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+  .infobody p{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
+  .infobody p.tier b{color:var(--accent);font-weight:800}
+  .infobody p.note{
+    color:var(--ink2);font-size:12px;border-top:1px solid var(--line);padding-top:9px;margin-top:1px;
+  }
+
+  details.adv{border-top:1px solid var(--line);margin-top:13px;padding-top:11px}
+  details.adv summary{
+    cursor:pointer;list-style:none;font-size:12px;font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;color:var(--ink2);display:flex;align-items:center;gap:6px;
+  }
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary::after{content:"▾";font-size:10px;transition:transform .15s}
+  details.adv[open] summary::after{transform:rotate(180deg)}
+  details.adv .field:first-of-type{margin-top:12px}
+  .adv .field.locked{opacity:.5;pointer-events:none}
+  .lockmsg{font-size:11.5px;color:var(--ink2);margin-top:8px;font-style:italic;display:none}
+
+  /* price panel */
+  .price-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .price-head{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+  .price-sub{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
+  .price-big{
+    font-size:40px;font-weight:800;letter-spacing:-.02em;color:var(--price);
+    font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px;
+  }
+  .price-big .per{font-size:15px;font-weight:600;color:var(--ink2);letter-spacing:0}
+  .price-rows{padding:10px 16px 13px;display:flex;flex-direction:column;gap:7px}
+  .prow{display:flex;justify-content:space-between;font-size:14.5px;gap:12px}
+  .prow .k{color:var(--ink2)}
+  .prow .v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .prow.member .k{color:var(--ink)}
+  .prow.sub{border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
+  .prow.total{border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
+  .prow.total .k{color:var(--ink);font-weight:700}
+  .prow.total .v{font-weight:800}
+  .prow .muted{color:var(--ink2);font-weight:500}
+  .needmsg{font-size:13.5px;color:var(--ink2);line-height:1.45}
+  .hint{font-size:12px;color:var(--ink2);line-height:1.4}
+  .hint:empty{display:none}
+
+  .msg{padding:16px;font-size:14.5px;color:var(--warn);font-weight:600;display:none}
+  .price-card.error .msg{display:block}
+  .price-card.error .price-head,.price-card.error .price-rows{display:none}
+
+  .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:0 8px}
+  .foot b{color:var(--ink2);font-weight:700}
+  .hidden{display:none!important}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div class="wrap">
+  <div class="brandbar">
+    <div class="logo" aria-hidden="true">B</div>
+    <div class="brandtext">
+      <span class="brandname"><b>Bro</b>care</span>
+      <span class="brandsub">Health Insurance Quoter</span>
+    </div>
+    <span class="tariff-tag">April 2026<br>tariff</span>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label class="lbl">Quote for</label>
+      <div class="seg" id="segMode" role="group" aria-label="Quote mode">
+        <button data-v="individual" class="on">Individual</button>
+        <button data-v="family">Family</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Business</label>
+      <div class="seg" id="segBiz" role="group" aria-label="Business type">
+        <button data-v="new" class="on">New</button>
+        <button data-v="renewal">Renewal</button>
+      </div>
+    </div>
+
+    <!-- INDIVIDUAL age input -->
+    <div class="field" id="indivBlock">
+      <label class="lbl" for="age">Age &nbsp;·&nbsp; or pick date of birth</label>
+      <div class="agegrid">
+        <input type="number" id="age" inputmode="numeric" min="0" max="99" placeholder="Age" aria-label="Age">
+        <input type="date" id="dob" aria-label="Date of birth">
+      </div>
+      <div class="agehint" id="ageHint"></div>
+    </div>
+
+    <!-- FAMILY members -->
+    <div class="field hidden" id="familyBlock">
+      <label class="lbl">Members &nbsp;·&nbsp; date of birth <em style="text-transform:none;letter-spacing:0;font-style:normal">or just the age</em> <span class="aux" id="sizeTag"></span></label>
+      <div id="members"></div>
+      <button class="addmember" id="addMember" type="button">+ Add member</button>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Coverage level</label>
+      <div class="levels" id="levels" role="group" aria-label="Coverage level"></div>
+
+      <details class="info">
+        <summary>More information</summary>
+        <div class="infobody">
+          <p class="tier"><b>Prime</b> — Full hospital network and the highest limits. Nothing excluded, except Bellevue on Class SP.</p>
+          <p class="tier"><b>Smart Plus</b> — Keeps AUBMC. Excludes CMC, Rizk, Saint John and Bellevue.</p>
+          <p class="tier"><b>Smart</b> — Same as Smart Plus but <em>also drops AUBMC</em>, and prosthesis limits are lower.</p>
+          <p class="tier"><b>Essential</b> — Smallest network: also excludes KMC. Class SP only. Bariatric surgery not covered, and a $50 co-pay on emergencies not followed by admission.</p>
+          <p class="note">A / B / SP is the hospitalisation class and sets the money limits — organ transplant is covered to $60,000 / $40,000 / $20,000 a year respectively. Prime · Smart Plus · Smart · Essential set which hospitals you can use.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Ambulatory (out-patient)</label>
+      <div class="seg" id="segAmb" role="group" aria-label="Ambulatory cover">
+        <button data-v="none">None</button>
+        <button data-v="85" class="on">85%</button>
+        <button data-v="100">100%</button>
+      </div>
+    </div>
+
+    <details class="adv">
+      <summary>More options</summary>
+      <div class="field" id="sizeField">
+        <label class="lbl">Family size</label>
+        <div class="seg" id="segSize" role="group" aria-label="Family size">
+          <button data-v="1&2" class="on">1–2 members</button>
+          <button data-v="3+">3+ members</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Co-pay</label>
+        <div class="seg" id="segCopay" role="group" aria-label="Co-pay"></div>
+        <span class="hint" id="copayNote"></span>
+      </div>
+      <div class="lockmsg" id="lockMsg">In Family mode, size is set automatically from the number of members.</div>
+    </details>
+  </div>
+
+  <div class="price-card" id="priceCard">
+    <div class="price-head">
+      <div class="price-sub" id="priceSub">Total owed / year</div>
+      <div class="price-big" id="priceBig">—</div>
+    </div>
+    <div class="price-rows" id="priceRows"></div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  
+<!--BROCARE-DOC-HANDOFF-->
+<style>
+#broPanel{margin-top:14px}
+#broPanel .bh{font-weight:700;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+#broPanel .bf{margin-bottom:10px}
+#broPanel .bf label{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:4px;font-weight:600}
+#broPanel input{width:100%;font:inherit;font-size:13px;padding:9px 11px;border-radius:9px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);box-sizing:border-box}
+#broPanel input:focus{outline:2px solid var(--accent);outline-offset:1px}
+#broPanel .drow{display:grid;grid-template-columns:1fr 120px auto;gap:7px;align-items:center;margin-bottom:7px}
+#broPanel .x{border:0;background:transparent;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 7px;line-height:1}
+#broPanel .x:hover{color:#C0392B}
+#broPanel .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+#broPanel button.act{flex:1 1 auto;min-width:110px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;
+  padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+#broPanel button.act:hover{border-color:var(--accent)}
+#broPanel button.act.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#broPanel .addb{font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+#broPanel .tot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:11px 0 3px;border-top:1px solid var(--line);margin-top:11px;font-size:12.5px;color:var(--ink2)}
+#broPanel .tot b{font-size:19px;color:var(--price);font-variant-numeric:tabular-nums}
+#broPanel .warn{font-size:11.5px;color:var(--warn);margin-top:8px;display:none}
+</style>
+
+<div class="card" id="broPanel">
+  <div class="bh">Discounts &amp; document</div>
+
+  <div class="bf">
+    <label for="broClient">Client name (prints on the document)</label>
+    <input id="broClient" type="text" placeholder="e.g. Rida Family">
+  </div>
+
+  <div id="broDiscs"></div>
+  <button type="button" class="addb" id="broAdd">+ Add discount</button>
+
+  <div class="tot"><span>Quoted price</span><span id="broQuoted">&mdash;</span></div>
+  <div class="bf" style="margin-top:10px">
+    <label for="broFinal">Final price you are confirming (USD)</label>
+    <input id="broFinal" type="number" step="1" min="0">
+  </div>
+  <div class="warn" id="broWarn">Get a price above first &mdash; the quoter has nothing to hand over yet.</div>
+
+  <div class="btns">
+    <button type="button" class="act pri" id="broOffer">Send offer</button>
+    <button type="button" class="act" id="broCompare">Comparison</button>
+    <button type="button" class="act" id="broInvoice">Create invoice</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STUDIO = "brocare-docs/index.html", MODE = "health";
+  var $ = function(i){return document.getElementById(i);};
+  var discs = [];
+
+  function digits(t){ var m = String(t||'').replace(/[^0-9.]/g,''); return m? Math.round(parseFloat(m)) : 0; }
+
+  function fmtDob(v){
+    if(!v) return '';
+    var d = new Date(v+'T00:00:00');
+    if(isNaN(d)) return '';
+    return d.getDate()+' '+d.toLocaleString('en-GB',{month:'short'})+' '+d.getFullYear();
+  }
+
+  /* Read what the quoter has already rendered - no hooks into its maths. */
+  function readQuote(){
+    if(MODE==='health'){
+      var big = $('priceBig'), sub = $('priceSub');
+      var total = big ? digits(big.textContent) : 0;
+      var lvl = '', ambTxt = '';
+      var on = document.querySelector('#levels [aria-pressed="true"], #levels .on, #levels .active');
+      if(on) lvl = on.textContent.trim();
+      var amb = document.querySelector('#segAmb [aria-pressed="true"], #segAmb .on, #segAmb .active');
+      if(amb) ambTxt = amb.textContent.trim();
+      var dobs = [];
+      document.querySelectorAll('#members input[type=date]').forEach(function(el){
+        var s = fmtDob(el.value); if(s) dobs.push(s);
+      });
+      var d1 = document.querySelector('#dob');
+      if(!dobs.length && d1){ var s1 = fmtDob(d1.value); if(s1) dobs.push(s1); }
+      /* The quoter's own label ("Total owed / year") is internal wording -
+         build a sub-line fit to print on a client document instead. */
+      var subTxt = sub ? sub.textContent.trim() : '';
+      var mm = subTxt.match(/(\d+)\s*member/);
+      var cnt = mm ? mm[1] : String(Math.max(1, dobs.length));
+      var niceSub = 'Medical insurance \u00b7 ' + cnt + ' member' + (cnt==='1' ? '' : 's');
+      if(ambTxt && /^\d+%$/.test(ambTxt)) ambTxt = ambTxt + ' covered';
+      return { total: total,
+        sub: niceSub,
+        chips: [ {k:'Plan', v: lvl || '\u2014'}, {k:'Out-patient', v: ambTxt || '\u2014'} ],
+        members: dobs.join(' \u00b7 '),
+        cover: 'Medical insurance' };
+    }
+    var sb = $('sumBig');
+    var total2 = sb ? digits(sb.textContent) : 0;
+    var brand = $('brand') ? ($('brand').value||'') : '';
+    var mc = document.querySelector('#modelChips [aria-pressed="true"], #modelChips .on, #modelChips .active');
+    var model = mc ? mc.textContent.trim() : '';
+    var year = $('year') ? ($('year').value||'') : '';
+    var val  = $('value') ? digits($('value').value) : 0;
+    var veh = [brand, model, year].filter(Boolean).join(' ');
+    return { total: total2,
+      sub: veh || 'Motor insurance',
+      chips: [ {k:'Vehicle', v: veh || '\u2014'},
+               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2014'} ],
+      members: '', cover: 'Motor insurance' };
+  }
+
+  function discTotal(){ return discs.reduce(function(s,d){ return s + (Number(d.amt)||0); }, 0); }
+
+  function paint(){
+    $('broDiscs').innerHTML = discs.map(function(d,i){
+      return '<div class="drow">'+
+        '<input data-i="'+i+'" data-f="label" value="'+String(d.label).replace(/"/g,'&quot;')+'" placeholder="Discount name">'+
+        '<input data-i="'+i+'" data-f="amt" type="number" value="'+(d.amt||0)+'" placeholder="0">'+
+        '<button type="button" class="x" data-x="'+i+'" aria-label="Remove">&times;</button></div>';
+    }).join('');
+    $('broDiscs').querySelectorAll('input').forEach(function(el){
+      el.addEventListener('input', function(){
+        var d = discs[+el.dataset.i];
+        d[el.dataset.f] = el.dataset.f==='amt' ? Number(el.value) : el.value;
+        syncFinal();
+      });
+    });
+    $('broDiscs').querySelectorAll('[data-x]').forEach(function(b){
+      b.onclick = function(){ discs.splice(+b.dataset.x,1); paint(); syncFinal(); };
+    });
+  }
+
+  function syncFinal(){
+    var q = readQuote();
+    var net = Math.max(0, q.total - discTotal());
+    if(!$('broFinal').dataset.touched) $('broFinal').value = net || '';
+    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2014';
+  }
+
+  $('broFinal').addEventListener('input', function(){ this.dataset.touched='1'; });
+  $('broAdd').onclick = function(){ discs.push({label:'Discount', amt:0}); paint(); syncFinal(); };
+
+  function go(type){
+    var q = readQuote();
+    var price = Number($('broFinal').value||0) || q.total;
+    if(!price){ $('broWarn').style.display='block'; return; }
+    $('broWarn').style.display='none';
+    var today = new Date().toISOString().slice(0,10);
+    var pre = MODE==='health' ? 'BRC-H-' : 'BRC-M-';
+    var tail = String(Date.now()).slice(-4);
+
+    var p = { type:type, line:(MODE==='health'?'medical':'motor'),
+      client: ($('broClient').value||'').trim() || 'Client',
+      sub: q.sub, ref: pre + new Date().getFullYear() + '-' + tail,
+      issued: today, validDays: 14,
+      price: price, priceLabel:'Annual premium', per:'/ year',
+      chips: q.chips, members: q.members,
+      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
+                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
+      invNo: 'INV-' + new Date().getFullYear() + '-' + tail
+    };
+    if(type==='comparison'){
+      p.options = [{name:'Option A', tag:'', price:price},{name:'Option B', tag:'', price:price}];
+      p.rows = [{label:'Cover', values:['','']}];
+      p.recommended = -1;
+    }
+    var json = JSON.stringify(p);
+    var bytes = new TextEncoder().encode(json);
+    var bin = ''; bytes.forEach(function(b){ bin += String.fromCharCode(b); });
+    window.open(STUDIO + '#data=' + btoa(bin), '_blank');
+  }
+
+  $('broOffer').onclick   = function(){ go('card'); };
+  $('broCompare').onclick = function(){ go('comparison'); };
+  $('broInvoice').onclick = function(){ go('invoice'); };
+
+  paint(); syncFinal();
+  setInterval(syncFinal, 900);   /* keep in step as the quoter recalculates */
+})();
+</script>
+
+<div class="foot">Prepared by <b>Brocare</b> · rates indicative and non-binding, final terms subject to medical assessment · USD per year.</div>
+</div>
+
+<script>
+const DATA = {"new":{"inpatient":{"A Prime":{"1&2":{"Co-Nil":{"0":570.0,"1":570.0,"2":570.0,"3":570.0,"4":570.0,"5":570.0,"6":570.0,"7":570.0,"8":570.0,"9":570.0,"10":570.0,"11":570.0,"12":570.0,"13":570.0,"14":570.0,"15":570.0,"16":570.0,"17":570.0,"18":900.0,"19":900.0,"20":900.0,"21":900.0,"22":900.0,"23":900.0,"24":900.0,"25":1230.0,"26":1230.0,"27":1230.0,"28":1230.0,"29":1230.0,"30":1230.0,"31":1290.0,"32":1290.0,"33":1290.0,"34":1290.0,"35":1290.0,"36":1360.0,"37":1360.0,"38":1360.0,"39":1360.0,"40":1360.0,"41":1440.0,"42":1440.0,"43":1440.0,"44":1440.0,"45":1440.0,"46":1820.0,"47":1820.0,"48":1820.0,"49":1820.0,"50":1820.0,"51":2160.0,"52":2160.0,"53":2160.0,"54":2160.0,"55":2160.0,"56":4015.0,"57":4015.0,"58":4015.0,"59":4015.0,"60":4015.0,"61":5005.0,"62":5005.0,"63":5005.0,"64":5005.0,"65":5005.0,"66":7980.0,"67":7980.0,"68":7980.0,"69":7980.0,"70":7980.0,"71":10615.0,"72":10615.0,"73":10615.0,"74":10615.0,"75":10615.0,"76":13400.0,"77":13400.0,"78":13400.0,"79":13400.0,"80":13400.0,"81":16835.0,"82":16835.0,"83":16835.0,"84":16835.0,"85":16835.0,"86":19445.8,"87":20420.4,"88":21440.1,"89":22512.6,"90":23637.9,"91":24822.6,"92":26061.2,"93":27364.7,"94":28734.2,"95":30167.5,"96":31678.9,"97":33261.8,"98":34923.9,"99":36670.7}},"3+":{"Co-Nil":{"0":570.0,"1":570.0,"2":570.0,"3":570.0,"4":570.0,"5":570.0,"6":570.0,"7":570.0,"8":570.0,"9":570.0,"10":570.0,"11":570.0,"12":570.0,"13":570.0,"14":570.0,"15":570.0,"16":570.0,"17":570.0,"18":790.0,"19":790.0,"20":790.0,"21":790.0,"22":790.0,"23":790.0,"24":790.0,"25":1075.0,"26":1075.0,"27":1075.0,"28":1075.0,"29":1075.0,"30":1075.0,"31":1125.0,"32":1125.0,"33":1125.0,"34":1125.0,"35":1125.0,"36":1190.0,"37":1190.0,"38":1190.0,"39":1190.0,"40":1190.0,"41":1260.0,"42":1260.0,"43":1260.0,"44":1260.0,"45":1260.0,"46":1595.0,"47":1595.0,"48":1595.0,"49":1595.0,"50":1595.0,"51":1890.0,"52":1890.0,"53":1890.0,"54":1890.0,"55":1890.0,"56":3515.0,"57":3515.0,"58":3515.0,"59":3515.0,"60":3515.0,"61":4380.0,"62":4380.0,"63":4380.0,"64":4380.0,"65":4380.0,"66":7980.0,"67":7980.0,"68":7980.0,"69":7980.0,"70":7980.0,"71":10615.0,"72":10615.0,"73":10615.0,"74":10615.0,"75":10615.0,"76":13400.0,"77":13400.0,"78":13400.0,"79":13400.0,"80":13400.0,"81":16835.0,"82":16835.0,"83":16835.0,"84":16835.0,"85":16835.0,"86":19445.8,"87":20420.4,"88":21440.1,"89":22512.6,"90":23637.9,"91":24822.6,"92":26061.2,"93":27364.7,"94":28734.2,"95":30167.5,"96":31678.9,"97":33261.8,"98":34923.9,"99":36670.7}}},"A Smart Plus":{"1&2":{"Co-Nil":{"0":515.0,"1":515.0,"2":515.0,"3":515.0,"4":515.0,"5":515.0,"6":515.0,"7":515.0,"8":515.0,"9":515.0,"10":515.0,"11":515.0,"12":515.0,"13":515.0,"14":515.0,"15":515.0,"16":515.0,"17":515.0,"18":810.0,"19":810.0,"20":810.0,"21":810.0,"22":810.0,"23":810.0,"24":810.0,"25":1110.0,"26":1110.0,"27":1110.0,"28":1110.0,"29":1110.0,"30":1110.0,"31":1165.0,"32":1165.0,"33":1165.0,"34":1165.0,"35":1165.0,"36":1225.0,"37":1225.0,"38":1225.0,"39":1225.0,"40":1225.0,"41":1300.0,"42":1300.0,"43":1300.0,"44":1300.0,"45":1300.0,"46":1640.0,"47":1640.0,"48":1640.0,"49":1640.0,"50":1640.0,"51":1945.0,"52":1945.0,"53":1945.0,"54":1945.0,"55":1945.0,"56":3615.0,"57":3615.0,"58":3615.0,"59":3615.0,"60":3615.0,"61":4505.0,"62":4505.0,"63":4505.0,"64":4505.0,"65":4505.0,"66":7185.0,"67":7185.0,"68":7185.0,"69":7185.0,"70":7185.0,"71":9555.0,"72":9555.0,"73":9555.0,"74":9555.0,"75":9555.0,"76":12060.0,"77":12060.0,"78":12060.0,"79":12060.0,"80":12060.0,"81":15155.0,"82":15155.0,"83":15155.0,"84":15155.0,"85":15155.0,"86":17501.22,"87":18378.36,"88":19296.09,"89":20261.34,"90":21274.11,"91":22340.34,"92":23455.08,"93":24628.23,"94":25860.780000000002,"95":27150.75,"96":28511.010000000002,"97":29935.620000000003,"98":31431.510000000002,"99":33003.63}},"3+":{"Co-Nil":{"0":515.0,"1":515.0,"2":515.0,"3":515.0,"4":515.0,"5":515.0,"6":515.0,"7":515.0,"8":515.0,"9":515.0,"10":515.0,"11":515.0,"12":515.0,"13":515.0,"14":515.0,"15":515.0,"16":515.0,"17":515.0,"18":715.0,"19":715.0,"20":715.0,"21":715.0,"22":715.0,"23":715.0,"24":715.0,"25":970.0,"26":970.0,"27":970.0,"28":970.0,"29":970.0,"30":970.0,"31":1015.0,"32":1015.0,"33":1015.0,"34":1015.0,"35":1015.0,"36":1075.0,"37":1075.0,"38":1075.0,"39":1075.0,"40":1075.0,"41":1135.0,"42":1135.0,"43":1135.0,"44":1135.0,"45":1135.0,"46":1440.0,"47":1440.0,"48":1440.0,"49":1440.0,"50":1440.0,"51":1705.0,"52":1705.0,"53":1705.0,"54":1705.0,"55":1705.0,"56":3165.0,"57":3165.0,"58":3165.0,"59":3165.0,"60":3165.0,"61":3945.0,"62":3945.0,"63":3945.0,"64":3945.0,"65":3945.0,"66":7185.0,"67":7185.0,"68":7185.0,"69":7185.0,"70":7185.0,"71":9555.0,"72":9555.0,"73":9555.0,"74":9555.0,"75":9555.0,"76":12060.0,"77":12060.0,"78":12060.0,"79":12060.0,"80":12060.0,"81":15155.0,"82":15155.0,"83":15155.0,"84":15155.0,"85":15155.0,"86":17501.22,"87":18378.36,"88":19296.09,"89":20261.34,"90":21274.11,"91":22340.34,"92":23455.08,"93":24628.23,"94":25860.780000000002,"95":27150.75,"96":28511.010000000002,"97":29935.620000000003,"98":31431.510000000002,"99":33003.63}}},"B Prime":{"1&2":{"Co-Nil":{"0":430.0,"1":430.0,"2":430.0,"3":430.0,"4":430.0,"5":430.0,"6":430.0,"7":430.0,"8":430.0,"9":430.0,"10":430.0,"11":430.0,"12":430.0,"13":430.0,"14":430.0,"15":430.0,"16":430.0,"17":430.0,"18":675.0,"19":675.0,"20":675.0,"21":675.0,"22":675.0,"23":675.0,"24":675.0,"25":925.0,"26":925.0,"27":925.0,"28":925.0,"29":925.0,"30":925.0,"31":965.0,"32":965.0,"33":965.0,"34":965.0,"35":965.0,"36":1020.0,"37":1020.0,"38":1020.0,"39":1020.0,"40":1020.0,"41":1080.0,"42":1080.0,"43":1080.0,"44":1080.0,"45":1080.0,"46":1365.0,"47":1365.0,"48":1365.0,"49":1365.0,"50":1365.0,"51":1620.0,"52":1620.0,"53":1620.0,"54":1620.0,"55":1620.0,"56":3010.0,"57":3010.0,"58":3010.0,"59":3010.0,"60":3010.0,"61":3755.0,"62":3755.0,"63":3755.0,"64":3755.0,"65":3755.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":9570.0,"77":9570.0,"78":9570.0,"79":9570.0,"80":9570.0,"81":12630.0,"82":12630.0,"83":12630.0,"84":12630.0,"85":12630.0,"86":12860.1,"87":13504.7,"88":14177.9,"89":14887.4,"90":15629.9,"91":16413.1,"92":17234.8,"93":18093.9,"94":19001.4,"95":19950.7,"96":20947.3,"97":21994.5,"98":23092.3,"99":24248.4}},"3+":{"Co-Nil":{"0":430.0,"1":430.0,"2":430.0,"3":430.0,"4":430.0,"5":430.0,"6":430.0,"7":430.0,"8":430.0,"9":430.0,"10":430.0,"11":430.0,"12":430.0,"13":430.0,"14":430.0,"15":430.0,"16":430.0,"17":430.0,"18":595.0,"19":595.0,"20":595.0,"21":595.0,"22":595.0,"23":595.0,"24":595.0,"25":810.0,"26":810.0,"27":810.0,"28":810.0,"29":810.0,"30":810.0,"31":845.0,"32":845.0,"33":845.0,"34":845.0,"35":845.0,"36":890.0,"37":890.0,"38":890.0,"39":890.0,"40":890.0,"41":945.0,"42":945.0,"43":945.0,"44":945.0,"45":945.0,"46":1195.0,"47":1195.0,"48":1195.0,"49":1195.0,"50":1195.0,"51":1415.0,"52":1415.0,"53":1415.0,"54":1415.0,"55":1415.0,"56":2635.0,"57":2635.0,"58":2635.0,"59":2635.0,"60":2635.0,"61":3290.0,"62":3290.0,"63":3290.0,"64":3290.0,"65":3290.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":9570.0,"77":9570.0,"78":9570.0,"79":9570.0,"80":9570.0,"81":12630.0,"82":12630.0,"83":12630.0,"84":12630.0,"85":12630.0,"86":12860.1,"87":13504.7,"88":14177.9,"89":14887.4,"90":15629.9,"91":16413.1,"92":17234.8,"93":18093.9,"94":19001.4,"95":19950.7,"96":20947.3,"97":21994.5,"98":23092.3,"99":24248.4}}},"B Smart Plus":{"1&2":{"Co-Nil":{"0":390.0,"1":390.0,"2":390.0,"3":390.0,"4":390.0,"5":390.0,"6":390.0,"7":390.0,"8":390.0,"9":390.0,"10":390.0,"11":390.0,"12":390.0,"13":390.0,"14":390.0,"15":390.0,"16":390.0,"17":390.0,"18":610.0,"19":610.0,"20":610.0,"21":610.0,"22":610.0,"23":610.0,"24":610.0,"25":835.0,"26":835.0,"27":835.0,"28":835.0,"29":835.0,"30":835.0,"31":870.0,"32":870.0,"33":870.0,"34":870.0,"35":870.0,"36":920.0,"37":920.0,"38":920.0,"39":920.0,"40":920.0,"41":975.0,"42":975.0,"43":975.0,"44":975.0,"45":975.0,"46":1230.0,"47":1230.0,"48":1230.0,"49":1230.0,"50":1230.0,"51":1460.0,"52":1460.0,"53":1460.0,"54":1460.0,"55":1460.0,"56":2710.0,"57":2710.0,"58":2710.0,"59":2710.0,"60":2710.0,"61":3380.0,"62":3380.0,"63":3380.0,"64":3380.0,"65":3380.0,"66":5390.0,"67":5390.0,"68":5390.0,"69":5390.0,"70":5390.0,"71":7170.0,"72":7170.0,"73":7170.0,"74":7170.0,"75":7170.0,"76":8615.0,"77":8615.0,"78":8615.0,"79":8615.0,"80":8615.0,"81":11370.0,"82":11370.0,"83":11370.0,"84":11370.0,"85":11370.0,"86":11574.09,"87":12154.230000000001,"88":12760.11,"89":13398.66,"90":14066.91,"91":14771.789999999999,"92":15511.32,"93":16284.510000000002,"94":17101.260000000002,"95":17955.63,"96":18852.57,"97":19795.05,"98":20783.07,"99":21823.56}},"3+":{"Co-Nil":{"0":390.0,"1":390.0,"2":390.0,"3":390.0,"4":390.0,"5":390.0,"6":390.0,"7":390.0,"8":390.0,"9":390.0,"10":390.0,"11":390.0,"12":390.0,"13":390.0,"14":390.0,"15":390.0,"16":390.0,"17":390.0,"18":540.0,"19":540.0,"20":540.0,"21":540.0,"22":540.0,"23":540.0,"24":540.0,"25":730.0,"26":730.0,"27":730.0,"28":730.0,"29":730.0,"30":730.0,"31":765.0,"32":765.0,"33":765.0,"34":765.0,"35":765.0,"36":805.0,"37":805.0,"38":805.0,"39":805.0,"40":805.0,"41":855.0,"42":855.0,"43":855.0,"44":855.0,"45":855.0,"46":1080.0,"47":1080.0,"48":1080.0,"49":1080.0,"50":1080.0,"51":1275.0,"52":1275.0,"53":1275.0,"54":1275.0,"55":1275.0,"56":2375.0,"57":2375.0,"58":2375.0,"59":2375.0,"60":2375.0,"61":2965.0,"62":2965.0,"63":2965.0,"64":2965.0,"65":2965.0,"66":5390.0,"67":5390.0,"68":5390.0,"69":5390.0,"70":5390.0,"71":7170.0,"72":7170.0,"73":7170.0,"74":7170.0,"75":7170.0,"76":8615.0,"77":8615.0,"78":8615.0,"79":8615.0,"80":8615.0,"81":11370.0,"82":11370.0,"83":11370.0,"84":11370.0,"85":11370.0,"86":11574.09,"87":12154.230000000001,"88":12760.11,"89":13398.66,"90":14066.91,"91":14771.789999999999,"92":15511.32,"93":16284.510000000002,"94":17101.260000000002,"95":17955.63,"96":18852.57,"97":19795.05,"98":20783.07,"99":21823.56}}},"SP Prime":{"1&2":{"Co-Nil":{"0":370.0,"1":370.0,"2":370.0,"3":370.0,"4":370.0,"5":370.0,"6":370.0,"7":370.0,"8":370.0,"9":370.0,"10":370.0,"11":370.0,"12":370.0,"13":370.0,"14":370.0,"15":370.0,"16":370.0,"17":370.0,"18":585.0,"19":585.0,"20":585.0,"21":585.0,"22":585.0,"23":585.0,"24":585.0,"25":800.0,"26":800.0,"27":800.0,"28":800.0,"29":800.0,"30":800.0,"31":840.0,"32":840.0,"33":840.0,"34":840.0,"35":840.0,"36":885.0,"37":885.0,"38":885.0,"39":885.0,"40":885.0,"41":935.0,"42":935.0,"43":935.0,"44":935.0,"45":935.0,"46":1185.0,"47":1185.0,"48":1185.0,"49":1185.0,"50":1185.0,"51":1405.0,"52":1405.0,"53":1405.0,"54":1405.0,"55":1405.0,"56":2610.0,"57":2610.0,"58":2610.0,"59":2610.0,"60":2610.0,"61":3115.0,"62":3115.0,"63":3115.0,"64":3115.0,"65":3115.0,"66":3870.0,"67":3870.0,"68":3870.0,"69":3870.0,"70":3870.0,"71":5000.0,"72":5000.0,"73":5000.0,"74":5000.0,"75":5000.0,"76":6500.0,"77":6500.0,"78":6500.0,"79":6500.0,"80":6500.0,"81":10945.0,"82":10945.0,"83":10945.0,"84":10945.0,"85":10945.0,"86":11492.25,"87":12066.8625,"88":12670.205624999999,"89":13303.71590625,"90":13968.9017015625,"91":14667.346786640624,"92":15400.714125972656,"93":16170.749832271289,"94":16979.287323884855,"95":17828.251690079098,"96":18719.664274583054,"97":19655.647488312206,"98":20638.42986272782,"99":21670.351355864208}},"3+":{"Co-Nil":{"0":370.0,"1":370.0,"2":370.0,"3":370.0,"4":370.0,"5":370.0,"6":370.0,"7":370.0,"8":370.0,"9":370.0,"10":370.0,"11":370.0,"12":370.0,"13":370.0,"14":370.0,"15":370.0,"16":370.0,"17":370.0,"18":515.0,"19":515.0,"20":515.0,"21":515.0,"22":515.0,"23":515.0,"24":515.0,"25":700.0,"26":700.0,"27":700.0,"28":700.0,"29":700.0,"30":700.0,"31":735.0,"32":735.0,"33":735.0,"34":735.0,"35":735.0,"36":775.0,"37":775.0,"38":775.0,"39":775.0,"40":775.0,"41":820.0,"42":820.0,"43":820.0,"44":820.0,"45":820.0,"46":1035.0,"47":1035.0,"48":1035.0,"49":1035.0,"50":1035.0,"51":1230.0,"52":1230.0,"53":1230.0,"54":1230.0,"55":1230.0,"56":2285.0,"57":2285.0,"58":2285.0,"59":2285.0,"60":2285.0,"61":2730.0,"62":2730.0,"63":2730.0,"64":2730.0,"65":2730.0,"66":3870.0,"67":3870.0,"68":3870.0,"69":3870.0,"70":3870.0,"71":5000.0,"72":5000.0,"73":5000.0,"74":5000.0,"75":5000.0,"76":6500.0,"77":6500.0,"78":6500.0,"79":6500.0,"80":6500.0,"81":10945.0,"82":10945.0,"83":10945.0,"84":10945.0,"85":10945.0,"86":11492.25,"87":12066.8625,"88":12670.205624999999,"89":13303.71590625,"90":13968.9017015625,"91":14667.346786640624,"92":15400.714125972656,"93":16170.749832271289,"94":16979.287323884855,"95":17828.251690079098,"96":18719.664274583054,"97":19655.647488312206,"98":20638.42986272782,"99":21670.351355864208}}},"SP Smart Plus":{"1&2":{"Co-Nil":{"0":325.0,"1":325.0,"2":325.0,"3":325.0,"4":325.0,"5":325.0,"6":325.0,"7":325.0,"8":325.0,"9":325.0,"10":325.0,"11":325.0,"12":325.0,"13":325.0,"14":325.0,"15":325.0,"16":325.0,"17":325.0,"18":515.0,"19":515.0,"20":515.0,"21":515.0,"22":515.0,"23":515.0,"24":515.0,"25":700.0,"26":700.0,"27":700.0,"28":700.0,"29":700.0,"30":700.0,"31":735.0,"32":735.0,"33":735.0,"34":735.0,"35":735.0,"36":775.0,"37":775.0,"38":775.0,"39":775.0,"40":775.0,"41":820.0,"42":820.0,"43":820.0,"44":820.0,"45":820.0,"46":1040.0,"47":1040.0,"48":1040.0,"49":1040.0,"50":1040.0,"51":1230.0,"52":1230.0,"53":1230.0,"54":1230.0,"55":1230.0,"56":2285.0,"57":2285.0,"58":2285.0,"59":2285.0,"60":2285.0,"61":2730.0,"62":2730.0,"63":2730.0,"64":2730.0,"65":2730.0,"66":3390.0,"67":3390.0,"68":3390.0,"69":3390.0,"70":3390.0,"71":4375.0,"72":4375.0,"73":4375.0,"74":4375.0,"75":4375.0,"76":5690.0,"77":5690.0,"78":5690.0,"79":5690.0,"80":5690.0,"81":9580.0,"82":9580.0,"83":9580.0,"84":9580.0,"85":9580.0,"86":10055.71875,"87":10558.504687499999,"88":11086.429921874998,"89":11640.75141796875,"90":12222.788988867187,"91":12833.928438310546,"92":13475.624860226075,"93":14149.406103237377,"94":14856.876408399248,"95":15599.720228819211,"96":16379.706240260173,"97":17198.69155227318,"98":18058.62612988684,"99":18961.557436381183}},"3+":{"Co-Nil":{"0":325.0,"1":325.0,"2":325.0,"3":325.0,"4":325.0,"5":325.0,"6":325.0,"7":325.0,"8":325.0,"9":325.0,"10":325.0,"11":325.0,"12":325.0,"13":325.0,"14":325.0,"15":325.0,"16":325.0,"17":325.0,"18":455.0,"19":455.0,"20":455.0,"21":455.0,"22":455.0,"23":455.0,"24":455.0,"25":615.0,"26":615.0,"27":615.0,"28":615.0,"29":615.0,"30":615.0,"31":645.0,"32":645.0,"33":645.0,"34":645.0,"35":645.0,"36":680.0,"37":680.0,"38":680.0,"39":680.0,"40":680.0,"41":720.0,"42":720.0,"43":720.0,"44":720.0,"45":720.0,"46":910.0,"47":910.0,"48":910.0,"49":910.0,"50":910.0,"51":1080.0,"52":1080.0,"53":1080.0,"54":1080.0,"55":1080.0,"56":2000.0,"57":2000.0,"58":2000.0,"59":2000.0,"60":2000.0,"61":2390.0,"62":2390.0,"63":2390.0,"64":2390.0,"65":2390.0,"66":3390.0,"67":3390.0,"68":3390.0,"69":3390.0,"70":3390.0,"71":4375.0,"72":4375.0,"73":4375.0,"74":4375.0,"75":4375.0,"76":5690.0,"77":5690.0,"78":5690.0,"79":5690.0,"80":5690.0,"81":9580.0,"82":9580.0,"83":9580.0,"84":9580.0,"85":9580.0,"86":10055.71875,"87":10558.504687499999,"88":11086.429921874998,"89":11640.75141796875,"90":12222.788988867187,"91":12833.928438310546,"92":13475.624860226075,"93":14149.406103237377,"94":14856.876408399248,"95":15599.720228819211,"96":16379.706240260173,"97":17198.69155227318,"98":18058.62612988684,"99":18961.557436381183}}},"A Smart":{"1&2":{"Co-Nil":{"0":430.0,"1":430.0,"2":430.0,"3":430.0,"4":430.0,"5":430.0,"6":430.0,"7":430.0,"8":430.0,"9":430.0,"10":430.0,"11":430.0,"12":430.0,"13":430.0,"14":430.0,"15":430.0,"16":430.0,"17":430.0,"18":720.0,"19":720.0,"20":720.0,"21":720.0,"22":720.0,"23":720.0,"24":720.0,"25":980.0,"26":980.0,"27":980.0,"28":980.0,"29":980.0,"30":980.0,"31":1025.0,"32":1025.0,"33":1025.0,"34":1025.0,"35":1025.0,"36":1085.0,"37":1085.0,"38":1085.0,"39":1085.0,"40":1085.0,"41":1145.0,"42":1145.0,"43":1145.0,"44":1145.0,"45":1145.0,"46":1450.0,"47":1450.0,"48":1450.0,"49":1450.0,"50":1450.0,"51":1640.0,"52":1640.0,"53":1640.0,"54":1640.0,"55":1640.0,"56":3045.0,"57":3045.0,"58":3045.0,"59":3045.0,"60":3045.0,"61":3795.0,"62":3795.0,"63":3795.0,"64":3795.0,"65":3795.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":11100.0,"77":11100.0,"78":11100.0,"79":11100.0,"80":11100.0,"81":13890.0,"82":13890.0,"83":13890.0,"84":13890.0,"85":13890.0,"86":16205.2,"87":17015.9,"88":17870.6,"89":18760.5,"90":19699.9,"91":20683.3,"92":21720.6,"93":22804.1,"94":23944.8,"95":25140.5,"96":26398.9,"97":27717.8,"98":29103.8,"99":30558.0}},"3+":{"Co-Nil":{"0":430.0,"1":430.0,"2":430.0,"3":430.0,"4":430.0,"5":430.0,"6":430.0,"7":430.0,"8":430.0,"9":430.0,"10":430.0,"11":430.0,"12":430.0,"13":430.0,"14":430.0,"15":430.0,"16":430.0,"17":430.0,"18":650.0,"19":650.0,"20":650.0,"21":650.0,"22":650.0,"23":650.0,"24":650.0,"25":880.0,"26":880.0,"27":880.0,"28":880.0,"29":880.0,"30":880.0,"31":920.0,"32":920.0,"33":920.0,"34":920.0,"35":920.0,"36":975.0,"37":975.0,"38":975.0,"39":975.0,"40":975.0,"41":1030.0,"42":1030.0,"43":1030.0,"44":1030.0,"45":1030.0,"46":1305.0,"47":1305.0,"48":1305.0,"49":1305.0,"50":1305.0,"51":1475.0,"52":1475.0,"53":1475.0,"54":1475.0,"55":1475.0,"56":2730.0,"57":2730.0,"58":2730.0,"59":2730.0,"60":2730.0,"61":3400.0,"62":3400.0,"63":3400.0,"64":3400.0,"65":3400.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":11100.0,"77":11100.0,"78":11100.0,"79":11100.0,"80":11100.0,"81":13890.0,"82":13890.0,"83":13890.0,"84":13890.0,"85":13890.0,"86":16205.2,"87":17015.9,"88":17870.6,"89":18760.5,"90":19699.9,"91":20683.3,"92":21720.6,"93":22804.1,"94":23944.8,"95":25140.5,"96":26398.9,"97":27717.8,"98":29103.8,"99":30558.0}}},"B Smart":{"1&2":{"Co-Nil":{"0":345.0,"1":345.0,"2":345.0,"3":345.0,"4":345.0,"5":345.0,"6":345.0,"7":345.0,"8":345.0,"9":345.0,"10":345.0,"11":345.0,"12":345.0,"13":345.0,"14":345.0,"15":345.0,"16":345.0,"17":345.0,"18":535.0,"19":535.0,"20":535.0,"21":535.0,"22":535.0,"23":535.0,"24":535.0,"25":725.0,"26":725.0,"27":725.0,"28":725.0,"29":725.0,"30":725.0,"31":760.0,"32":760.0,"33":760.0,"34":760.0,"35":760.0,"36":795.0,"37":795.0,"38":795.0,"39":795.0,"40":795.0,"41":840.0,"42":840.0,"43":840.0,"44":840.0,"45":840.0,"46":1105.0,"47":1105.0,"48":1105.0,"49":1105.0,"50":1105.0,"51":1215.0,"52":1215.0,"53":1215.0,"54":1215.0,"55":1215.0,"56":2260.0,"57":2260.0,"58":2260.0,"59":2260.0,"60":2260.0,"61":2815.0,"62":2815.0,"63":2815.0,"64":2815.0,"65":2815.0,"66":4490.0,"67":4490.0,"68":4490.0,"69":4490.0,"70":4490.0,"71":5975.0,"72":5975.0,"73":5975.0,"74":5975.0,"75":5975.0,"76":7180.0,"77":7180.0,"78":7180.0,"79":7180.0,"80":7180.0,"81":9470.0,"82":9470.0,"83":9470.0,"84":9470.0,"85":9470.0,"86":10718.4,"87":11251.9,"88":11816.2,"89":12408.0,"90":13027.3,"91":13677.4,"92":14362.7,"93":15081.0,"94":15832.3,"95":16624.3,"96":17454.8,"97":18327.1,"98":19245.6,"99":20207.0}},"3+":{"Co-Nil":{"0":345.0,"1":345.0,"2":345.0,"3":345.0,"4":345.0,"5":345.0,"6":345.0,"7":345.0,"8":345.0,"9":345.0,"10":345.0,"11":345.0,"12":345.0,"13":345.0,"14":345.0,"15":345.0,"16":345.0,"17":345.0,"18":485.0,"19":485.0,"20":485.0,"21":485.0,"22":485.0,"23":485.0,"24":485.0,"25":655.0,"26":655.0,"27":655.0,"28":655.0,"29":655.0,"30":655.0,"31":680.0,"32":680.0,"33":680.0,"34":680.0,"35":680.0,"36":715.0,"37":715.0,"38":715.0,"39":715.0,"40":715.0,"41":755.0,"42":755.0,"43":755.0,"44":755.0,"45":755.0,"46":990.0,"47":990.0,"48":990.0,"49":990.0,"50":990.0,"51":1090.0,"52":1090.0,"53":1090.0,"54":1090.0,"55":1090.0,"56":1980.0,"57":1980.0,"58":1980.0,"59":1980.0,"60":1980.0,"61":2465.0,"62":2465.0,"63":2465.0,"64":2465.0,"65":2465.0,"66":4490.0,"67":4490.0,"68":4490.0,"69":4490.0,"70":4490.0,"71":5975.0,"72":5975.0,"73":5975.0,"74":5975.0,"75":5975.0,"76":7180.0,"77":7180.0,"78":7180.0,"79":7180.0,"80":7180.0,"81":9470.0,"82":9470.0,"83":9470.0,"84":9470.0,"85":9470.0,"86":10718.4,"87":11251.9,"88":11816.2,"89":12408.0,"90":13027.3,"91":13677.4,"92":14362.7,"93":15081.0,"94":15832.3,"95":16624.3,"96":17454.8,"97":18327.1,"98":19245.6,"99":20207.0}}},"SP Smart":{"1&2":{"Co-Nil":{"0":240.0,"1":240.0,"2":240.0,"3":240.0,"4":240.0,"5":240.0,"6":240.0,"7":240.0,"8":240.0,"9":240.0,"10":240.0,"11":240.0,"12":240.0,"13":240.0,"14":240.0,"15":240.0,"16":240.0,"17":240.0,"18":380.0,"19":380.0,"20":380.0,"21":380.0,"22":380.0,"23":380.0,"24":380.0,"25":520.0,"26":520.0,"27":520.0,"28":520.0,"29":520.0,"30":520.0,"31":545.0,"32":545.0,"33":545.0,"34":545.0,"35":545.0,"36":575.0,"37":575.0,"38":575.0,"39":575.0,"40":575.0,"41":610.0,"42":610.0,"43":610.0,"44":610.0,"45":610.0,"46":770.0,"47":770.0,"48":770.0,"49":770.0,"50":770.0,"51":915.0,"52":915.0,"53":915.0,"54":915.0,"55":915.0,"56":1695.0,"57":1695.0,"58":1695.0,"59":1695.0,"60":1695.0,"61":1970.0,"62":1970.0,"63":1970.0,"64":1970.0,"65":1970.0,"66":2535.0,"67":2535.0,"68":2535.0,"69":2535.0,"70":2535.0,"71":3510.0,"72":3510.0,"73":3510.0,"74":3510.0,"75":3510.0,"76":4450.0,"77":4450.0,"78":4450.0,"79":4450.0,"80":4450.0,"81":7115.0,"82":7115.0,"83":7115.0,"84":7115.0,"85":7115.0,"86":7470.75,"87":7844.2875,"88":8236.501875,"89":8648.32696875,"90":9080.7433171875,"91":9534.780483046876,"92":10011.51950719922,"93":10512.095482559182,"94":11037.700256687142,"95":11589.585269521498,"96":12169.064532997572,"97":12777.517759647451,"98":13416.393647629824,"99":14087.213330011315}},"3+":{"Co-Nil":{"0":240.0,"1":240.0,"2":240.0,"3":240.0,"4":240.0,"5":240.0,"6":240.0,"7":240.0,"8":240.0,"9":240.0,"10":240.0,"11":240.0,"12":240.0,"13":240.0,"14":240.0,"15":240.0,"16":240.0,"17":240.0,"18":345.0,"19":345.0,"20":345.0,"21":345.0,"22":345.0,"23":345.0,"24":345.0,"25":460.0,"26":460.0,"27":460.0,"28":460.0,"29":460.0,"30":460.0,"31":475.0,"32":475.0,"33":475.0,"34":475.0,"35":475.0,"36":505.0,"37":505.0,"38":505.0,"39":505.0,"40":505.0,"41":535.0,"42":535.0,"43":535.0,"44":535.0,"45":535.0,"46":675.0,"47":675.0,"48":675.0,"49":675.0,"50":675.0,"51":800.0,"52":800.0,"53":800.0,"54":800.0,"55":800.0,"56":1485.0,"57":1485.0,"58":1485.0,"59":1485.0,"60":1485.0,"61":1725.0,"62":1725.0,"63":1725.0,"64":1725.0,"65":1725.0,"66":2535.0,"67":2535.0,"68":2535.0,"69":2535.0,"70":2535.0,"71":3510.0,"72":3510.0,"73":3510.0,"74":3510.0,"75":3510.0,"76":4450.0,"77":4450.0,"78":4450.0,"79":4450.0,"80":4450.0,"81":7115.0,"82":7115.0,"83":7115.0,"84":7115.0,"85":7115.0,"86":7470.75,"87":7844.2875,"88":8236.501875,"89":8648.32696875,"90":9080.7433171875,"91":9534.780483046876,"92":10011.51950719922,"93":10512.095482559182,"94":11037.700256687142,"95":11589.585269521498,"96":12169.064532997572,"97":12777.517759647451,"98":13416.393647629824,"99":14087.213330011315}}},"SP Essential":{"1&2":{"Co-Nil":{"0":200.0,"1":200.0,"2":200.0,"3":200.0,"4":200.0,"5":200.0,"6":200.0,"7":200.0,"8":200.0,"9":200.0,"10":200.0,"11":200.0,"12":200.0,"13":200.0,"14":200.0,"15":200.0,"16":200.0,"17":200.0,"18":315.0,"19":315.0,"20":315.0,"21":315.0,"22":315.0,"23":315.0,"24":315.0,"25":430.0,"26":430.0,"27":430.0,"28":430.0,"29":430.0,"30":430.0,"31":450.0,"32":450.0,"33":450.0,"34":450.0,"35":450.0,"36":475.0,"37":475.0,"38":475.0,"39":475.0,"40":475.0,"41":500.0,"42":500.0,"43":500.0,"44":500.0,"45":500.0,"46":635.0,"47":635.0,"48":635.0,"49":635.0,"50":635.0,"51":750.0,"52":750.0,"53":750.0,"54":750.0,"55":750.0,"56":1390.0,"57":1390.0,"58":1390.0,"59":1390.0,"60":1390.0,"61":1620.0,"62":1620.0,"63":1620.0,"64":1620.0,"65":1620.0,"66":2080.0,"67":2080.0,"68":2080.0,"69":2080.0,"70":2080.0,"71":2880.0,"72":2880.0,"73":2880.0,"74":2880.0,"75":2880.0,"76":3650.0,"77":3650.0,"78":3650.0,"79":3650.0,"80":3650.0,"81":5835.0,"82":5835.0,"83":5835.0,"84":5835.0,"85":5835.0,"86":6130.0,"87":6435.0,"88":6755.0,"89":7095.0,"90":7450.0,"91":7820.0,"92":8210.0,"93":8620.0,"94":9055.0,"95":9505.0,"96":9980.0,"97":10480.0,"98":11005.0,"99":11555.0}},"3+":{"Co-Nil":{"0":200.0,"1":200.0,"2":200.0,"3":200.0,"4":200.0,"5":200.0,"6":200.0,"7":200.0,"8":200.0,"9":200.0,"10":200.0,"11":200.0,"12":200.0,"13":200.0,"14":200.0,"15":200.0,"16":200.0,"17":200.0,"18":285.0,"19":285.0,"20":285.0,"21":285.0,"22":285.0,"23":285.0,"24":285.0,"25":380.0,"26":380.0,"27":380.0,"28":380.0,"29":380.0,"30":380.0,"31":390.0,"32":390.0,"33":390.0,"34":390.0,"35":390.0,"36":415.0,"37":415.0,"38":415.0,"39":415.0,"40":415.0,"41":440.0,"42":440.0,"43":440.0,"44":440.0,"45":440.0,"46":555.0,"47":555.0,"48":555.0,"49":555.0,"50":555.0,"51":660.0,"52":660.0,"53":660.0,"54":660.0,"55":660.0,"56":1220.0,"57":1220.0,"58":1220.0,"59":1220.0,"60":1220.0,"61":1415.0,"62":1415.0,"63":1415.0,"64":1415.0,"65":1415.0,"66":2080.0,"67":2080.0,"68":2080.0,"69":2080.0,"70":2080.0,"71":2880.0,"72":2880.0,"73":2880.0,"74":2880.0,"75":2880.0,"76":3650.0,"77":3650.0,"78":3650.0,"79":3650.0,"80":3650.0,"81":5835.0,"82":5835.0,"83":5835.0,"84":5835.0,"85":5835.0,"86":6130.0,"87":6435.0,"88":6755.0,"89":7095.0,"90":7450.0,"91":7820.0,"92":8210.0,"93":8620.0,"94":9055.0,"95":9505.0,"96":9980.0,"97":10480.0,"98":11005.0,"99":11555.0}}}},"ambulatory":{"AMB Prime 85%":{"0":130.0,"1":130.0,"2":130.0,"3":130.0,"4":130.0,"5":130.0,"6":130.0,"7":130.0,"8":130.0,"9":130.0,"10":130.0,"11":130.0,"12":130.0,"13":130.0,"14":130.0,"15":130.0,"16":130.0,"17":130.0,"18":265.0,"19":265.0,"20":265.0,"21":265.0,"22":265.0,"23":265.0,"24":265.0,"25":315.0,"26":315.0,"27":315.0,"28":315.0,"29":315.0,"30":315.0,"31":315.0,"32":315.0,"33":315.0,"34":315.0,"35":315.0,"36":370.0,"37":370.0,"38":370.0,"39":370.0,"40":370.0,"41":455.0,"42":455.0,"43":455.0,"44":455.0,"45":455.0,"46":500.0,"47":500.0,"48":500.0,"49":500.0,"50":500.0,"51":570.0,"52":570.0,"53":570.0,"54":570.0,"55":570.0,"56":700.0,"57":700.0,"58":700.0,"59":700.0,"60":700.0,"61":700.0,"62":700.0,"63":700.0,"64":700.0,"65":700.0,"66":880.0,"67":880.0,"68":880.0,"69":880.0,"70":880.0,"71":1250.0,"72":1250.0,"73":1250.0,"74":1250.0,"75":1250.0,"76":1250.0,"77":1250.0,"78":1250.0,"79":1250.0,"80":1250.0,"81":1250.0,"82":1250.0,"83":1250.0,"84":1250.0,"85":1250.0,"86":1250.0,"87":1250.0,"88":1250.0,"89":1250.0,"90":1250.0,"91":1250.0,"92":1250.0,"93":1250.0,"94":1250.0,"95":1250.0,"96":1250.0,"97":1250.0,"98":1250.0,"99":1250.0},"AMB Smart Plus 85%":{"0":130.0,"1":130.0,"2":130.0,"3":130.0,"4":130.0,"5":130.0,"6":130.0,"7":130.0,"8":130.0,"9":130.0,"10":130.0,"11":130.0,"12":130.0,"13":130.0,"14":130.0,"15":130.0,"16":130.0,"17":130.0,"18":265.0,"19":265.0,"20":265.0,"21":265.0,"22":265.0,"23":265.0,"24":265.0,"25":315.0,"26":315.0,"27":315.0,"28":315.0,"29":315.0,"30":315.0,"31":315.0,"32":315.0,"33":315.0,"34":315.0,"35":315.0,"36":370.0,"37":370.0,"38":370.0,"39":370.0,"40":370.0,"41":455.0,"42":455.0,"43":455.0,"44":455.0,"45":455.0,"46":500.0,"47":500.0,"48":500.0,"49":500.0,"50":500.0,"51":570.0,"52":570.0,"53":570.0,"54":570.0,"55":570.0,"56":700.0,"57":700.0,"58":700.0,"59":700.0,"60":700.0,"61":700.0,"62":700.0,"63":700.0,"64":700.0,"65":700.0,"66":880.0,"67":880.0,"68":880.0,"69":880.0,"70":880.0,"71":1250.0,"72":1250.0,"73":1250.0,"74":1250.0,"75":1250.0,"76":1250.0,"77":1250.0,"78":1250.0,"79":1250.0,"80":1250.0,"81":1250.0,"82":1250.0,"83":1250.0,"84":1250.0,"85":1250.0,"86":1250.0,"87":1250.0,"88":1250.0,"89":1250.0,"90":1250.0,"91":1250.0,"92":1250.0,"93":1250.0,"94":1250.0,"95":1250.0,"96":1250.0,"97":1250.0,"98":1250.0,"99":1250.0},"AMB Smart 85%":{"0":95.0,"1":95.0,"2":95.0,"3":95.0,"4":95.0,"5":95.0,"6":95.0,"7":95.0,"8":95.0,"9":95.0,"10":95.0,"11":95.0,"12":95.0,"13":95.0,"14":95.0,"15":95.0,"16":95.0,"17":95.0,"18":195.0,"19":195.0,"20":195.0,"21":195.0,"22":195.0,"23":195.0,"24":195.0,"25":240.0,"26":240.0,"27":240.0,"28":240.0,"29":240.0,"30":240.0,"31":240.0,"32":240.0,"33":240.0,"34":240.0,"35":240.0,"36":265.0,"37":265.0,"38":265.0,"39":265.0,"40":265.0,"41":300.0,"42":300.0,"43":300.0,"44":300.0,"45":300.0,"46":330.0,"47":330.0,"48":330.0,"49":330.0,"50":330.0,"51":375.0,"52":375.0,"53":375.0,"54":375.0,"55":375.0,"56":455.0,"57":455.0,"58":455.0,"59":455.0,"60":455.0,"61":455.0,"62":455.0,"63":455.0,"64":455.0,"65":455.0,"66":575.0,"67":575.0,"68":575.0,"69":575.0,"70":575.0,"71":815.0,"72":815.0,"73":815.0,"74":815.0,"75":815.0,"76":815.0,"77":815.0,"78":815.0,"79":815.0,"80":815.0,"81":815.0,"82":815.0,"83":815.0,"84":815.0,"85":815.0,"86":815.0,"87":815.0,"88":815.0,"89":815.0,"90":815.0,"91":815.0,"92":815.0,"93":815.0,"94":815.0,"95":815.0,"96":815.0,"97":815.0,"98":815.0,"99":815.0},"AMB Prime 100%":{"0":175.0,"1":175.0,"2":175.0,"3":175.0,"4":175.0,"5":175.0,"6":175.0,"7":175.0,"8":175.0,"9":175.0,"10":175.0,"11":175.0,"12":175.0,"13":175.0,"14":175.0,"15":175.0,"16":175.0,"17":175.0,"18":370.0,"19":370.0,"20":370.0,"21":370.0,"22":370.0,"23":370.0,"24":370.0,"25":450.0,"26":450.0,"27":450.0,"28":450.0,"29":450.0,"30":450.0,"31":450.0,"32":450.0,"33":450.0,"34":450.0,"35":450.0,"36":500.0,"37":500.0,"38":500.0,"39":500.0,"40":500.0,"41":620.0,"42":620.0,"43":620.0,"44":620.0,"45":620.0,"46":675.0,"47":675.0,"48":675.0,"49":675.0,"50":675.0,"51":770.0,"52":770.0,"53":770.0,"54":770.0,"55":770.0,"56":945.0000000000001,"57":945.0000000000001,"58":945.0000000000001,"59":945.0000000000001,"60":945.0000000000001,"61":945.0,"62":945.0,"63":945.0,"64":945.0,"65":945.0,"66":1200.0,"67":1200.0,"68":1200.0,"69":1200.0,"70":1200.0,"71":1700.0,"72":1700.0,"73":1700.0,"74":1700.0,"75":1700.0,"76":1700.0,"77":1700.0,"78":1700.0,"79":1700.0,"80":1700.0,"81":1700.0,"82":1700.0,"83":1700.0,"84":1700.0,"85":1700.0,"86":1700.0,"87":1700.0,"88":1700.0,"89":1700.0,"90":1700.0,"91":1700.0,"92":1700.0,"93":1700.0,"94":1700.0,"95":1700.0,"96":1700.0,"97":1700.0,"98":1700.0,"99":1700.0},"AMB Smart Plus 100%":{"0":175.0,"1":175.0,"2":175.0,"3":175.0,"4":175.0,"5":175.0,"6":175.0,"7":175.0,"8":175.0,"9":175.0,"10":175.0,"11":175.0,"12":175.0,"13":175.0,"14":175.0,"15":175.0,"16":175.0,"17":175.0,"18":370.0,"19":370.0,"20":370.0,"21":370.0,"22":370.0,"23":370.0,"24":370.0,"25":450.0,"26":450.0,"27":450.0,"28":450.0,"29":450.0,"30":450.0,"31":450.0,"32":450.0,"33":450.0,"34":450.0,"35":450.0,"36":500.0,"37":500.0,"38":500.0,"39":500.0,"40":500.0,"41":620.0,"42":620.0,"43":620.0,"44":620.0,"45":620.0,"46":675.0,"47":675.0,"48":675.0,"49":675.0,"50":675.0,"51":770.0,"52":770.0,"53":770.0,"54":770.0,"55":770.0,"56":945.0000000000001,"57":945.0000000000001,"58":945.0000000000001,"59":945.0000000000001,"60":945.0000000000001,"61":945.0,"62":945.0,"63":945.0,"64":945.0,"65":945.0,"66":1200.0,"67":1200.0,"68":1200.0,"69":1200.0,"70":1200.0,"71":1700.0,"72":1700.0,"73":1700.0,"74":1700.0,"75":1700.0,"76":1700.0,"77":1700.0,"78":1700.0,"79":1700.0,"80":1700.0,"81":1700.0,"82":1700.0,"83":1700.0,"84":1700.0,"85":1700.0,"86":1700.0,"87":1700.0,"88":1700.0,"89":1700.0,"90":1700.0,"91":1700.0,"92":1700.0,"93":1700.0,"94":1700.0,"95":1700.0,"96":1700.0,"97":1700.0,"98":1700.0,"99":1700.0},"AMB Smart 100%":{"0":145.0,"1":145.0,"2":145.0,"3":145.0,"4":145.0,"5":145.0,"6":145.0,"7":145.0,"8":145.0,"9":145.0,"10":145.0,"11":145.0,"12":145.0,"13":145.0,"14":145.0,"15":145.0,"16":145.0,"17":145.0,"18":295.0,"19":295.0,"20":295.0,"21":295.0,"22":295.0,"23":295.0,"24":295.0,"25":360.0,"26":360.0,"27":360.0,"28":360.0,"29":360.0,"30":360.0,"31":360.0,"32":360.0,"33":360.0,"34":360.0,"35":360.0,"36":400.0,"37":400.0,"38":400.0,"39":400.0,"40":400.0,"41":405.0,"42":405.0,"43":405.0,"44":405.0,"45":405.0,"46":465.0,"47":465.0,"48":465.0,"49":465.0,"50":465.0,"51":505.0,"52":505.0,"53":505.0,"54":505.0,"55":505.0,"56":615.0,"57":615.0,"58":615.0,"59":615.0,"60":615.0,"61":640.0,"62":640.0,"63":640.0,"64":640.0,"65":640.0,"66":780.0,"67":780.0,"68":780.0,"69":780.0,"70":780.0,"71":1105.0,"72":1105.0,"73":1105.0,"74":1105.0,"75":1105.0,"76":1105.0,"77":1105.0,"78":1105.0,"79":1105.0,"80":1105.0,"81":1105.0,"82":1105.0,"83":1105.0,"84":1105.0,"85":1105.0,"86":1105.0,"87":1105.0,"88":1105.0,"89":1105.0,"90":1105.0,"91":1105.0,"92":1105.0,"93":1105.0,"94":1105.0,"95":1105.0,"96":1105.0,"97":1105.0,"98":1105.0,"99":1105.0},"AMB Essential 85%":{"0":80.0,"1":80.0,"2":80.0,"3":80.0,"4":80.0,"5":80.0,"6":80.0,"7":80.0,"8":80.0,"9":80.0,"10":80.0,"11":80.0,"12":80.0,"13":80.0,"14":80.0,"15":80.0,"16":80.0,"17":80.0,"18":160.0,"19":160.0,"20":160.0,"21":160.0,"22":160.0,"23":160.0,"24":160.0,"25":200.0,"26":200.0,"27":200.0,"28":200.0,"29":200.0,"30":200.0,"31":200.0,"32":200.0,"33":200.0,"34":200.0,"35":200.0,"36":220.0,"37":220.0,"38":220.0,"39":220.0,"40":220.0,"41":250.0,"42":250.0,"43":250.0,"44":250.0,"45":250.0,"46":275.0,"47":275.0,"48":275.0,"49":275.0,"50":275.0,"51":310.0,"52":310.0,"53":310.0,"54":310.0,"55":310.0,"56":375.0,"57":375.0,"58":375.0,"59":375.0,"60":375.0,"61":375.0,"62":375.0,"63":375.0,"64":375.0,"65":375.0,"66":475.0,"67":475.0,"68":475.0,"69":475.0,"70":475.0,"71":670.0,"72":670.0,"73":670.0,"74":670.0,"75":670.0,"76":670.0,"77":670.0,"78":670.0,"79":670.0,"80":670.0,"81":670.0,"82":670.0,"83":670.0,"84":670.0,"85":670.0,"86":670.0,"87":670.0,"88":670.0,"89":670.0,"90":670.0,"91":670.0,"92":670.0,"93":670.0,"94":670.0,"95":670.0,"96":670.0,"97":670.0,"98":670.0,"99":670.0},"AMB Essential 100%":{"0":120.0,"1":120.0,"2":120.0,"3":120.0,"4":120.0,"5":120.0,"6":120.0,"7":120.0,"8":120.0,"9":120.0,"10":120.0,"11":120.0,"12":120.0,"13":120.0,"14":120.0,"15":120.0,"16":120.0,"17":120.0,"18":245.0,"19":245.0,"20":245.0,"21":245.0,"22":245.0,"23":245.0,"24":245.0,"25":295.0,"26":295.0,"27":295.0,"28":295.0,"29":295.0,"30":295.0,"31":295.0,"32":295.0,"33":295.0,"34":295.0,"35":295.0,"36":330.0,"37":330.0,"38":330.0,"39":330.0,"40":330.0,"41":335.0,"42":335.0,"43":335.0,"44":335.0,"45":335.0,"46":385.0,"47":385.0,"48":385.0,"49":385.0,"50":385.0,"51":415.0,"52":415.0,"53":415.0,"54":415.0,"55":415.0,"56":505.0,"57":505.0,"58":505.0,"59":505.0,"60":505.0,"61":525.0,"62":525.0,"63":525.0,"64":525.0,"65":525.0,"66":640.0,"67":640.0,"68":640.0,"69":640.0,"70":640.0,"71":910.0,"72":910.0,"73":910.0,"74":910.0,"75":910.0,"76":910.0,"77":910.0,"78":910.0,"79":910.0,"80":910.0,"81":910.0,"82":910.0,"83":910.0,"84":910.0,"85":910.0,"86":910.0,"87":910.0,"88":910.0,"89":910.0,"90":910.0,"91":910.0,"92":910.0,"93":910.0,"94":910.0,"95":910.0,"96":910.0,"97":910.0,"98":910.0,"99":910.0}},"costOfPolicy":30.0},"renewal":{"inpatient":{"A Prime":{"1&2":{"Co-Nil":{"0":650.0,"1":650.0,"2":650.0,"3":650.0,"4":650.0,"5":650.0,"6":650.0,"7":650.0,"8":650.0,"9":650.0,"10":650.0,"11":650.0,"12":650.0,"13":650.0,"14":650.0,"15":650.0,"16":650.0,"17":650.0,"18":1030.0,"19":1030.0,"20":1030.0,"21":1030.0,"22":1030.0,"23":1030.0,"24":1030.0,"25":1405.0,"26":1405.0,"27":1405.0,"28":1405.0,"29":1405.0,"30":1405.0,"31":1470.0,"32":1470.0,"33":1470.0,"34":1470.0,"35":1470.0,"36":1550.0,"37":1550.0,"38":1550.0,"39":1550.0,"40":1550.0,"41":1645.0,"42":1645.0,"43":1645.0,"44":1645.0,"45":1645.0,"46":2080.0,"47":2080.0,"48":2080.0,"49":2080.0,"50":2080.0,"51":2465.0,"52":2465.0,"53":2465.0,"54":2465.0,"55":2465.0,"56":4015.0,"57":4015.0,"58":4015.0,"59":4015.0,"60":4015.0,"61":5005.0,"62":5005.0,"63":5005.0,"64":5005.0,"65":5005.0,"66":7980.0,"67":7980.0,"68":7980.0,"69":7980.0,"70":7980.0,"71":10615.0,"72":10615.0,"73":10615.0,"74":10615.0,"75":10615.0,"76":13400.0,"77":13400.0,"78":13400.0,"79":13400.0,"80":13400.0,"81":16835.0,"82":16835.0,"83":16835.0,"84":16835.0,"85":16835.0,"86":19445.8,"87":20420.4,"88":21440.1,"89":22512.6,"90":23637.9,"91":24822.6,"92":26061.2,"93":27364.7,"94":28734.2,"95":30167.5,"96":31678.9,"97":33261.8,"98":34923.9,"99":36670.7}},"3+":{"Co-Nil":{"0":650.0,"1":650.0,"2":650.0,"3":650.0,"4":650.0,"5":650.0,"6":650.0,"7":650.0,"8":650.0,"9":650.0,"10":650.0,"11":650.0,"12":650.0,"13":650.0,"14":650.0,"15":650.0,"16":650.0,"17":650.0,"18":900.0,"19":900.0,"20":900.0,"21":900.0,"22":900.0,"23":900.0,"24":900.0,"25":1230.0,"26":1230.0,"27":1230.0,"28":1230.0,"29":1230.0,"30":1230.0,"31":1290.0,"32":1290.0,"33":1290.0,"34":1290.0,"35":1290.0,"36":1360.0,"37":1360.0,"38":1360.0,"39":1360.0,"40":1360.0,"41":1440.0,"42":1440.0,"43":1440.0,"44":1440.0,"45":1440.0,"46":1820.0,"47":1820.0,"48":1820.0,"49":1820.0,"50":1820.0,"51":2160.0,"52":2160.0,"53":2160.0,"54":2160.0,"55":2160.0,"56":3515.0,"57":3515.0,"58":3515.0,"59":3515.0,"60":3515.0,"61":4380.0,"62":4380.0,"63":4380.0,"64":4380.0,"65":4380.0,"66":7980.0,"67":7980.0,"68":7980.0,"69":7980.0,"70":7980.0,"71":10615.0,"72":10615.0,"73":10615.0,"74":10615.0,"75":10615.0,"76":13400.0,"77":13400.0,"78":13400.0,"79":13400.0,"80":13400.0,"81":16835.0,"82":16835.0,"83":16835.0,"84":16835.0,"85":16835.0,"86":19445.8,"87":20420.4,"88":21440.1,"89":22512.6,"90":23637.9,"91":24822.6,"92":26061.2,"93":27364.7,"94":28734.2,"95":30167.5,"96":31678.9,"97":33261.8,"98":34923.9,"99":36670.7}}},"A Smart Plus":{"1&2":{"Co-Nil":{"0":585.0,"1":585.0,"2":585.0,"3":585.0,"4":585.0,"5":585.0,"6":585.0,"7":585.0,"8":585.0,"9":585.0,"10":585.0,"11":585.0,"12":585.0,"13":585.0,"14":585.0,"15":585.0,"16":585.0,"17":585.0,"18":930.0,"19":930.0,"20":930.0,"21":930.0,"22":930.0,"23":930.0,"24":930.0,"25":1265.0,"26":1265.0,"27":1265.0,"28":1265.0,"29":1265.0,"30":1265.0,"31":1325.0,"32":1325.0,"33":1325.0,"34":1325.0,"35":1325.0,"36":1395.0,"37":1395.0,"38":1395.0,"39":1395.0,"40":1395.0,"41":1485.0,"42":1485.0,"43":1485.0,"44":1485.0,"45":1485.0,"46":1875.0,"47":1875.0,"48":1875.0,"49":1875.0,"50":1875.0,"51":2220.0,"52":2220.0,"53":2220.0,"54":2220.0,"55":2220.0,"56":3615.0,"57":3615.0,"58":3615.0,"59":3615.0,"60":3615.0,"61":4505.0,"62":4505.0,"63":4505.0,"64":4505.0,"65":4505.0,"66":7185.0,"67":7185.0,"68":7185.0,"69":7185.0,"70":7185.0,"71":9555.0,"72":9555.0,"73":9555.0,"74":9555.0,"75":9555.0,"76":12060.0,"77":12060.0,"78":12060.0,"79":12060.0,"80":12060.0,"81":15155.0,"82":15155.0,"83":15155.0,"84":15155.0,"85":15155.0,"86":17501.22,"87":18378.36,"88":19296.09,"89":20261.34,"90":21274.11,"91":22340.34,"92":23455.08,"93":24628.23,"94":25860.780000000002,"95":27150.75,"96":28511.010000000002,"97":29935.620000000003,"98":31431.510000000002,"99":33003.63}},"3+":{"Co-Nil":{"0":585.0,"1":585.0,"2":585.0,"3":585.0,"4":585.0,"5":585.0,"6":585.0,"7":585.0,"8":585.0,"9":585.0,"10":585.0,"11":585.0,"12":585.0,"13":585.0,"14":585.0,"15":585.0,"16":585.0,"17":585.0,"18":810.0,"19":810.0,"20":810.0,"21":810.0,"22":810.0,"23":810.0,"24":810.0,"25":1110.0,"26":1110.0,"27":1110.0,"28":1110.0,"29":1110.0,"30":1110.0,"31":1165.0,"32":1165.0,"33":1165.0,"34":1165.0,"35":1165.0,"36":1225.0,"37":1225.0,"38":1225.0,"39":1225.0,"40":1225.0,"41":1300.0,"42":1300.0,"43":1300.0,"44":1300.0,"45":1300.0,"46":1640.0,"47":1640.0,"48":1640.0,"49":1640.0,"50":1640.0,"51":1945.0,"52":1945.0,"53":1945.0,"54":1945.0,"55":1945.0,"56":3165.0,"57":3165.0,"58":3165.0,"59":3165.0,"60":3165.0,"61":3945.0,"62":3945.0,"63":3945.0,"64":3945.0,"65":3945.0,"66":7185.0,"67":7185.0,"68":7185.0,"69":7185.0,"70":7185.0,"71":9555.0,"72":9555.0,"73":9555.0,"74":9555.0,"75":9555.0,"76":12060.0,"77":12060.0,"78":12060.0,"79":12060.0,"80":12060.0,"81":15155.0,"82":15155.0,"83":15155.0,"84":15155.0,"85":15155.0,"86":17501.22,"87":18378.36,"88":19296.09,"89":20261.34,"90":21274.11,"91":22340.34,"92":23455.08,"93":24628.23,"94":25860.780000000002,"95":27150.75,"96":28511.010000000002,"97":29935.620000000003,"98":31431.510000000002,"99":33003.63}}},"B Prime":{"1&2":{"Co-Nil":{"0":490.0,"1":490.0,"2":490.0,"3":490.0,"4":490.0,"5":490.0,"6":490.0,"7":490.0,"8":490.0,"9":490.0,"10":490.0,"11":490.0,"12":490.0,"13":490.0,"14":490.0,"15":490.0,"16":490.0,"17":490.0,"18":775.0,"19":775.0,"20":775.0,"21":775.0,"22":775.0,"23":775.0,"24":775.0,"25":1055.0,"26":1055.0,"27":1055.0,"28":1055.0,"29":1055.0,"30":1055.0,"31":1105.0,"32":1105.0,"33":1105.0,"34":1105.0,"35":1105.0,"36":1165.0,"37":1165.0,"38":1165.0,"39":1165.0,"40":1165.0,"41":1235.0,"42":1235.0,"43":1235.0,"44":1235.0,"45":1235.0,"46":1560.0,"47":1560.0,"48":1560.0,"49":1560.0,"50":1560.0,"51":1850.0,"52":1850.0,"53":1850.0,"54":1850.0,"55":1850.0,"56":3010.0,"57":3010.0,"58":3010.0,"59":3010.0,"60":3010.0,"61":3755.0,"62":3755.0,"63":3755.0,"64":3755.0,"65":3755.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":9570.0,"77":9570.0,"78":9570.0,"79":9570.0,"80":9570.0,"81":12630.0,"82":12630.0,"83":12630.0,"84":12630.0,"85":12630.0,"86":12860.1,"87":13504.7,"88":14177.9,"89":14887.4,"90":15629.9,"91":16413.1,"92":17234.8,"93":18093.9,"94":19001.4,"95":19950.7,"96":20947.3,"97":21994.5,"98":23092.3,"99":24248.4}},"3+":{"Co-Nil":{"0":490.0,"1":490.0,"2":490.0,"3":490.0,"4":490.0,"5":490.0,"6":490.0,"7":490.0,"8":490.0,"9":490.0,"10":490.0,"11":490.0,"12":490.0,"13":490.0,"14":490.0,"15":490.0,"16":490.0,"17":490.0,"18":675.0,"19":675.0,"20":675.0,"21":675.0,"22":675.0,"23":675.0,"24":675.0,"25":925.0,"26":925.0,"27":925.0,"28":925.0,"29":925.0,"30":925.0,"31":965.0,"32":965.0,"33":965.0,"34":965.0,"35":965.0,"36":1020.0,"37":1020.0,"38":1020.0,"39":1020.0,"40":1020.0,"41":1080.0,"42":1080.0,"43":1080.0,"44":1080.0,"45":1080.0,"46":1365.0,"47":1365.0,"48":1365.0,"49":1365.0,"50":1365.0,"51":1620.0,"52":1620.0,"53":1620.0,"54":1620.0,"55":1620.0,"56":2635.0,"57":2635.0,"58":2635.0,"59":2635.0,"60":2635.0,"61":3290.0,"62":3290.0,"63":3290.0,"64":3290.0,"65":3290.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":9570.0,"77":9570.0,"78":9570.0,"79":9570.0,"80":9570.0,"81":12630.0,"82":12630.0,"83":12630.0,"84":12630.0,"85":12630.0,"86":12860.1,"87":13504.7,"88":14177.9,"89":14887.4,"90":15629.9,"91":16413.1,"92":17234.8,"93":18093.9,"94":19001.4,"95":19950.7,"96":20947.3,"97":21994.5,"98":23092.3,"99":24248.4}}},"B Smart Plus":{"1&2":{"Co-Nil":{"0":445.0,"1":445.0,"2":445.0,"3":445.0,"4":445.0,"5":445.0,"6":445.0,"7":445.0,"8":445.0,"9":445.0,"10":445.0,"11":445.0,"12":445.0,"13":445.0,"14":445.0,"15":445.0,"16":445.0,"17":445.0,"18":700.0,"19":700.0,"20":700.0,"21":700.0,"22":700.0,"23":700.0,"24":700.0,"25":950.0,"26":950.0,"27":950.0,"28":950.0,"29":950.0,"30":950.0,"31":995.0,"32":995.0,"33":995.0,"34":995.0,"35":995.0,"36":1050.0,"37":1050.0,"38":1050.0,"39":1050.0,"40":1050.0,"41":1115.0,"42":1115.0,"43":1115.0,"44":1115.0,"45":1115.0,"46":1405.0,"47":1405.0,"48":1405.0,"49":1405.0,"50":1405.0,"51":1665.0,"52":1665.0,"53":1665.0,"54":1665.0,"55":1665.0,"56":2710.0,"57":2710.0,"58":2710.0,"59":2710.0,"60":2710.0,"61":3380.0,"62":3380.0,"63":3380.0,"64":3380.0,"65":3380.0,"66":5390.0,"67":5390.0,"68":5390.0,"69":5390.0,"70":5390.0,"71":7170.0,"72":7170.0,"73":7170.0,"74":7170.0,"75":7170.0,"76":8615.0,"77":8615.0,"78":8615.0,"79":8615.0,"80":8615.0,"81":11370.0,"82":11370.0,"83":11370.0,"84":11370.0,"85":11370.0,"86":11574.09,"87":12154.230000000001,"88":12760.11,"89":13398.66,"90":14066.91,"91":14771.789999999999,"92":15511.32,"93":16284.510000000002,"94":17101.260000000002,"95":17955.63,"96":18852.57,"97":19795.05,"98":20783.07,"99":21823.56}},"3+":{"Co-Nil":{"0":445.0,"1":445.0,"2":445.0,"3":445.0,"4":445.0,"5":445.0,"6":445.0,"7":445.0,"8":445.0,"9":445.0,"10":445.0,"11":445.0,"12":445.0,"13":445.0,"14":445.0,"15":445.0,"16":445.0,"17":445.0,"18":610.0,"19":610.0,"20":610.0,"21":610.0,"22":610.0,"23":610.0,"24":610.0,"25":835.0,"26":835.0,"27":835.0,"28":835.0,"29":835.0,"30":835.0,"31":870.0,"32":870.0,"33":870.0,"34":870.0,"35":870.0,"36":920.0,"37":920.0,"38":920.0,"39":920.0,"40":920.0,"41":975.0,"42":975.0,"43":975.0,"44":975.0,"45":975.0,"46":1230.0,"47":1230.0,"48":1230.0,"49":1230.0,"50":1230.0,"51":1460.0,"52":1460.0,"53":1460.0,"54":1460.0,"55":1460.0,"56":2375.0,"57":2375.0,"58":2375.0,"59":2375.0,"60":2375.0,"61":2965.0,"62":2965.0,"63":2965.0,"64":2965.0,"65":2965.0,"66":5390.0,"67":5390.0,"68":5390.0,"69":5390.0,"70":5390.0,"71":7170.0,"72":7170.0,"73":7170.0,"74":7170.0,"75":7170.0,"76":8615.0,"77":8615.0,"78":8615.0,"79":8615.0,"80":8615.0,"81":11370.0,"82":11370.0,"83":11370.0,"84":11370.0,"85":11370.0,"86":11574.09,"87":12154.230000000001,"88":12760.11,"89":13398.66,"90":14066.91,"91":14771.789999999999,"92":15511.32,"93":16284.510000000002,"94":17101.260000000002,"95":17955.63,"96":18852.57,"97":19795.05,"98":20783.07,"99":21823.56}}},"SP Prime":{"1&2":{"Co-Nil":{"0":425.0,"1":425.0,"2":425.0,"3":425.0,"4":425.0,"5":425.0,"6":425.0,"7":425.0,"8":425.0,"9":425.0,"10":425.0,"11":425.0,"12":425.0,"13":425.0,"14":425.0,"15":425.0,"16":425.0,"17":425.0,"18":670.0,"19":670.0,"20":670.0,"21":670.0,"22":670.0,"23":670.0,"24":670.0,"25":915.0,"26":915.0,"27":915.0,"28":915.0,"29":915.0,"30":915.0,"31":955.0,"32":955.0,"33":955.0,"34":955.0,"35":955.0,"36":1010.0,"37":1010.0,"38":1010.0,"39":1010.0,"40":1010.0,"41":1070.0,"42":1070.0,"43":1070.0,"44":1070.0,"45":1070.0,"46":1350.0,"47":1350.0,"48":1350.0,"49":1350.0,"50":1350.0,"51":1605.0,"52":1605.0,"53":1605.0,"54":1605.0,"55":1605.0,"56":2610.0,"57":2610.0,"58":2610.0,"59":2610.0,"60":2610.0,"61":3115.0,"62":3115.0,"63":3115.0,"64":3115.0,"65":3115.0,"66":3870.0,"67":3870.0,"68":3870.0,"69":3870.0,"70":3870.0,"71":5000.0,"72":5000.0,"73":5000.0,"74":5000.0,"75":5000.0,"76":6500.0,"77":6500.0,"78":6500.0,"79":6500.0,"80":6500.0,"81":10945.0,"82":10945.0,"83":10945.0,"84":10945.0,"85":10945.0,"86":11492.25,"87":12066.8625,"88":12670.205624999999,"89":13303.71590625,"90":13968.9017015625,"91":14667.346786640624,"92":15400.714125972656,"93":16170.749832271289,"94":16979.287323884855,"95":17828.251690079098,"96":18719.664274583054,"97":19655.647488312206,"98":20638.42986272782,"99":21670.351355864208}},"3+":{"Co-Nil":{"0":425.0,"1":425.0,"2":425.0,"3":425.0,"4":425.0,"5":425.0,"6":425.0,"7":425.0,"8":425.0,"9":425.0,"10":425.0,"11":425.0,"12":425.0,"13":425.0,"14":425.0,"15":425.0,"16":425.0,"17":425.0,"18":585.0,"19":585.0,"20":585.0,"21":585.0,"22":585.0,"23":585.0,"24":585.0,"25":800.0,"26":800.0,"27":800.0,"28":800.0,"29":800.0,"30":800.0,"31":840.0,"32":840.0,"33":840.0,"34":840.0,"35":840.0,"36":885.0,"37":885.0,"38":885.0,"39":885.0,"40":885.0,"41":935.0,"42":935.0,"43":935.0,"44":935.0,"45":935.0,"46":1185.0,"47":1185.0,"48":1185.0,"49":1185.0,"50":1185.0,"51":1405.0,"52":1405.0,"53":1405.0,"54":1405.0,"55":1405.0,"56":2285.0,"57":2285.0,"58":2285.0,"59":2285.0,"60":2285.0,"61":2730.0,"62":2730.0,"63":2730.0,"64":2730.0,"65":2730.0,"66":3870.0,"67":3870.0,"68":3870.0,"69":3870.0,"70":3870.0,"71":5000.0,"72":5000.0,"73":5000.0,"74":5000.0,"75":5000.0,"76":6500.0,"77":6500.0,"78":6500.0,"79":6500.0,"80":6500.0,"81":10945.0,"82":10945.0,"83":10945.0,"84":10945.0,"85":10945.0,"86":11492.25,"87":12066.8625,"88":12670.205624999999,"89":13303.71590625,"90":13968.9017015625,"91":14667.346786640624,"92":15400.714125972656,"93":16170.749832271289,"94":16979.287323884855,"95":17828.251690079098,"96":18719.664274583054,"97":19655.647488312206,"98":20638.42986272782,"99":21670.351355864208}}},"SP Smart Plus":{"1&2":{"Co-Nil":{"0":375.0,"1":375.0,"2":375.0,"3":375.0,"4":375.0,"5":375.0,"6":375.0,"7":375.0,"8":375.0,"9":375.0,"10":375.0,"11":375.0,"12":375.0,"13":375.0,"14":375.0,"15":375.0,"16":375.0,"17":375.0,"18":590.0,"19":590.0,"20":590.0,"21":590.0,"22":590.0,"23":590.0,"24":590.0,"25":805.0,"26":805.0,"27":805.0,"28":805.0,"29":805.0,"30":805.0,"31":840.0,"32":840.0,"33":840.0,"34":840.0,"35":840.0,"36":885.0,"37":885.0,"38":885.0,"39":885.0,"40":885.0,"41":940.0,"42":940.0,"43":940.0,"44":940.0,"45":940.0,"46":1185.0,"47":1185.0,"48":1185.0,"49":1185.0,"50":1185.0,"51":1405.0,"52":1405.0,"53":1405.0,"54":1405.0,"55":1405.0,"56":2285.0,"57":2285.0,"58":2285.0,"59":2285.0,"60":2285.0,"61":2730.0,"62":2730.0,"63":2730.0,"64":2730.0,"65":2730.0,"66":3390.0,"67":3390.0,"68":3390.0,"69":3390.0,"70":3390.0,"71":4375.0,"72":4375.0,"73":4375.0,"74":4375.0,"75":4375.0,"76":5690.0,"77":5690.0,"78":5690.0,"79":5690.0,"80":5690.0,"81":9580.0,"82":9580.0,"83":9580.0,"84":9580.0,"85":9580.0,"86":10055.71875,"87":10558.504687499999,"88":11086.429921874998,"89":11640.75141796875,"90":12222.788988867187,"91":12833.928438310546,"92":13475.624860226075,"93":14149.406103237377,"94":14856.876408399248,"95":15599.720228819211,"96":16379.706240260173,"97":17198.69155227318,"98":18058.62612988684,"99":18961.557436381183}},"3+":{"Co-Nil":{"0":375.0,"1":375.0,"2":375.0,"3":375.0,"4":375.0,"5":375.0,"6":375.0,"7":375.0,"8":375.0,"9":375.0,"10":375.0,"11":375.0,"12":375.0,"13":375.0,"14":375.0,"15":375.0,"16":375.0,"17":375.0,"18":515.0,"19":515.0,"20":515.0,"21":515.0,"22":515.0,"23":515.0,"24":515.0,"25":700.0,"26":700.0,"27":700.0,"28":700.0,"29":700.0,"30":700.0,"31":735.0,"32":735.0,"33":735.0,"34":735.0,"35":735.0,"36":775.0,"37":775.0,"38":775.0,"39":775.0,"40":775.0,"41":820.0,"42":820.0,"43":820.0,"44":820.0,"45":820.0,"46":1040.0,"47":1040.0,"48":1040.0,"49":1040.0,"50":1040.0,"51":1230.0,"52":1230.0,"53":1230.0,"54":1230.0,"55":1230.0,"56":2000.0,"57":2000.0,"58":2000.0,"59":2000.0,"60":2000.0,"61":2390.0,"62":2390.0,"63":2390.0,"64":2390.0,"65":2390.0,"66":3390.0,"67":3390.0,"68":3390.0,"69":3390.0,"70":3390.0,"71":4375.0,"72":4375.0,"73":4375.0,"74":4375.0,"75":4375.0,"76":5690.0,"77":5690.0,"78":5690.0,"79":5690.0,"80":5690.0,"81":9580.0,"82":9580.0,"83":9580.0,"84":9580.0,"85":9580.0,"86":10055.71875,"87":10558.504687499999,"88":11086.429921874998,"89":11640.75141796875,"90":12222.788988867187,"91":12833.928438310546,"92":13475.624860226075,"93":14149.406103237377,"94":14856.876408399248,"95":15599.720228819211,"96":16379.706240260173,"97":17198.69155227318,"98":18058.62612988684,"99":18961.557436381183}}},"A Smart":{"1&2":{"Co-Nil":{"0":490.0,"1":490.0,"2":490.0,"3":490.0,"4":490.0,"5":490.0,"6":490.0,"7":490.0,"8":490.0,"9":490.0,"10":490.0,"11":490.0,"12":490.0,"13":490.0,"14":490.0,"15":490.0,"16":490.0,"17":490.0,"18":820.0,"19":820.0,"20":820.0,"21":820.0,"22":820.0,"23":820.0,"24":820.0,"25":1115.0,"26":1115.0,"27":1115.0,"28":1115.0,"29":1115.0,"30":1115.0,"31":1170.0,"32":1170.0,"33":1170.0,"34":1170.0,"35":1170.0,"36":1235.0,"37":1235.0,"38":1235.0,"39":1235.0,"40":1235.0,"41":1305.0,"42":1305.0,"43":1305.0,"44":1305.0,"45":1305.0,"46":1655.0,"47":1655.0,"48":1655.0,"49":1655.0,"50":1655.0,"51":1870.0,"52":1870.0,"53":1870.0,"54":1870.0,"55":1870.0,"56":3045.0,"57":3045.0,"58":3045.0,"59":3045.0,"60":3045.0,"61":3795.0,"62":3795.0,"63":3795.0,"64":3795.0,"65":3795.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":11100.0,"77":11100.0,"78":11100.0,"79":11100.0,"80":11100.0,"81":13890.0,"82":13890.0,"83":13890.0,"84":13890.0,"85":13890.0,"86":16205.2,"87":17015.9,"88":17870.6,"89":18760.5,"90":19699.9,"91":20683.3,"92":21720.6,"93":22804.1,"94":23944.8,"95":25140.5,"96":26398.9,"97":27717.8,"98":29103.8,"99":30558.0}},"3+":{"Co-Nil":{"0":490.0,"1":490.0,"2":490.0,"3":490.0,"4":490.0,"5":490.0,"6":490.0,"7":490.0,"8":490.0,"9":490.0,"10":490.0,"11":490.0,"12":490.0,"13":490.0,"14":490.0,"15":490.0,"16":490.0,"17":490.0,"18":740.0,"19":740.0,"20":740.0,"21":740.0,"22":740.0,"23":740.0,"24":740.0,"25":1005.0,"26":1005.0,"27":1005.0,"28":1005.0,"29":1005.0,"30":1005.0,"31":1050.0,"32":1050.0,"33":1050.0,"34":1050.0,"35":1050.0,"36":1110.0,"37":1110.0,"38":1110.0,"39":1110.0,"40":1110.0,"41":1175.0,"42":1175.0,"43":1175.0,"44":1175.0,"45":1175.0,"46":1490.0,"47":1490.0,"48":1490.0,"49":1490.0,"50":1490.0,"51":1685.0,"52":1685.0,"53":1685.0,"54":1685.0,"55":1685.0,"56":2730.0,"57":2730.0,"58":2730.0,"59":2730.0,"60":2730.0,"61":3400.0,"62":3400.0,"63":3400.0,"64":3400.0,"65":3400.0,"66":5985.0,"67":5985.0,"68":5985.0,"69":5985.0,"70":5985.0,"71":7965.0,"72":7965.0,"73":7965.0,"74":7965.0,"75":7965.0,"76":11100.0,"77":11100.0,"78":11100.0,"79":11100.0,"80":11100.0,"81":13890.0,"82":13890.0,"83":13890.0,"84":13890.0,"85":13890.0,"86":16205.2,"87":17015.9,"88":17870.6,"89":18760.5,"90":19699.9,"91":20683.3,"92":21720.6,"93":22804.1,"94":23944.8,"95":25140.5,"96":26398.9,"97":27717.8,"98":29103.8,"99":30558.0}}},"B Smart":{"1&2":{"Co-Nil":{"0":390.0,"1":390.0,"2":390.0,"3":390.0,"4":390.0,"5":390.0,"6":390.0,"7":390.0,"8":390.0,"9":390.0,"10":390.0,"11":390.0,"12":390.0,"13":390.0,"14":390.0,"15":390.0,"16":390.0,"17":390.0,"18":610.0,"19":610.0,"20":610.0,"21":610.0,"22":610.0,"23":610.0,"24":610.0,"25":825.0,"26":825.0,"27":825.0,"28":825.0,"29":825.0,"30":825.0,"31":865.0,"32":865.0,"33":865.0,"34":865.0,"35":865.0,"36":905.0,"37":905.0,"38":905.0,"39":905.0,"40":905.0,"41":955.0,"42":955.0,"43":955.0,"44":955.0,"45":955.0,"46":1260.0,"47":1260.0,"48":1260.0,"49":1260.0,"50":1260.0,"51":1390.0,"52":1390.0,"53":1390.0,"54":1390.0,"55":1390.0,"56":2260.0,"57":2260.0,"58":2260.0,"59":2260.0,"60":2260.0,"61":2815.0,"62":2815.0,"63":2815.0,"64":2815.0,"65":2815.0,"66":4490.0,"67":4490.0,"68":4490.0,"69":4490.0,"70":4490.0,"71":5975.0,"72":5975.0,"73":5975.0,"74":5975.0,"75":5975.0,"76":7180.0,"77":7180.0,"78":7180.0,"79":7180.0,"80":7180.0,"81":9470.0,"82":9470.0,"83":9470.0,"84":9470.0,"85":9470.0,"86":10718.4,"87":11251.9,"88":11816.2,"89":12408.0,"90":13027.3,"91":13677.4,"92":14362.7,"93":15081.0,"94":15832.3,"95":16624.3,"96":17454.8,"97":18327.1,"98":19245.6,"99":20207.0}},"3+":{"Co-Nil":{"0":390.0,"1":390.0,"2":390.0,"3":390.0,"4":390.0,"5":390.0,"6":390.0,"7":390.0,"8":390.0,"9":390.0,"10":390.0,"11":390.0,"12":390.0,"13":390.0,"14":390.0,"15":390.0,"16":390.0,"17":390.0,"18":550.0,"19":550.0,"20":550.0,"21":550.0,"22":550.0,"23":550.0,"24":550.0,"25":745.0,"26":745.0,"27":745.0,"28":745.0,"29":745.0,"30":745.0,"31":775.0,"32":775.0,"33":775.0,"34":775.0,"35":775.0,"36":815.0,"37":815.0,"38":815.0,"39":815.0,"40":815.0,"41":860.0,"42":860.0,"43":860.0,"44":860.0,"45":860.0,"46":1130.0,"47":1130.0,"48":1130.0,"49":1130.0,"50":1130.0,"51":1245.0,"52":1245.0,"53":1245.0,"54":1245.0,"55":1245.0,"56":1980.0,"57":1980.0,"58":1980.0,"59":1980.0,"60":1980.0,"61":2465.0,"62":2465.0,"63":2465.0,"64":2465.0,"65":2465.0,"66":4490.0,"67":4490.0,"68":4490.0,"69":4490.0,"70":4490.0,"71":5975.0,"72":5975.0,"73":5975.0,"74":5975.0,"75":5975.0,"76":7180.0,"77":7180.0,"78":7180.0,"79":7180.0,"80":7180.0,"81":9470.0,"82":9470.0,"83":9470.0,"84":9470.0,"85":9470.0,"86":10718.4,"87":11251.9,"88":11816.2,"89":12408.0,"90":13027.3,"91":13677.4,"92":14362.7,"93":15081.0,"94":15832.3,"95":16624.3,"96":17454.8,"97":18327.1,"98":19245.6,"99":20207.0}}},"SP Smart":{"1&2":{"Co-Nil":{"0":275.0,"1":275.0,"2":275.0,"3":275.0,"4":275.0,"5":275.0,"6":275.0,"7":275.0,"8":275.0,"9":275.0,"10":275.0,"11":275.0,"12":275.0,"13":275.0,"14":275.0,"15":275.0,"16":275.0,"17":275.0,"18":435.0,"19":435.0,"20":435.0,"21":435.0,"22":435.0,"23":435.0,"24":435.0,"25":595.0,"26":595.0,"27":595.0,"28":595.0,"29":595.0,"30":595.0,"31":625.0,"32":625.0,"33":625.0,"34":625.0,"35":625.0,"36":655.0,"37":655.0,"38":655.0,"39":655.0,"40":655.0,"41":695.0,"42":695.0,"43":695.0,"44":695.0,"45":695.0,"46":880.0,"47":880.0,"48":880.0,"49":880.0,"50":880.0,"51":1045.0,"52":1045.0,"53":1045.0,"54":1045.0,"55":1045.0,"56":1695.0,"57":1695.0,"58":1695.0,"59":1695.0,"60":1695.0,"61":1970.0,"62":1970.0,"63":1970.0,"64":1970.0,"65":1970.0,"66":2535.0,"67":2535.0,"68":2535.0,"69":2535.0,"70":2535.0,"71":3510.0,"72":3510.0,"73":3510.0,"74":3510.0,"75":3510.0,"76":4450.0,"77":4450.0,"78":4450.0,"79":4450.0,"80":4450.0,"81":7115.0,"82":7115.0,"83":7115.0,"84":7115.0,"85":7115.0,"86":7470.75,"87":7844.2875,"88":8236.501875,"89":8648.32696875,"90":9080.7433171875,"91":9534.780483046876,"92":10011.51950719922,"93":10512.095482559182,"94":11037.700256687142,"95":11589.585269521498,"96":12169.064532997572,"97":12777.517759647451,"98":13416.393647629824,"99":14087.213330011315}},"3+":{"Co-Nil":{"0":275.0,"1":275.0,"2":275.0,"3":275.0,"4":275.0,"5":275.0,"6":275.0,"7":275.0,"8":275.0,"9":275.0,"10":275.0,"11":275.0,"12":275.0,"13":275.0,"14":275.0,"15":275.0,"16":275.0,"17":275.0,"18":390.0,"19":390.0,"20":390.0,"21":390.0,"22":390.0,"23":390.0,"24":390.0,"25":525.0,"26":525.0,"27":525.0,"28":525.0,"29":525.0,"30":525.0,"31":545.0,"32":545.0,"33":545.0,"34":545.0,"35":545.0,"36":575.0,"37":575.0,"38":575.0,"39":575.0,"40":575.0,"41":610.0,"42":610.0,"43":610.0,"44":610.0,"45":610.0,"46":770.0,"47":770.0,"48":770.0,"49":770.0,"50":770.0,"51":915.0,"52":915.0,"53":915.0,"54":915.0,"55":915.0,"56":1485.0,"57":1485.0,"58":1485.0,"59":1485.0,"60":1485.0,"61":1725.0,"62":1725.0,"63":1725.0,"64":1725.0,"65":1725.0,"66":2535.0,"67":2535.0,"68":2535.0,"69":2535.0,"70":2535.0,"71":3510.0,"72":3510.0,"73":3510.0,"74":3510.0,"75":3510.0,"76":4450.0,"77":4450.0,"78":4450.0,"79":4450.0,"80":4450.0,"81":7115.0,"82":7115.0,"83":7115.0,"84":7115.0,"85":7115.0,"86":7470.75,"87":7844.2875,"88":8236.501875,"89":8648.32696875,"90":9080.7433171875,"91":9534.780483046876,"92":10011.51950719922,"93":10512.095482559182,"94":11037.700256687142,"95":11589.585269521498,"96":12169.064532997572,"97":12777.517759647451,"98":13416.393647629824,"99":14087.213330011315}}},"SP Essential":{"1&2":{"Co-Nil":{"0":225.0,"1":225.0,"2":225.0,"3":225.0,"4":225.0,"5":225.0,"6":225.0,"7":225.0,"8":225.0,"9":225.0,"10":225.0,"11":225.0,"12":225.0,"13":225.0,"14":225.0,"15":225.0,"16":225.0,"17":225.0,"18":360.0,"19":360.0,"20":360.0,"21":360.0,"22":360.0,"23":360.0,"24":360.0,"25":490.0,"26":490.0,"27":490.0,"28":490.0,"29":490.0,"30":490.0,"31":515.0,"32":515.0,"33":515.0,"34":515.0,"35":515.0,"36":540.0,"37":540.0,"38":540.0,"39":540.0,"40":540.0,"41":570.0,"42":570.0,"43":570.0,"44":570.0,"45":570.0,"46":725.0,"47":725.0,"48":725.0,"49":725.0,"50":725.0,"51":860.0,"52":860.0,"53":860.0,"54":860.0,"55":860.0,"56":1390.0,"57":1390.0,"58":1390.0,"59":1390.0,"60":1390.0,"61":1620.0,"62":1620.0,"63":1620.0,"64":1620.0,"65":1620.0,"66":2080.0,"67":2080.0,"68":2080.0,"69":2080.0,"70":2080.0,"71":2880.0,"72":2880.0,"73":2880.0,"74":2880.0,"75":2880.0,"76":3650.0,"77":3650.0,"78":3650.0,"79":3650.0,"80":3650.0,"81":5835.0,"82":5835.0,"83":5835.0,"84":5835.0,"85":5835.0,"86":6130.0,"87":6435.0,"88":6755.0,"89":7095.0,"90":7450.0,"91":7820.0,"92":8210.0,"93":8620.0,"94":9055.0,"95":9505.0,"96":9980.0,"97":10480.0,"98":11005.0,"99":11555.0}},"3+":{"Co-Nil":{"0":225.0,"1":225.0,"2":225.0,"3":225.0,"4":225.0,"5":225.0,"6":225.0,"7":225.0,"8":225.0,"9":225.0,"10":225.0,"11":225.0,"12":225.0,"13":225.0,"14":225.0,"15":225.0,"16":225.0,"17":225.0,"18":320.0,"19":320.0,"20":320.0,"21":320.0,"22":320.0,"23":320.0,"24":320.0,"25":430.0,"26":430.0,"27":430.0,"28":430.0,"29":430.0,"30":430.0,"31":450.0,"32":450.0,"33":450.0,"34":450.0,"35":450.0,"36":475.0,"37":475.0,"38":475.0,"39":475.0,"40":475.0,"41":500.0,"42":500.0,"43":500.0,"44":500.0,"45":500.0,"46":635.0,"47":635.0,"48":635.0,"49":635.0,"50":635.0,"51":750.0,"52":750.0,"53":750.0,"54":750.0,"55":750.0,"56":1220.0,"57":1220.0,"58":1220.0,"59":1220.0,"60":1220.0,"61":1415.0,"62":1415.0,"63":1415.0,"64":1415.0,"65":1415.0,"66":2080.0,"67":2080.0,"68":2080.0,"69":2080.0,"70":2080.0,"71":2880.0,"72":2880.0,"73":2880.0,"74":2880.0,"75":2880.0,"76":3650.0,"77":3650.0,"78":3650.0,"79":3650.0,"80":3650.0,"81":5835.0,"82":5835.0,"83":5835.0,"84":5835.0,"85":5835.0,"86":6130.0,"87":6435.0,"88":6755.0,"89":7095.0,"90":7450.0,"91":7820.0,"92":8210.0,"93":8620.0,"94":9055.0,"95":9505.0,"96":9980.0,"97":10480.0,"98":11005.0,"99":11555.0}}}},"ambulatory":{"AMB Prime 85%":{"0":145.0,"1":145.0,"2":145.0,"3":145.0,"4":145.0,"5":145.0,"6":145.0,"7":145.0,"8":145.0,"9":145.0,"10":145.0,"11":145.0,"12":145.0,"13":145.0,"14":145.0,"15":145.0,"16":145.0,"17":145.0,"18":300.0,"19":300.0,"20":300.0,"21":300.0,"22":300.0,"23":300.0,"24":300.0,"25":360.0,"26":360.0,"27":360.0,"28":360.0,"29":360.0,"30":360.0,"31":360.0,"32":360.0,"33":360.0,"34":360.0,"35":360.0,"36":420.0,"37":420.0,"38":420.0,"39":420.0,"40":420.0,"41":520.0,"42":520.0,"43":520.0,"44":520.0,"45":520.0,"46":570.0,"47":570.0,"48":570.0,"49":570.0,"50":570.0,"51":650.0,"52":650.0,"53":650.0,"54":650.0,"55":650.0,"56":700.0,"57":700.0,"58":700.0,"59":700.0,"60":700.0,"61":700.0,"62":700.0,"63":700.0,"64":700.0,"65":700.0,"66":880.0,"67":880.0,"68":880.0,"69":880.0,"70":880.0,"71":1250.0,"72":1250.0,"73":1250.0,"74":1250.0,"75":1250.0,"76":1250.0,"77":1250.0,"78":1250.0,"79":1250.0,"80":1250.0,"81":1250.0,"82":1250.0,"83":1250.0,"84":1250.0,"85":1250.0,"86":1250.0,"87":1250.0,"88":1250.0,"89":1250.0,"90":1250.0,"91":1250.0,"92":1250.0,"93":1250.0,"94":1250.0,"95":1250.0,"96":1250.0,"97":1250.0,"98":1250.0,"99":1250.0},"AMB Smart Plus 85%":{"0":145.0,"1":145.0,"2":145.0,"3":145.0,"4":145.0,"5":145.0,"6":145.0,"7":145.0,"8":145.0,"9":145.0,"10":145.0,"11":145.0,"12":145.0,"13":145.0,"14":145.0,"15":145.0,"16":145.0,"17":145.0,"18":300.0,"19":300.0,"20":300.0,"21":300.0,"22":300.0,"23":300.0,"24":300.0,"25":360.0,"26":360.0,"27":360.0,"28":360.0,"29":360.0,"30":360.0,"31":360.0,"32":360.0,"33":360.0,"34":360.0,"35":360.0,"36":420.0,"37":420.0,"38":420.0,"39":420.0,"40":420.0,"41":520.0,"42":520.0,"43":520.0,"44":520.0,"45":520.0,"46":570.0,"47":570.0,"48":570.0,"49":570.0,"50":570.0,"51":650.0,"52":650.0,"53":650.0,"54":650.0,"55":650.0,"56":700.0,"57":700.0,"58":700.0,"59":700.0,"60":700.0,"61":700.0,"62":700.0,"63":700.0,"64":700.0,"65":700.0,"66":880.0,"67":880.0,"68":880.0,"69":880.0,"70":880.0,"71":1250.0,"72":1250.0,"73":1250.0,"74":1250.0,"75":1250.0,"76":1250.0,"77":1250.0,"78":1250.0,"79":1250.0,"80":1250.0,"81":1250.0,"82":1250.0,"83":1250.0,"84":1250.0,"85":1250.0,"86":1250.0,"87":1250.0,"88":1250.0,"89":1250.0,"90":1250.0,"91":1250.0,"92":1250.0,"93":1250.0,"94":1250.0,"95":1250.0,"96":1250.0,"97":1250.0,"98":1250.0,"99":1250.0},"AMB Smart 85%":{"0":105.0,"1":105.0,"2":105.0,"3":105.0,"4":105.0,"5":105.0,"6":105.0,"7":105.0,"8":105.0,"9":105.0,"10":105.0,"11":105.0,"12":105.0,"13":105.0,"14":105.0,"15":105.0,"16":105.0,"17":105.0,"18":220.0,"19":220.0,"20":220.0,"21":220.0,"22":220.0,"23":220.0,"24":220.0,"25":270.0,"26":270.0,"27":270.0,"28":270.0,"29":270.0,"30":270.0,"31":270.0,"32":270.0,"33":270.0,"34":270.0,"35":270.0,"36":300.0,"37":300.0,"38":300.0,"39":300.0,"40":300.0,"41":340.0,"42":340.0,"43":340.0,"44":340.0,"45":340.0,"46":375.0,"47":375.0,"48":375.0,"49":375.0,"50":375.0,"51":425.0,"52":425.0,"53":425.0,"54":425.0,"55":425.0,"56":455.0,"57":455.0,"58":455.0,"59":455.0,"60":455.0,"61":455.0,"62":455.0,"63":455.0,"64":455.0,"65":455.0,"66":575.0,"67":575.0,"68":575.0,"69":575.0,"70":575.0,"71":815.0,"72":815.0,"73":815.0,"74":815.0,"75":815.0,"76":815.0,"77":815.0,"78":815.0,"79":815.0,"80":815.0,"81":815.0,"82":815.0,"83":815.0,"84":815.0,"85":815.0,"86":815.0,"87":815.0,"88":815.0,"89":815.0,"90":815.0,"91":815.0,"92":815.0,"93":815.0,"94":815.0,"95":815.0,"96":815.0,"97":815.0,"98":815.0,"99":815.0},"AMB Prime 100%":{"0":200.0,"1":200.0,"2":200.0,"3":200.0,"4":200.0,"5":200.0,"6":200.0,"7":200.0,"8":200.0,"9":200.0,"10":200.0,"11":200.0,"12":200.0,"13":200.0,"14":200.0,"15":200.0,"16":200.0,"17":200.0,"18":420.0,"19":420.0,"20":420.0,"21":420.0,"22":420.0,"23":420.0,"24":420.0,"25":510.0,"26":510.0,"27":510.0,"28":510.0,"29":510.0,"30":510.0,"31":510.0,"32":510.0,"33":510.0,"34":510.0,"35":510.0,"36":570.0,"37":570.0,"38":570.0,"39":570.0,"40":570.0,"41":705.0,"42":705.0,"43":705.0,"44":705.0,"45":705.0,"46":770.0,"47":770.0,"48":770.0,"49":770.0,"50":770.0,"51":880.0,"52":880.0,"53":880.0,"54":880.0,"55":880.0,"56":945.0000000000001,"57":945.0000000000001,"58":945.0000000000001,"59":945.0000000000001,"60":945.0000000000001,"61":945.0,"62":945.0,"63":945.0,"64":945.0,"65":945.0,"66":1200.0,"67":1200.0,"68":1200.0,"69":1200.0,"70":1200.0,"71":1700.0,"72":1700.0,"73":1700.0,"74":1700.0,"75":1700.0,"76":1700.0,"77":1700.0,"78":1700.0,"79":1700.0,"80":1700.0,"81":1700.0,"82":1700.0,"83":1700.0,"84":1700.0,"85":1700.0,"86":1700.0,"87":1700.0,"88":1700.0,"89":1700.0,"90":1700.0,"91":1700.0,"92":1700.0,"93":1700.0,"94":1700.0,"95":1700.0,"96":1700.0,"97":1700.0,"98":1700.0,"99":1700.0},"AMB Smart Plus 100%":{"0":200.0,"1":200.0,"2":200.0,"3":200.0,"4":200.0,"5":200.0,"6":200.0,"7":200.0,"8":200.0,"9":200.0,"10":200.0,"11":200.0,"12":200.0,"13":200.0,"14":200.0,"15":200.0,"16":200.0,"17":200.0,"18":420.0,"19":420.0,"20":420.0,"21":420.0,"22":420.0,"23":420.0,"24":420.0,"25":510.0,"26":510.0,"27":510.0,"28":510.0,"29":510.0,"30":510.0,"31":510.0,"32":510.0,"33":510.0,"34":510.0,"35":510.0,"36":570.0,"37":570.0,"38":570.0,"39":570.0,"40":570.0,"41":705.0,"42":705.0,"43":705.0,"44":705.0,"45":705.0,"46":770.0,"47":770.0,"48":770.0,"49":770.0,"50":770.0,"51":880.0,"52":880.0,"53":880.0,"54":880.0,"55":880.0,"56":945.0000000000001,"57":945.0000000000001,"58":945.0000000000001,"59":945.0000000000001,"60":945.0000000000001,"61":945.0,"62":945.0,"63":945.0,"64":945.0,"65":945.0,"66":1200.0,"67":1200.0,"68":1200.0,"69":1200.0,"70":1200.0,"71":1700.0,"72":1700.0,"73":1700.0,"74":1700.0,"75":1700.0,"76":1700.0,"77":1700.0,"78":1700.0,"79":1700.0,"80":1700.0,"81":1700.0,"82":1700.0,"83":1700.0,"84":1700.0,"85":1700.0,"86":1700.0,"87":1700.0,"88":1700.0,"89":1700.0,"90":1700.0,"91":1700.0,"92":1700.0,"93":1700.0,"94":1700.0,"95":1700.0,"96":1700.0,"97":1700.0,"98":1700.0,"99":1700.0},"AMB Smart 100%":{"0":165.0,"1":165.0,"2":165.0,"3":165.0,"4":165.0,"5":165.0,"6":165.0,"7":165.0,"8":165.0,"9":165.0,"10":165.0,"11":165.0,"12":165.0,"13":165.0,"14":165.0,"15":165.0,"16":165.0,"17":165.0,"18":335.0,"19":335.0,"20":335.0,"21":335.0,"22":335.0,"23":335.0,"24":335.0,"25":410.0,"26":410.0,"27":410.0,"28":410.0,"29":410.0,"30":410.0,"31":410.0,"32":410.0,"33":410.0,"34":410.0,"35":410.0,"36":455.0,"37":455.0,"38":455.0,"39":455.0,"40":455.0,"41":460.0,"42":460.0,"43":460.0,"44":460.0,"45":460.0,"46":530.0,"47":530.0,"48":530.0,"49":530.0,"50":530.0,"51":575.0,"52":575.0,"53":575.0,"54":575.0,"55":575.0,"56":615.0,"57":615.0,"58":615.0,"59":615.0,"60":615.0,"61":640.0,"62":640.0,"63":640.0,"64":640.0,"65":640.0,"66":780.0,"67":780.0,"68":780.0,"69":780.0,"70":780.0,"71":1105.0,"72":1105.0,"73":1105.0,"74":1105.0,"75":1105.0,"76":1105.0,"77":1105.0,"78":1105.0,"79":1105.0,"80":1105.0,"81":1105.0,"82":1105.0,"83":1105.0,"84":1105.0,"85":1105.0,"86":1105.0,"87":1105.0,"88":1105.0,"89":1105.0,"90":1105.0,"91":1105.0,"92":1105.0,"93":1105.0,"94":1105.0,"95":1105.0,"96":1105.0,"97":1105.0,"98":1105.0,"99":1105.0},"AMB Essential 85%":{"0":90.0,"1":90.0,"2":90.0,"3":90.0,"4":90.0,"5":90.0,"6":90.0,"7":90.0,"8":90.0,"9":90.0,"10":90.0,"11":90.0,"12":90.0,"13":90.0,"14":90.0,"15":90.0,"16":90.0,"17":90.0,"18":180.0,"19":180.0,"20":180.0,"21":180.0,"22":180.0,"23":180.0,"24":180.0,"25":225.0,"26":225.0,"27":225.0,"28":225.0,"29":225.0,"30":225.0,"31":225.0,"32":225.0,"33":225.0,"34":225.0,"35":225.0,"36":250.0,"37":250.0,"38":250.0,"39":250.0,"40":250.0,"41":280.0,"42":280.0,"43":280.0,"44":280.0,"45":280.0,"46":310.0,"47":310.0,"48":310.0,"49":310.0,"50":310.0,"51":350.0,"52":350.0,"53":350.0,"54":350.0,"55":350.0,"56":375.0,"57":375.0,"58":375.0,"59":375.0,"60":375.0,"61":375.0,"62":375.0,"63":375.0,"64":375.0,"65":375.0,"66":475.0,"67":475.0,"68":475.0,"69":475.0,"70":475.0,"71":670.0,"72":670.0,"73":670.0,"74":670.0,"75":670.0,"76":670.0,"77":670.0,"78":670.0,"79":670.0,"80":670.0,"81":670.0,"82":670.0,"83":670.0,"84":670.0,"85":670.0,"86":670.0,"87":670.0,"88":670.0,"89":670.0,"90":670.0,"91":670.0,"92":670.0,"93":670.0,"94":670.0,"95":670.0,"96":670.0,"97":670.0,"98":670.0,"99":670.0},"AMB Essential 100%":{"0":135.0,"1":135.0,"2":135.0,"3":135.0,"4":135.0,"5":135.0,"6":135.0,"7":135.0,"8":135.0,"9":135.0,"10":135.0,"11":135.0,"12":135.0,"13":135.0,"14":135.0,"15":135.0,"16":135.0,"17":135.0,"18":275.0,"19":275.0,"20":275.0,"21":275.0,"22":275.0,"23":275.0,"24":275.0,"25":340.0,"26":340.0,"27":340.0,"28":340.0,"29":340.0,"30":340.0,"31":340.0,"32":340.0,"33":340.0,"34":340.0,"35":340.0,"36":375.0,"37":375.0,"38":375.0,"39":375.0,"40":375.0,"41":380.0,"42":380.0,"43":380.0,"44":380.0,"45":380.0,"46":435.0,"47":435.0,"48":435.0,"49":435.0,"50":435.0,"51":475.0,"52":475.0,"53":475.0,"54":475.0,"55":475.0,"56":505.0,"57":505.0,"58":505.0,"59":505.0,"60":505.0,"61":525.0,"62":525.0,"63":525.0,"64":525.0,"65":525.0,"66":640.0,"67":640.0,"68":640.0,"69":640.0,"70":640.0,"71":910.0,"72":910.0,"73":910.0,"74":910.0,"75":910.0,"76":910.0,"77":910.0,"78":910.0,"79":910.0,"80":910.0,"81":910.0,"82":910.0,"83":910.0,"84":910.0,"85":910.0,"86":910.0,"87":910.0,"88":910.0,"89":910.0,"90":910.0,"91":910.0,"92":910.0,"93":910.0,"94":910.0,"95":910.0,"96":910.0,"97":910.0,"98":910.0,"99":910.0}},"costOfPolicy":30.0}};
+
+const state = { mode:'individual', biz:'new', age:null, level:null, amb:'85', size:'1&2', copay:'Co-Nil' };
+let members = [];      // family mode: [{id, dob:'YYYY-MM-DD'|null, age:number|null}]
+let mid = 0;
+
+const $ = id => document.getElementById(id);
+const money = x => '$' + x.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* age from DOB, exactly like the tariff workbook: floor((today - dob)/365) */
+function ageFromDob(str){
+  if(!str) return null;
+  const dob=new Date(str+'T00:00:00');
+  if(isNaN(dob)) return null;
+  const days=Math.floor((Date.now()-dob.getTime())/86400000);
+  return Math.floor(days/365);
+}
+
+/* build level buttons from the data itself */
+const LEVELS = Object.keys(DATA.new.inpatient).sort((a,b)=>{
+  const grp = s => s.startsWith('A ')?0 : s.startsWith('B ')?1 : 2;
+  const tier = s => /Smart Plus$/.test(s)?1 : /Prime$/.test(s)?0 : /Smart$/.test(s)?2 : 3;
+  return grp(a)-grp(b) || tier(a)-tier(b);
+});
+const levelsBox = $('levels');
+LEVELS.forEach(lv=>{
+  const b=document.createElement('button');
+  b.textContent=lv; b.dataset.v=lv;
+  b.onclick=()=>{ state.level=lv; paintGroup(levelsBox,lv); calc(); };
+  levelsBox.appendChild(b);
+});
+
+function paintGroup(box,val){ box.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.v===val)); }
+function wireSeg(id,key,after){
+  $(id).querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ state[key]=b.dataset.v; paintGroup($(id),b.dataset.v); if(after) after(); calc(); };
+  });
+}
+/* Co-pay options are built from the tariff itself, so an option that carries no
+   prices never appears. In the April 2026 files Co-NSSF rows exist but are all
+   blank, so only Co-Nil shows. If a future file prices it, it returns by itself. */
+(function buildCopays(){
+  const found=[];
+  Object.values(DATA).forEach(t=>Object.values(t.inpatient).forEach(sizes=>
+    Object.values(sizes).forEach(cps=>Object.keys(cps).forEach(c=>{
+      if(!found.includes(c) && Object.keys(cps[c]).length) found.push(c);
+    }))));
+  if(!found.length) found.push('Co-Nil');
+  if(!found.includes(state.copay)) state.copay=found[0];
+  const box=$('segCopay');
+  box.innerHTML='';
+  found.forEach(c=>{
+    const b=document.createElement('button');
+    b.dataset.v=c; b.textContent=c;
+    if(c===state.copay) b.classList.add('on');
+    box.appendChild(b);
+  });
+  $('copayNote').textContent = found.length<2
+    ? 'Only '+found[0]+' is priced in the current tariff.' : '';
+})();
+
+wireSeg('segBiz','biz');
+wireSeg('segAmb','amb');
+wireSeg('segCopay','copay');
+wireSeg('segSize','size');
+wireSeg('segMode','mode', switchMode);
+
+/* individual age field */
+$('age').addEventListener('input', e=>{
+  const v=parseInt(e.target.value,10);
+  state.age=Number.isFinite(v)?v:null;
+  $('dob').value=''; $('ageHint').textContent='';
+  calc();
+});
+$('dob').addEventListener('change', e=>{
+  const age=ageFromDob(e.target.value);
+  if(age===null){ return; }
+  if(age<0){ $('ageHint').textContent='Date of birth is in the future.'; state.age=null; calc(); return; }
+  state.age=age; $('age').value=age;
+  $('ageHint').textContent='Computed age: '+age+' (same formula as the tariff workbook)';
+  calc();
+});
+
+/* ---- family mode ---- */
+function switchMode(){
+  const fam = state.mode==='family';
+  $('indivBlock').classList.toggle('hidden', fam);
+  $('familyBlock').classList.toggle('hidden', !fam);
+  $('sizeField').classList.toggle('locked', fam);   // size auto in family mode
+  $('lockMsg').style.display = fam ? 'block' : 'none';
+  if(fam){
+    if(members.length===0){ addMember(); addMember(); }  // start with 2 rows
+  } else {
+    state.size='1&2'; paintGroup($('segSize'),'1&2');    // individual resets to default
+  }
+  renderMembers();
+}
+$('addMember').onclick = ()=>{ addMember(); renderMembers(); calc(); };
+function addMember(){ members.push({id:++mid, dob:null, age:null}); }
+
+/* Size bucket + caption. Kept separate so a date edit never rebuilds the rows. */
+function updateSizeTag(){
+  const autoSize = members.length>=3 ? '3+' : '1&2';
+  if(state.mode==='family'){ state.size=autoSize; paintGroup($('segSize'),autoSize); }
+  $('sizeTag').textContent = state.mode==='family'
+    ? members.length+' member'+(members.length!==1?'s':'')+' · size '+autoSize : '';
+}
+
+/* Full rebuild — ONLY on add / remove / mode switch.
+   Never call this from a date or age input handler: replacing the row while
+   the user is typing closes the mobile date picker mid-entry. */
+function renderMembers(){
+  const box=$('members');
+  box.innerHTML='';
+  const todayISO=new Date().toISOString().slice(0,10);
+  members.forEach((m,i)=>{
+    const row=document.createElement('div');
+    row.className='mrow';
+    row.innerHTML =
+      '<input type="date" class="mdate" aria-label="Member '+(i+1)+' date of birth" value="'+(m.dob||'')+'" min="1920-01-01" max="'+todayISO+'">'+
+      '<input type="number" class="mage'+(m.age!==null&&m.age<0?' bad':'')+'" inputmode="numeric" min="0" max="99" placeholder="age" '+
+        'aria-label="Member '+(i+1)+' age" value="'+(m.age!==null&&m.age>=0?m.age:'')+'">'+
+      '<button class="mdel" type="button" aria-label="Remove member '+(i+1)+'"'+(members.length<=1?' disabled':'')+'>×</button>';
+
+    const date=row.querySelector('.mdate');
+    const ageBox=row.querySelector('.mage');
+
+    /* Date changed -> fill the age box in place. No rebuild. */
+    date.addEventListener('change', ()=>{
+      m.dob=date.value||null;
+      m.age=ageFromDob(date.value);
+      ageBox.value = (m.age!==null && m.age>=0) ? m.age : '';
+      ageBox.classList.toggle('bad', m.age!==null && m.age<0);
+      updateSizeTag(); calc();
+    });
+
+    /* Age typed directly -> faster than the picker on a phone. No rebuild. */
+    ageBox.addEventListener('input', ()=>{
+      const v=parseInt(ageBox.value,10);
+      m.age = Number.isFinite(v) ? v : null;
+      m.dob = null; date.value='';
+      ageBox.classList.remove('bad');
+      updateSizeTag(); calc();
+    });
+
+    row.querySelector('.mdel').onclick=()=>{
+      members=members.filter(x=>x.id!==m.id); renderMembers(); calc();
+    };
+    box.appendChild(row);
+  });
+  updateSizeTag();
+}
+
+/* ---- pricing ---- */
+function ambPlanFor(level,pct){ return 'AMB '+level.split(' ').slice(1).join(' ')+' '+pct+'%'; }
+
+function fail(text){ $('priceCard').classList.add('error'); $('msg').textContent=text; }
+function clearRows(){ $('priceRows').innerHTML=''; }
+function addRow(k,v,cls){
+  const r=document.createElement('div'); r.className='prow'+(cls&&cls!=='muted-v'?' '+cls:'');
+  r.innerHTML='<span class="k">'+esc(k)+'</span><span class="v'+(cls==='muted-v'?' muted':'')+'">'+esc(v)+'</span>';
+  $('priceRows').appendChild(r);
+}
+
+/* price one person; returns {ip, amb, err} */
+function pricePerson(age){
+  const T=DATA[state.biz];
+  const lvl=T.inpatient[state.level];
+  const byCopay = lvl && lvl[state.size] && lvl[state.size][state.copay];
+  if(!byCopay){
+    const avail=Object.entries(lvl||{}).flatMap(([s,c])=>Object.keys(c).map(k=>s+' / '+k));
+    return {err:'No rate for '+state.level+' with '+state.size+' / '+state.copay+'. Available: '+avail.join(', ')+'.'};
+  }
+  const ip=byCopay[age];
+  if(ip===undefined){
+    const ages=Object.keys(byCopay).map(Number);
+    return {err:'Age '+age+' is out of range — this tariff covers ages '+Math.min(...ages)+'–'+Math.max(...ages)+'.'};
+  }
+  let amb=0;
+  if(state.amb!=='none'){
+    const plan=ambPlanFor(state.level,state.amb);
+    const pd=T.ambulatory[plan];
+    if(!pd || pd[age]===undefined) return {err:'No ambulatory rate for '+plan+' at age '+age+'.'};
+    amb=pd[age];
+  }
+  return {ip,amb};
+}
+
+function resetPrice(sub, need){
+  $('priceCard').classList.remove('error');
+  $('priceBig').textContent='—'; clearRows(); $('priceSub').textContent=sub||'Total owed / year';
+  if(need){
+    const d=document.createElement('div');
+    d.className='needmsg';
+    d.textContent=need;
+    $('priceRows').appendChild(d);
+  }
+}
+
+function calc(){
+  $('priceCard').classList.remove('error');
+  const cop = DATA[state.biz].costOfPolicy;
+  const fam = state.mode==='family';
+
+  /* Say plainly what is still missing rather than showing a bare dash. */
+  const haveAge = fam
+    ? members.some(m=>m.age!==null && m.age>=0)
+    : state.age!==null;
+  if(state.level===null || !haveAge){
+    const miss=[];
+    if(!haveAge) miss.push(fam ? 'a date of birth or age for at least one member' : 'an age or date of birth');
+    if(state.level===null) miss.push('a coverage level');
+    resetPrice(fam?'Family total / year':'Total owed / year', 'Still needed: '+miss.join(' and ')+'.');
+    return;
+  }
+
+  if(state.mode==='individual'){
+    if(state.age===null){ resetPrice(); return; }
+    const p=pricePerson(state.age);
+    if(p.err){ fail(p.err); return; }
+    const total=p.ip+p.amb+cop;
+    $('priceSub').textContent='Total owed / year';
+    $('priceBig').innerHTML=money(total)+' <span class="per">/ year</span>';
+    clearRows();
+    addRow('In-patient', money(p.ip));
+    addRow(state.amb==='none'?'Out-patient (none)':'Out-patient · '+ambPlanFor(state.level,state.amb).replace('AMB ',''), money(p.amb));
+    addRow('Cost of policy', money(cop),'muted-v');
+    addRow((state.biz==='new'?'New':'Renewal')+' · age '+state.age+' · '+state.level, money(total),'total');
+    return;
+  }
+
+  /* family */
+  const valid = members.filter(m=>m.age!==null && m.age>=0);
+  if(valid.length===0){ resetPrice('Family total / year'); return; }
+
+  let sumIp=0,sumAmb=0;
+  const lines=[];
+  for(let i=0;i<members.length;i++){
+    const m=members[i];
+    if(m.age===null || m.age<0) continue;
+    const p=pricePerson(m.age);
+    if(p.err){ fail('Member '+(i+1)+': '+p.err); return; }
+    sumIp+=p.ip; sumAmb+=p.amb;
+    lines.push({i:i+1, age:m.age, sub:p.ip+p.amb});
+  }
+  const premium=sumIp+sumAmb;
+  const total=premium+cop;
+
+  $('priceSub').textContent='Family total / year · '+valid.length+' member'+(valid.length!==1?'s':'')+' · size '+state.size;
+  $('priceBig').innerHTML=money(total)+' <span class="per">/ year</span>';
+  clearRows();
+  lines.forEach(l=> addRow('Member '+l.i+' · age '+l.age, money(l.sub),'member'));
+  addRow('In-patient subtotal', money(sumIp),'sub');
+  addRow(state.amb==='none'?'Out-patient (none)':'Out-patient subtotal · '+state.amb+'%', money(sumAmb));
+  addRow('Cost of policy (once)', money(cop),'muted-v');
+  addRow((state.biz==='new'?'New':'Renewal')+' · '+state.level, money(total),'total');
+}
+
+calc();
+</script>
