@@ -92,7 +92,7 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet .lbl{font-size:8px;letter-spacing:.19em;text-transform:uppercase;color:#8194AE;font-weight:600;}
 .sheet .val{font-size:12.5px;color:#0E1730;font-weight:500;}
 .sheet .mast{height:106px;background:#05081A;padding:0 46px;display:flex;align-items:center;justify-content:space-between;}
-.sheet .mast img{height:41px;}
+.sheet .mast img{height:48px;}
 .sheet .mast .r{text-align:right;}
 .sheet .mast .r .t{font-family:'Syne';font-weight:700;font-size:14px;color:#fff;}
 .sheet .mast .r .s{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:#4FC3F7;margin-top:4px;}
@@ -164,7 +164,7 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet.card .glow{position:absolute;width:420px;height:420px;border-radius:50%;top:-210px;right:-170px;
   background:radial-gradient(circle,rgba(45,111,255,.34),transparent 68%);}
 .sheet.card .hd{display:flex;justify-content:space-between;align-items:flex-start;position:relative;}
-.sheet.card .hd img{height:27px;}
+.sheet.card .hd img{height:32px;}
 .sheet.card .hd .r{text-align:right;}
 .sheet.card .hd .r .k{font-size:7.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);}
 .sheet.card .hd .r .v{font-size:10.5px;font-weight:600;color:#4FC3F7;margin-top:3px;letter-spacing:.03em;}
@@ -175,9 +175,9 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet.card .figw{margin-top:30px;padding:24px 0 22px;border-top:1px solid rgba(79,195,247,.28);
   border-bottom:1px solid rgba(255,255,255,.10);position:relative;}
 .sheet.card .figw .k{font-size:7.5px;letter-spacing:.19em;text-transform:uppercase;color:rgba(255,255,255,.45);}
-.sheet.card .figw .fig{font-family:'Syne';font-weight:800;font-size:40px;line-height:.95;letter-spacing:-.03em;
-  color:#fff;margin-top:8px;}
-.sheet.card .figw .fig .cur{font-size:16px;color:#4FC3F7;vertical-align:11px;margin-right:5px;letter-spacing:0;}
+.sheet.card .figw .fig{font-family:'InterV',system-ui,sans-serif;font-weight:700;font-size:29px;line-height:1.05;
+  letter-spacing:-.015em;font-variant-numeric:tabular-nums;color:#fff;margin-top:8px;}
+.sheet.card .figw .fig .cur{font-size:13px;color:#4FC3F7;vertical-align:7px;margin-right:5px;letter-spacing:0;font-weight:600;}
 .sheet.card .figw .fig .per{font-size:11px;color:rgba(255,255,255,.5);font-weight:400;letter-spacing:0;
   vertical-align:4px;margin-left:6px;}
 .sheet.card .chips{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:9px;position:relative;}
@@ -209,7 +209,17 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
   body{background:#fff;}
 }
 </style>
+<style>
+  .backlink{
+    display:block;text-decoration:none;color:#64748b;
+    font-size:13px;font-weight:700;padding:10px 16px 0;
+  }
+  .backlink:hover{color:#0E7C86}
+  @media print{ .backlink{display:none} }
+</style>
 </head><body>
+
+<a class="backlink" href="../">‹ All Brocare tools</a>
 
 <div class="top">
   <div class="bm">
@@ -433,7 +443,7 @@ function paintRows(){
   box.querySelectorAll('[data-delr]').forEach(b=>b.onclick=()=>{D.rows.splice(+b.dataset.delr,1);buildForm();render();});
 }
 
-const CONTACT = 'Beirut, Jnah, Al Mais Bldg, 4th Floor &nbsp;&middot;&nbsp; <b>+961 1 82 33 00</b><br>'+
+const CONTACT = 'Beirut, Ein el Tineh, Mousaitbeh 5046, 4th Floor &nbsp;&middot;&nbsp; <b>+961 1 82 33 00</b><br>'+
   'WhatsApp <b>+961 81 82 33 00</b> &nbsp;&middot;&nbsp; ali.m@brocareinsurance.com';
 const DISCLAIM = 'Indicative offer, subject to underwriting acceptance and the insurer&rsquo;s policy wording. '+
   'Premiums shown in USD. Cover begins only on written confirmation and receipt of premium.';
@@ -464,7 +474,7 @@ function tplCard(){
     '<div class="valid">Valid until '+validTo+' &middot; subject to underwriting acceptance</div>'+
     '<div class="cta"><div class="l"><div class="t">Reply to confirm</div>'+
       '<div class="p tab">+961 81 82 33 00</div></div>'+
-      '<div class="rr">BroCare Insurance Brokerage SARL<br>Beirut, Jnah, Al Mais Bldg, 4th Floor</div></div>'+
+      '<div class="rr">BroCare Insurance Brokerage SARL<br>Beirut, Ein el Tineh, Mousaitbeh 5046, 4th Floor</div></div>'+
     '</div></div>';
 }
 
@@ -525,11 +535,10 @@ function tplInvoice(){
         (D.policyRef?'Policy '+esc(D.policyRef)+'<br>':'')+
         (D.period?'Period: '+esc(D.period):'')+'</div></div>'+
     '</div>'+
-    '<div class="intro" style="margin-top:0">'+
+    '<div class="intro" style="margin-top:0;grid-template-columns:repeat(3,1fr)">'+
       '<div><div class="lbl">Invoice date</div><div class="val tab">'+fmtDate(D.issued)+'</div></div>'+
       '<div><div class="lbl">Payable by</div><div class="val tab">'+fmtDate(addDays(D.issued,D.dueDays))+'</div></div>'+
-      '<div><div class="lbl">Reference</div><div class="val tab">'+esc(D.ref)+'</div></div>'+
-      '<div><div class="lbl">Currency</div><div class="val">USD</div></div></div>'+
+      '<div><div class="lbl">Reference</div><div class="val tab">'+esc(D.ref)+'</div></div></div>'+
     '<div style="margin:0 46px"><table class="items"><thead><tr><th>Description</th><th>Amount</th></tr></thead>'+
       '<tbody>'+rows+'</tbody></table></div>'+
     '<div class="totbox"><div class="totgrid">'+
@@ -537,7 +546,7 @@ function tplInvoice(){
       '<div class="totrow grand"><span>Total due</span><span class="tab">USD '+money(total)+'</span></div>'+
     '</div></div>'+
     '<div class="pay"><div class="k">Payment</div>'+
-      '<div class="v">Cash at our Jnah office, or by Whish Money</div>'+
+      '<div class="v">Cash at our office, or by Whish Money</div>'+
       '<div class="n">Please quote invoice '+esc(D.invNo)+' when paying. '+
       'The total shown is all-inclusive of applicable government fees.</div></div>'+
     '<div class="fine">Cover begins only on written confirmation and receipt of premium. '+
