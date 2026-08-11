@@ -313,6 +313,24 @@
   padding:11px 0 3px;border-top:1px solid var(--line);margin-top:11px;font-size:12.5px;color:var(--ink2)}
 #broPanel .tot b{font-size:19px;color:var(--price);font-variant-numeric:tabular-nums}
 #broPanel .warn{font-size:11.5px;color:var(--warn);margin-top:8px;display:none}
+/* saved-quote basket for multi-column comparisons */
+#broCmpBox{display:none;margin-top:12px;border:1px solid var(--accent);border-radius:11px;
+  background:var(--accent-soft);padding:11px}
+#broCmpBox .cmph{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+#broCmpBox .cmph button{border:0;background:transparent;color:var(--ink2);cursor:pointer;
+  font:inherit;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;padding:2px 4px}
+#broCmpBox .cmph button:hover{color:var(--warn)}
+#broCmpBox .cmprow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;
+  font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)}
+#broCmpBox .cmprow:last-of-type{border-bottom:0}
+#broCmpBox .cmprow .p{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#broCmpBox .cmprow button{border:0;background:transparent;color:var(--ink2);cursor:pointer;
+  font-size:16px;line-height:1;padding:0 3px}
+#broCmpBox .cmprow button:hover{color:var(--warn)}
+#broCmpBox .fin{width:100%;margin-top:9px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;
+  padding:10px;border-radius:9px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+#broCmpBox .hintline{font-size:11px;color:var(--ink2);margin-top:7px;line-height:1.45}
 </style>
 
 <div class="card" id="broPanel">
@@ -332,6 +350,13 @@
     <input id="broFinal" type="number" step="1" min="0">
   </div>
   <div class="warn" id="broWarn">Get a price above first &mdash; the quoter has nothing to hand over yet.</div>
+
+  <div id="broCmpBox">
+    <div class="cmph"><span id="broCmpTitle">Comparison</span><button type="button" id="broCmpClear">Clear all</button></div>
+    <div id="broCmpList"></div>
+    <button type="button" class="fin" id="broCmpFinish">Finish &amp; compare</button>
+    <div class="hintline" id="broCmpHint"></div>
+  </div>
 
   <div class="btns">
     <button type="button" class="act pri" id="broOffer">Send offer</button>
@@ -430,40 +455,131 @@
   $('broFinal').addEventListener('input', function(){ this.dataset.touched='1'; });
   $('broAdd').onclick = function(){ discs.push({label:'Discount', amt:0}); paint(); syncFinal(); };
 
-  function go(type){
-    var q = readQuote();
-    var price = Number($('broFinal').value||0) || q.total;
-    if(!price){ $('broWarn').style.display='block'; return; }
-    $('broWarn').style.display='none';
-    var today = new Date().toISOString().slice(0,10);
-    var pre = MODE==='health' ? 'BRC-H-' : 'BRC-M-';
-    var tail = String(Date.now()).slice(-4);
-
-    var p = { type:type, line:(MODE==='health'?'medical':'motor'),
-      client: ($('broClient').value||'').trim() || 'Client',
-      sub: q.sub, ref: pre + new Date().getFullYear() + '-' + tail,
-      issued: today, validDays: 14,
-      price: price, priceLabel:'Annual premium', per:'/ year',
-      chips: q.chips, members: q.members,
-      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
-                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
-      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
-      invNo: 'INV-' + new Date().getFullYear() + '-' + tail
-    };
-    if(type==='comparison'){
-      p.options = [{name:'Option A', tag:'', price:price},{name:'Option B', tag:'', price:price}];
-      p.rows = [{label:'Cover', values:['','']}];
-      p.recommended = -1;
-    }
+  function openStudio(p){
     var json = JSON.stringify(p);
     var bytes = new TextEncoder().encode(json);
     var bin = ''; bytes.forEach(function(b){ bin += String.fromCharCode(b); });
     window.open(STUDIO + '#data=' + btoa(bin), '_blank');
   }
 
-  $('broOffer').onclick   = function(){ go('card'); };
-  $('broCompare').onclick = function(){ go('comparison'); };
-  $('broInvoice').onclick = function(){ go('invoice'); };
+  function refs(){
+    var tail = String(Date.now()).slice(-4), yr = new Date().getFullYear();
+    return { ref:(MODE==='health'?'BRC-H-':'BRC-M-') + yr + '-' + tail, invNo:'INV-' + yr + '-' + tail };
+  }
+
+  function go(type){
+    var q = readQuote();
+    var price = Number($('broFinal').value||0) || q.total;
+    if(!price){ $('broWarn').style.display='block'; return; }
+    $('broWarn').style.display='none';
+    var r = refs();
+    openStudio({ type:type, line:(MODE==='health'?'medical':'motor'),
+      client: ($('broClient').value||'').trim() || 'Client',
+      sub: q.sub, ref: r.ref,
+      issued: new Date().toISOString().slice(0,10), validDays: 14,
+      price: price, priceLabel:'Annual premium', per:'/ year',
+      chips: q.chips, members: q.members,
+      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
+                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
+      invNo: r.invNo });
+  }
+
+  /* ---------- multi-quote comparison ----------
+     "Add to comparison" banks the quote on screen and reloads for a fresh one.
+     "Finish" banks whatever is on screen too, then builds one document with a
+     column per saved quote. Kept in sessionStorage so the reload survives it. */
+  var CKEY = 'broCmp.' + MODE, CCLI = 'broCmpClient.' + MODE, MAXCOLS = 4;
+  function esc2(s){ return String(s).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function getBasket(){ try{ return JSON.parse(sessionStorage.getItem(CKEY)) || []; }catch(e){ return []; } }
+  function setBasket(a){ try{ sessionStorage.setItem(CKEY, JSON.stringify(a)); }catch(e){} }
+
+  function optionName(q){
+    var c = (q.chips||[]).filter(function(x){ return /plan|cover/i.test(x.k); })[0];
+    return (c && c.v && c.v !== '\u2014') ? c.v : (q.sub || 'Option');
+  }
+  function currentEntry(){
+    var q = readQuote();
+    var price = Number($('broFinal').value||0) || q.total;
+    if(!price) return null;
+    return { name:optionName(q), price:price, sub:q.sub,
+             chips:q.chips, members:q.members, cover:q.cover };
+  }
+
+  function paintCmp(){
+    var b = getBasket(), box = $('broCmpBox'), btn = $('broCompare');
+    if(!b.length){ box.style.display='none'; btn.textContent='Comparison'; btn.disabled=false; return; }
+    box.style.display='block';
+    $('broCmpTitle').textContent = 'Comparison \u2014 ' + b.length + ' saved';
+    $('broCmpList').innerHTML = b.map(function(e,i){
+      return '<div class="cmprow"><span>'+(i+1)+'. '+esc2(e.name)+'</span>'+
+             '<span class="p">USD '+Number(e.price).toLocaleString('en-US')+'</span>'+
+             '<button type="button" data-cx="'+i+'" aria-label="Remove">&times;</button></div>';
+    }).join('');
+    $('broCmpList').querySelectorAll('[data-cx]').forEach(function(x){
+      x.onclick = function(){ var a=getBasket(); a.splice(+x.dataset.cx,1); setBasket(a); paintCmp(); };
+    });
+    var full = b.length >= MAXCOLS;
+    btn.textContent = full ? 'Comparison full' : 'Add to comparison';
+    btn.disabled = full;
+    $('broCmpHint').textContent = full
+      ? 'Maximum of ' + MAXCOLS + ' columns. Press Finish to build the document.'
+      : 'Quote again above, then "Add to comparison" for another column \u2014 or press Finish to include the quote on screen now.';
+  }
+
+  function addToComparison(){
+    var e = currentEntry();
+    if(!e){ $('broWarn').style.display='block'; return; }
+    var b = getBasket();
+    if(b.length >= MAXCOLS) return;
+    b.push(e); setBasket(b);
+    try{ sessionStorage.setItem(CCLI, ($('broClient').value||'').trim()); }catch(err){}
+    location.reload();          /* cleanest possible reset of the quoter */
+  }
+
+  function finishComparison(){
+    var list = getBasket().slice(), cur = currentEntry();
+    if(cur && list.length < MAXCOLS) list.push(cur);   /* include what's on screen */
+    if(list.length < 2){
+      $('broWarn').textContent = 'Save at least two quotes before comparing.';
+      $('broWarn').style.display = 'block';
+      return;
+    }
+    var keys = [];
+    list.forEach(function(e){ (e.chips||[]).forEach(function(c){
+      if(keys.indexOf(c.k) < 0) keys.push(c.k); }); });
+    var rows = keys.map(function(k){
+      return { label:k, values:list.map(function(e){
+        var f = (e.chips||[]).filter(function(c){ return c.k===k; })[0];
+        return f ? f.v : ''; }) };
+    });
+    if(MODE==='health' && list.some(function(e){ return e.members; })){
+      rows.push({ label:'Members', values:list.map(function(e){ return e.members||''; }) });
+    }
+    var r = refs();
+    openStudio({ type:'comparison', line:(MODE==='health'?'medical':'motor'),
+      client: ($('broClient').value||'').trim() || 'Client',
+      sub: list[0].cover || '', ref: r.ref,
+      issued: new Date().toISOString().slice(0,10), validDays: 14,
+      price: list[0].price, priceLabel:'Annual premium', per:'/ year',
+      chips: list[0].chips, members: list[0].members,
+      discounts: [], items: [],
+      options: list.map(function(e){ return {name:e.name, tag:'', price:e.price}; }),
+      rows: rows, recommended: -1, invNo: r.invNo });
+  }
+
+  $('broOffer').onclick    = function(){ go('card'); };
+  $('broCompare').onclick  = addToComparison;
+  $('broInvoice').onclick  = function(){ go('invoice'); };
+  $('broCmpFinish').onclick = finishComparison;
+  $('broCmpClear').onclick  = function(){
+    try{ sessionStorage.removeItem(CKEY); sessionStorage.removeItem(CCLI); }catch(e){}
+    paintCmp();
+  };
+
+  try{ var savedCli = sessionStorage.getItem(CCLI); if(savedCli) $('broClient').value = savedCli; }catch(e){}
+  paintCmp();
 
   paint(); syncFinal();
   setInterval(syncFinal, 900);   /* keep in step as the quoter recalculates */
