@@ -48,6 +48,27 @@
   }
   .backlink:hover{color:var(--accent)}
   .backlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  /* insurer switch — deliberately the loudest control on the page */
+  .insurerbox{background:var(--surface);border:2px solid var(--accent);border-radius:14px;
+    padding:13px;box-shadow:var(--shadow)}
+  .insurerlbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:9px}
+  .insurerseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .insurerseg button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    font:800 17px/1 inherit;font-family:inherit;padding:15px 8px;border-radius:11px;cursor:pointer;
+    letter-spacing:-.01em;transition:background .12s,border-color .12s,color .12s}
+  .insurerseg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .insurerseg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  details.info{margin-top:10px;border:1px solid var(--line);border-radius:10px;
+    background:var(--surface2);overflow:hidden}
+  details.info summary{cursor:pointer;list-style:none;padding:10px 12px;font-size:11px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:flex;align-items:center}
+  details.info summary::-webkit-details-marker{display:none}
+  details.info summary::after{content:"▾";margin-left:auto;font-size:10px;transition:transform .15s}
+  details.info[open] summary::after{transform:rotate(180deg)}
+  .infobody{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
+  .infobody p{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
+  .infobody p b{color:var(--accent);font-weight:800}
   .brandbar{display:flex;align-items:center;gap:11px;padding:4px 2px 2px}
   .logo{
     width:38px;height:38px;border-radius:11px;flex:none;
@@ -142,6 +163,21 @@
     background:transparent;color:var(--accent);font:700 14px/1 inherit;font-family:inherit;cursor:pointer;
   }
   .copybtn:hover{background:var(--accent-soft)}
+  /* both insurers side by side */
+  #crossBox{display:none;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:14px}
+  .xtitle{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink2);margin-bottom:11px}
+  .xgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .xcol{background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:10px}
+  .xh{font-size:13px;font-weight:800;color:var(--accent);margin-bottom:7px}
+  .xrow{display:flex;justify-content:space-between;gap:7px;align-items:baseline;
+    font-size:12px;padding:4px 0;border-bottom:1px solid var(--line)}
+  .xrow:last-child{border-bottom:0}
+  .xrow.best .xp{color:var(--price);font-weight:800}
+  .xp{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .xna{font-size:12px;color:var(--ink2);line-height:1.4}
+  .xnote{font-size:11.5px;color:var(--ink2);margin-top:10px;line-height:1.45}
 
   .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:0 8px;line-height:1.5}
   .foot b{font-weight:700}
@@ -157,8 +193,21 @@
       <span class="brandname"><b>Bro</b>care</span>
       <span class="brandsub">Motor All Risk Quoter</span>
     </div>
-    <span class="tariff-tag">April 2026<br>tariff</span>
+    <span class="tariff-tag" id="tariffTag">April 2026<br>tariff</span>
   </div>
+
+  <!-- INSURER -->
+  <section class="insurerbox">
+    <div class="insurerlbl">Insurer — rates come from whichever you pick</div>
+    <div class="insurerseg" id="segInsurer" role="group" aria-label="Insurer">
+      <button data-v="fidelity" class="on">Fidelity</button>
+      <button data-v="ufa">UFA</button>
+    </div>
+    <details class="info">
+      <summary>More information</summary>
+      <div class="infobody" id="insurerBlurb"></div>
+    </details>
+  </section>
 
   <!-- STEP 1 -->
   <section class="step" id="s1">
@@ -179,7 +228,7 @@
           <button data-v="Hybrid">Hybrid</button>
           <button data-v="Electric">Electric</button>
         </div>
-        <span class="hint">Recorded on the quote — no rate difference under the current tariff.</span>
+        <span class="hint" id="fuelHint"></span>
       </div>
     </div>
   </section>
@@ -221,6 +270,13 @@
     </div>
     <div class="sum-rows" id="sumRows"></div>
     <button class="copybtn" id="copyBtn" type="button">Copy quote for client</button>
+  </section>
+
+  <!-- BOTH INSURERS, SAME VEHICLE -->
+  <section id="crossBox">
+    <div class="xtitle">Fidelity vs UFA — same vehicle</div>
+    <div class="xgrid" id="crossGrid"></div>
+    <div class="xnote" id="crossNote"></div>
   </section>
 
   
@@ -357,7 +413,8 @@
     var prod = po ? po.textContent.trim() : '';
     return { total: total2,
       sub: veh || 'Motor insurance',
-      chips: [ {k:'Cover', v: prod || '\u2014'},
+      chips: [ {k:'Insurer', v: (typeof TARIFF!=='undefined' && TARIFF.name) || '\u2014'},
+               {k:'Cover', v: prod || '\u2014'},
                {k:'Vehicle', v: veh || '\u2014'},
                {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2014'} ],
       members: '', cover: 'Motor insurance' };
@@ -537,70 +594,131 @@
    Premium = vehicle value x rate%, floored at the product minimum.
    Edit only this block when rates change.
    ============================================================ */
-const TARIFF = {
-  products:[
-    { id:'prime', name:'Prime Drive', min:785, agency:true,
-      note:'Widest cover · agency dealer repair · no depreciation on new spare parts',
-      bands:[[0,19999],[20000,49999],[50000,99999],[100000,300000]],
-      years:[
-        { from:2023, to:2026, rates:[3.75,3.25,2.65,2.50] },
-        { from:2020, to:2022, rates:[4.25,3.75,3.00,2.75] },
-        { from:2018, to:2019, rates:[null,4.50,3.50,2.95] }
-      ] },
-    { id:'smart', name:'Smart Drive', min:675, agency:false,
-      note:'Comprehensive cover · depreciation scale on spare parts',
-      bands:[[0,49999],[50000,99999],[100000,300000]],
-      years:[
-        { from:2023, to:2026, rates:[2.50,2.25,2.00] },
-        { from:2020, to:2022, rates:[3.00,2.50,2.25] },
-        { from:2018, to:2019, rates:[3.50,3.00,2.75] },
-        { from:2010, to:2017, rates:[3.80,3.25,3.00] }
-      ] },
-    { id:'collision', name:'Collision', min:405, agency:false,
-      note:'Collision damage cover',
-      bands:[[0,Infinity]],
-      years:[
-        { from:2016, to:2026, rates:[1.75] },
-        { from:2005, to:2015, rates:[2.00] }
-      ] },
-    { id:'total', name:'Total Loss', min:305, agency:false,
-      note:'Total loss cover only',
-      bands:[[0,Infinity]],
-      years:[
-        { from:2016, to:2026, rates:[1.25] },
-        { from:2005, to:2015, rates:[1.75] }
-      ] }
-  ],
-  maxValue:300000,
-  /* Sports & luxury vehicles that must be referred to Fidelity */
-  sports:{
-    'Acura':'ALL','Aston Martin':'ALL','Bentley':'ALL','Bugatti':'ALL','Ferrari':'ALL',
-    'Lamborghini':'ALL','Lotus':'ALL','McLaren':'ALL','Porsche':'ALL','Rolls Royce':'ALL',
-    'Audi':['RS models','R8'],
-    'BMW':['M models','GT'],
-    'Chevrolet':['Camaro','Corvette'],
-    'Dodge':['Viper','SRT','Demon','Challenger'],
-    'Ford':['Mustang'],
-    'Infiniti':['G35','G37'],
-    'Jeep':['SRT'],
-    'Maserati':['MC20'],
-    'Mercedes':['SLR','AMG (excl. SUV)','Maybach','Brabus'],
-    'Mitsubishi':['Evolution'],
-    'Nissan':['350Z','370Z','GTR','Skyline'],
-    'Volkswagen':['GTI-R']
-  },
-  otherMakes:['Toyota','Honda','Hyundai','Kia','Mazda','Suzuki','Renault','Peugeot','Citroen','Fiat',
-              'Volvo','Land Rover','Range Rover','Mini','Seat','Skoda','Tesla','BYD','Chery','MG','Geely',
-              'GMC','Cadillac','Lexus','Genesis','Subaru','Isuzu','Other make'],
-  /* Minimum driver age by vehicle value */
-  driverRules:[
-    { min:50000, max:100000, age:21 },
-    { min:100001, max:Infinity, age:26 }
-  ],
-  sportsMinAge:30
+/* Sports / luxury makes that neither insurer will auto-quote. */
+const SPORTS = {
+  'Acura':'ALL','Aston Martin':'ALL','Bentley':'ALL','Bugatti':'ALL','Ferrari':'ALL',
+  'Lamborghini':'ALL','Lotus':'ALL','McLaren':'ALL','Porsche':'ALL','Rolls Royce':'ALL',
+  'Audi':['RS models','R8'],
+  'BMW':['M models','GT'],
+  'Chevrolet':['Camaro','Corvette'],
+  'Dodge':['Viper','SRT','Demon','Challenger'],
+  'Ford':['Mustang'],
+  'Infiniti':['G35','G37'],
+  'Jeep':['SRT'],
+  'Maserati':['MC20'],
+  'Mercedes':['SLR','AMG (excl. SUV)','Maybach','Brabus'],
+  'Mitsubishi':['Evolution'],
+  'Nissan':['350Z','370Z','GTR','Skyline'],
+  'Volkswagen':['GTI-R']
 };
+const OTHER_MAKES = ['Toyota','Honda','Hyundai','Kia','Mazda','Suzuki','Renault','Peugeot','Citroen','Fiat',
+  'Volvo','Land Rover','Range Rover','Mini','Seat','Skoda','Tesla','BYD','Chery','MG','Geely',
+  'GMC','Cadillac','Lexus','Genesis','Subaru','Isuzu','Other make'];
 
-const S = { value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
+/* ============================================================
+   Two insurers, two rate books. Premium = value x rate%, floored
+   at the plan minimum. `fuels` limits a plan to certain fuel types
+   (UFA prices electric vehicles on a separate tariff).
+   Fidelity: Motor All Risk, April 2026.  UFA: Motor Tariff, 01.07.2026.
+   ============================================================ */
+const INSURERS = {
+  fidelity: {
+    key:'fidelity', name:'Fidelity', tariffTag:'April 2026 tariff', maxValue:300000,
+    referNote:'Refer to Fidelity',
+    blurb:[
+      ['Prime Drive','Widest cover. Agency dealer repair included, and no depreciation on new spare parts.'],
+      ['Smart Drive','Comprehensive cover, but spare parts follow a depreciation scale and there is no agency repair.'],
+      ['Collision','Collision damage only — a cut-down cover for older or lower-value cars.'],
+      ['Total Loss','Pays out only if the car is a write-off (repairs reaching 65% of its value).']
+    ],
+    products:[
+      { id:'prime', name:'Prime Drive', min:785, agency:true, pairWith:'smart',
+        note:'Widest cover · agency dealer repair · no depreciation on new spare parts',
+        bands:[[0,19999],[20000,49999],[50000,99999],[100000,300000]],
+        years:[
+          { from:2023, to:2026, rates:[3.75,3.25,2.65,2.50] },
+          { from:2020, to:2022, rates:[4.25,3.75,3.00,2.75] },
+          { from:2018, to:2019, rates:[null,4.50,3.50,2.95] }
+        ] },
+      { id:'smart', name:'Smart Drive', min:675, agency:false,
+        note:'Comprehensive cover · depreciation scale on spare parts',
+        bands:[[0,49999],[50000,99999],[100000,300000]],
+        years:[
+          { from:2023, to:2026, rates:[2.50,2.25,2.00] },
+          { from:2020, to:2022, rates:[3.00,2.50,2.25] },
+          { from:2018, to:2019, rates:[3.50,3.00,2.75] },
+          { from:2010, to:2017, rates:[3.80,3.25,3.00] }
+        ] },
+      { id:'collision', name:'Collision', min:405, agency:false,
+        note:'Collision damage cover',
+        bands:[[0,Infinity]],
+        years:[ { from:2016, to:2026, rates:[1.75] }, { from:2005, to:2015, rates:[2.00] } ] },
+      { id:'total', name:'Total Loss', min:305, agency:false,
+        note:'Total loss cover only',
+        bands:[[0,Infinity]],
+        years:[ { from:2016, to:2026, rates:[1.25] }, { from:2005, to:2015, rates:[1.75] } ] }
+    ],
+    driverRules:[ { min:50000, max:100000, age:21 }, { min:100001, max:Infinity, age:26 } ],
+    sportsMinAge:30
+  },
+
+  ufa: {
+    key:'ufa', name:'UFA', tariffTag:'July 2026 tariff', maxValue:150000,
+    referNote:'Refer to UFA',
+    blurb:[
+      ['Standard Plan','Comprehensive cover for cars up to USD 50,000. Spare parts depreciate, no agency repair, and SRCC or natural-hazard damage is capped at USD 1,000.'],
+      ['Lux Plan','Higher limits (third-party USD 1.5m), scratching and denting covered, natural hazards up to the full car value, replacement car at USD 50 a day.'],
+      ['Lux Plan + Agency Repair','The Lux Plan with repairs at the official dealer — cars made 2024–2027 only.'],
+      ['Lux Plan (Electric)','The Lux Plan on UFA’s separate electric-vehicle tariff. The battery is covered when damaged in an accident.'],
+      ['Total Loss','Pays out only on a write-off, with a 10% deductible on own-damage total loss.']
+    ],
+    products:[
+      { id:'ufa-std', name:'Standard Plan', min:615, agency:false, fuels:['Gasoline','Hybrid'],
+        note:'Comprehensive · up to USD 50,000 · no agency repair',
+        bands:[[0,20000],[20001,50000]],
+        years:[
+          { from:2022, to:2027, rates:[3.00,2.50] },
+          { from:2018, to:2021, rates:[3.20,2.70] },
+          { from:2014, to:2017, rates:[3.50,2.90] },
+          { from:2010, to:2013, rates:[4.00,3.20] }
+        ] },
+      { id:'ufa-lux', name:'Lux Plan', min:675, agency:false, fuels:['Gasoline','Hybrid'],
+        note:'Higher limits · scratching & denting · replacement car USD 50/day',
+        bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
+        years:[
+          { from:2022, to:2027, rates:[3.20,2.60,2.40,2.30,2.20] },
+          { from:2018, to:2021, rates:[3.50,2.90,2.50,2.40,2.30] },
+          { from:2014, to:2017, rates:[3.70,3.10,2.60,2.50,2.40] },
+          { from:2011, to:2013, rates:[4.20,3.40,2.80,2.60,2.50] }
+        ] },
+      { id:'ufa-lux-ag', name:'Lux Plan + Agency Repair', min:825, agency:true, pairWith:'ufa-lux', fuels:['Gasoline','Hybrid'],
+        note:'Lux cover with official dealer repair · 2024–2027 vehicles only',
+        bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
+        years:[ { from:2024, to:2027, rates:[3.50,2.80,2.70,2.40,2.30] } ] },
+      { id:'ufa-ev-lux', name:'Lux Plan (Electric)', min:675, agency:false, fuels:['Electric'],
+        note:'Electric-vehicle tariff · battery covered when damaged in an accident',
+        bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
+        years:[ { from:2020, to:2027, rates:[3.20,2.50,2.40,2.30,2.20] } ] },
+      { id:'ufa-ev-lux-ag', name:'Lux Plan (Electric) + Agency Repair', min:825, agency:true, pairWith:'ufa-ev-lux', fuels:['Electric'],
+        note:'Electric Lux cover with official dealer repair · 2024–2027 only',
+        bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
+        years:[ { from:2024, to:2027, rates:[3.50,2.80,2.70,2.40,2.30] } ] },
+      { id:'ufa-total', name:'Total Loss', min:225, agency:false,
+        note:'Write-off cover only · 10% deductible on own-damage total loss',
+        bands:[[0,25000],[25001,50000],[50001,100000]],
+        years:[ { from:2017, to:2027, rates:[1.75,1.50,1.30] }, { from:2001, to:2016, rates:[2.00,1.75,1.50] } ] }
+    ],
+    /* UFA's tariff sets no driver-age bands — it requires a valid licence only. */
+    driverRules:[],
+    sportsMinAge:0
+  }
+};
+INSURERS.fidelity.sports = SPORTS;  INSURERS.fidelity.otherMakes = OTHER_MAKES;
+INSURERS.ufa.sports      = SPORTS;  INSURERS.ufa.otherMakes      = OTHER_MAKES;
+
+let TARIFF = INSURERS.fidelity;     /* the active rate book */
+
+const S = { insurer:'fidelity', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
 
 const $ = id => document.getElementById(id);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -608,8 +726,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 
 /* ---------- populate selects ---------- */
 (function initYears(){
-  const sel=$('year');
-  for(let y=2026;y>=2005;y--){
+  const sel=$('year');            /* 2027 covers UFA, 2001 covers UFA Total Loss */
+  for(let y=2027;y>=2001;y--){
     const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o);
   }
 })();
@@ -631,7 +749,7 @@ function bandIndex(product, value){
   return -1;
 }
 function quote(product, value, year){
-  if(value>TARIFF.maxValue) return {na:'Refer to Fidelity'};
+  if(value>TARIFF.maxValue) return {na:TARIFF.referNote};
   const yr=product.years.find(y=>year>=y.from && year<=y.to);
   if(!yr) return {na:'Year not covered'};
   const bi=bandIndex(product,value);
@@ -646,12 +764,15 @@ function quote(product, value, year){
 /* ---------- eligibility ---------- */
 function eligibility(){
   if(S.sports){
-    let m='This make/model is on Fidelity’s sports & luxury list — it must be referred to Fidelity for a quote.';
-    if(S.driverAge!==null && S.driverAge<TARIFF.sportsMinAge) m+=' Driver must also be at least '+TARIFF.sportsMinAge+'.';
+    let m='This make/model is on the sports & luxury list — it must be referred to '+TARIFF.name+' for a quote.';
+    if(TARIFF.sportsMinAge && S.driverAge!==null && S.driverAge<TARIFF.sportsMinAge){
+      m+=' Driver must also be at least '+TARIFF.sportsMinAge+'.';
+    }
     return {block:m};
   }
   if(S.value!==null && S.value>TARIFF.maxValue){
-    return {block:'Vehicle value is above $300,000 — refer to Fidelity for a quote.'};
+    return {block:'Vehicle value is above $'+TARIFF.maxValue.toLocaleString()+
+      ' — refer to '+TARIFF.name+' for a quote.'};
   }
   if(S.value!==null && S.driverAge!==null){
     for(const r of TARIFF.driverRules){
@@ -731,43 +852,53 @@ function render(){
 
   $('s4').classList.toggle('off', !S.product);
   if(S.product) buildSummary();
+  buildCross();
 }
 
-/* What agency repair costs = the Prime Drive premium over Smart Drive,
-   since agency repair is only available on Prime Drive. */
-function agencyUplift(){
-  const prime=TARIFF.products.find(p=>p.id==='prime');
-  const smart=TARIFF.products.find(p=>p.id==='smart');
-  const qp=quote(prime,S.value,S.year), qs=quote(smart,S.value,S.year);
-  if(qp.premium===undefined||qs.premium===undefined) return null;
-  return qp.premium-qs.premium;
+/* What agency repair costs = the agency plan's premium over its plain twin. */
+function agencyUplift(p){
+  if(!p || !p.agency || !p.pairWith) return null;
+  const base=TARIFF.products.find(x=>x.id===p.pairWith);
+  if(!base) return null;
+  const qa=quote(p,S.value,S.year), qb=quote(base,S.value,S.year);
+  if(qa.premium===undefined||qb.premium===undefined) return null;
+  return {amount:qa.premium-qb.premium, base:base.name};
+}
+
+/* Plans a given fuel type is allowed on. UFA prices EVs separately; Fidelity
+   makes no fuel distinction, so its plans carry no `fuels` list at all. */
+function plansForFuel(){
+  return TARIFF.products.filter(function(p){
+    return !p.fuels || p.fuels.indexOf(S.fuel) >= 0;
+  });
 }
 
 function buildOptions(){
   const box=$('opts'); box.innerHTML='';
-  const uplift=agencyUplift();
-  let anyAgency=false;
-  TARIFF.products.forEach(function(p){
+  const list=plansForFuel();
+  let agencyNames=[];
+  list.forEach(function(p){
     const q=quote(p,S.value,S.year);
     const ok = q.premium!==undefined;
+    const up = ok ? agencyUplift(p) : null;
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='opt'+(S.product===p.id?' on':'')+(ok?'':' dead');
     const price = ok
       ? '<div class="optprice">'+money(q.premium)+'<small>'+q.rate.toFixed(2)+'%'+(q.atMin?' · minimum':'')+'</small></div>'
       : '<div class="optprice na">'+esc(q.na)+'</div>';
-    const delta = (p.id==='prime' && ok && uplift!==null)
-      ? '<div class="optdelta">+'+money(uplift)+' over Smart Drive — this is what agency repair costs</div>' : '';
+    const delta = up
+      ? '<div class="optdelta">+'+money(up.amount)+' over '+esc(up.base)+' — this is what agency repair costs</div>' : '';
     btn.innerHTML='<div><div class="optname">'+esc(p.name)+'</div><div class="optmeta">'+esc(p.note)+'</div>'+delta+'</div>'+price;
     if(ok){
-      if(p.agency) anyAgency=true;
+      if(p.agency) agencyNames.push(p.name);
       btn.onclick=function(){ S.product=p.id; render(); };
     }
     box.appendChild(btn);
   });
-  $('agencyHint').textContent = anyAgency
-    ? 'Agency dealer repair is only available on Prime Drive — it is not sold as an add-on to the other covers.'
-    : '';
+  $('agencyHint').textContent = agencyNames.length
+    ? 'Agency dealer repair is available on ' + agencyNames.join(' and ') + ' only.'
+    : 'No plan with agency dealer repair is available for this vehicle.';
 }
 
 function buildSummary(){
@@ -775,6 +906,7 @@ function buildSummary(){
   const q=quote(p,S.value,S.year);
   $('sumBig').innerHTML = money(q.premium)+' <span class="per">/ year</span>';
   const rows=[
+    ['Insurer', TARIFF.name],
     ['Vehicle', S.brand + (S.models.length?(' '+S.models.join(', ')):'') + ' · ' + S.year],
     ['Declared value', money(S.value)],
     ['Fuel', S.fuel],
@@ -782,8 +914,8 @@ function buildSummary(){
     ['Cover', p.name],
     ['Agency repair', p.agency?'Included':'Not available on this cover']
   ];
-  const up=agencyUplift();
-  if(p.agency && up!==null) rows.push(['— cost of that agency repair', '+'+money(up)+' vs Smart Drive']);
+  const up=agencyUplift(p);
+  if(up) rows.push(['— cost of that agency repair', '+'+money(up.amount)+' vs '+up.base]);
   let html=rows.map(r=>'<div class="srow"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
   html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
         + '<span class="v">'+(q.atMin?('minimum '+money(p.min)):money(q.raw))+'</span></div>';
@@ -794,21 +926,23 @@ $('copyBtn').onclick=function(){
   const p=TARIFF.products.find(x=>x.id===S.product);
   if(!p) return;
   const q=quote(p,S.value,S.year);
+  const up=agencyUplift(p);
   const txt=[
     'BROCARE — Motor All Risk quote',
     '',
+    'Insurer: '+TARIFF.name,
     'Vehicle: '+S.brand+(S.models.length?(' '+S.models.join(', ')):'')+' · '+S.year,
     'Declared value: '+money(S.value),
     'Fuel: '+S.fuel,
     'Driver age: '+S.driverAge,
     'Cover: '+p.name+(p.agency?' (agency dealer repair included)':''),
-    (p.agency && agencyUplift()!==null) ? 'Agency repair costs +'+money(agencyUplift())+' vs Smart Drive.' : '',
+    up ? 'Agency repair costs +'+money(up.amount)+' vs '+up.base+'.' : '',
     '',
     'ANNUAL PREMIUM: '+money(q.premium),
     '',
-    'Excludes bodily injury (MBY) cover. Indicative only —',
-    'no cover until risk acceptance from Fidelity.',
-    'Fidelity Motor All Risk tariff, April 2026.'
+    'Excludes bodily injury cover. Indicative only —',
+    'no cover until risk acceptance from '+TARIFF.name+'.',
+    TARIFF.name+' motor tariff, '+TARIFF.tariffTag+'.'
   ].join('\n');
   const done=function(){
     const b=$('copyBtn'), old=b.textContent;
@@ -819,5 +953,69 @@ $('copyBtn').onclick=function(){
   } else { window.prompt('Copy the quote:', txt); }
 };
 
+/* ---------- insurer switch ---------- */
+function paintInsurer(){
+  $('segInsurer').querySelectorAll('button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.v===S.insurer);
+  });
+  $('tariffTag').innerHTML = TARIFF.tariffTag.replace(/\s*tariff$/,'') + '<br>tariff';
+  $('insurerBlurb').innerHTML = TARIFF.blurb.map(function(r){
+    return '<p><b>'+esc(r[0])+'</b> — '+esc(r[1])+'</p>';
+  }).join('');
+  $('fuelHint').textContent = TARIFF.key==='ufa'
+    ? 'UFA prices electric vehicles on a separate tariff, so this changes which plans you see.'
+    : 'Recorded on the quote — Fidelity applies no rate difference by fuel.';
+}
+$('segInsurer').querySelectorAll('button').forEach(function(b){
+  b.onclick=function(){
+    if(S.insurer===b.dataset.v) return;
+    S.insurer=b.dataset.v;
+    TARIFF=INSURERS[S.insurer];
+    S.product=null;                 /* plan names differ between insurers */
+    paintInsurer();
+    render();
+  };
+});
+
+/* ---------- Fidelity vs UFA on the same vehicle ---------- */
+function crossQuote(insurerKey){
+  const book=INSURERS[insurerKey], out=[];
+  book.products.forEach(function(p){
+    if(p.fuels && p.fuels.indexOf(S.fuel)<0) return;
+    if(S.value>book.maxValue) return;
+    const yr=p.years.find(y=>S.year>=y.from && S.year<=y.to);
+    if(!yr) return;
+    let bi=-1;
+    for(let i=0;i<p.bands.length;i++){ if(S.value>=p.bands[i][0] && S.value<=p.bands[i][1]){ bi=i; break; } }
+    if(bi<0) return;
+    const rate=yr.rates[bi];
+    if(rate===null||rate===undefined) return;
+    out.push({ name:p.name, rate:rate, premium:Math.max(S.value*rate/100, p.min), agency:!!p.agency });
+  });
+  return out;
+}
+function buildCross(){
+  const box=$('crossBox');
+  if(S.value===null || S.year===null){ box.style.display='none'; return; }
+  box.style.display='block';
+  const f=crossQuote('fidelity'), u=crossQuote('ufa');
+  const side=function(title,list,book){
+    if(!list.length) return '<div class="xcol"><div class="xh">'+title+'</div>'+
+      '<div class="xna">No plan available — '+esc(book.referNote)+'</div></div>';
+    const cheapest=Math.min.apply(null,list.map(function(x){return x.premium;}));
+    return '<div class="xcol"><div class="xh">'+title+'</div>'+list.map(function(x){
+      return '<div class="xrow'+(x.premium===cheapest?' best':'')+'"><span>'+esc(x.name)+'</span>'+
+             '<span class="xp">'+money(x.premium)+'</span></div>';
+    }).join('')+'</div>';
+  };
+  $('crossGrid').innerHTML = side('Fidelity',f,INSURERS.fidelity) + side('UFA',u,INSURERS.ufa);
+  const all=f.concat(u);
+  $('crossNote').textContent = all.length
+    ? 'Cheapest overall: '+money(Math.min.apply(null,all.map(function(x){return x.premium;})))+
+      ' · same vehicle, same declared value, both tariffs.'
+    : 'Neither tariff can auto-quote this vehicle.';
+}
+
+paintInsurer();
 render();
 </script>
