@@ -257,12 +257,23 @@
     <div class="stephead"><span class="stepnum">1</span><span class="steptitle">Vehicle</span><span class="stepecho" id="e1"></span></div>
     <div class="stepbody">
       <div class="field">
-        <label class="lbl" for="value">Vehicle value (USD)</label>
-        <div class="valwrap"><span class="cur">$</span><input type="number" id="value" inputmode="numeric" min="0" step="500" placeholder="35000"></div>
-      </div>
-      <div class="field">
         <label class="lbl" for="year">Year of make</label>
         <select id="year"><option value="">Select year…</option></select>
+      </div>
+      <div class="field">
+        <label class="lbl" for="brand">Make</label>
+        <select id="brand"><option value="">Select make…</option></select>
+      </div>
+      <div class="field hidden" id="lookupField">
+        <label class="lbl" for="lookupModel">Don't know the value? Type the model to look it up</label>
+        <input type="text" id="lookupModel" placeholder="e.g. Corolla, Tucson, Q5…" autocomplete="off">
+        <div id="valueResult"></div>
+        <div class="lookupRow" id="lookupLinks"></div>
+        <span class="hint">Checks Brocare's Lebanon comparables database first (real listings, researched by hand). Not covered yet, or want to double-check? Use the links above, or call the agency for a valuation.</span>
+      </div>
+      <div class="field">
+        <label class="lbl" for="value">Vehicle value (USD)</label>
+        <div class="valwrap"><span class="cur">$</span><input type="number" id="value" inputmode="numeric" min="0" step="500" placeholder="35000"></div>
       </div>
       <div class="field">
         <label class="lbl">Fuel type</label>
@@ -280,20 +291,9 @@
   <section class="step off" id="s2">
     <div class="stephead"><span class="stepnum">2</span><span class="steptitle">Eligibility check</span><span class="stepecho" id="e2"></span></div>
     <div class="stepbody">
-      <div class="field">
-        <label class="lbl" for="brand">Make</label>
-        <select id="brand"><option value="">Select make…</option></select>
-      </div>
       <div class="field hidden" id="modelField">
         <label class="lbl">Model — tap if it matches</label>
         <div class="chips" id="modelChips"></div>
-      </div>
-      <div class="field hidden" id="lookupField">
-        <label class="lbl" for="lookupModel">Not sure of the value? Type the model</label>
-        <input type="text" id="lookupModel" placeholder="e.g. Corolla, Tucson, Q5…" autocomplete="off">
-        <div id="valueResult"></div>
-        <div class="lookupRow" id="lookupLinks"></div>
-        <span class="hint">Checks Brocare's Lebanon comparables database first (real listings, researched by hand). Not covered yet, or want to double-check? Use the links above, or call the agency for a valuation.</span>
       </div>
       <div class="field">
         <label class="lbl" for="driverAge">Driver age</label>
