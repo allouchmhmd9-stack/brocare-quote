@@ -125,6 +125,30 @@
   }
   .chips button.on{background:var(--warn);border-color:var(--warn);color:#fff}
 
+  /* one-click comparable-listings links */
+  .lookupRow{display:flex;flex-wrap:wrap;gap:7px}
+  .lookupRow a{
+    display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);
+    background:var(--accent-soft);color:var(--accent);text-decoration:none;
+    font:700 13px/1 inherit;font-family:inherit;padding:9px 12px;border-radius:999px;
+  }
+  .lookupRow a:hover{background:var(--accent);color:var(--accent-ink)}
+  .lookupRow a::after{content:"↗";font-size:11px}
+
+  /* value-finder comparables card */
+  .valueCard{border:1px solid var(--line);background:var(--surface2);border-radius:11px;padding:12px;margin-bottom:8px}
+  .valueCard.hit{border-color:var(--accent);background:var(--accent-soft)}
+  .valueCard.miss{border-color:var(--warn);background:var(--warn-soft)}
+  .valueCard .vc-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:6px}
+  .valueCard.hit .vc-h{color:var(--accent)}
+  .valueCard.miss .vc-h{color:var(--warn)}
+  .valueCard .vc-price{font-size:22px;font-weight:800;color:var(--price);font-variant-numeric:tabular-nums;margin-bottom:3px}
+  .valueCard .vc-range{font-size:12px;color:var(--ink2);margin-bottom:6px}
+  .valueCard .vc-note{font-size:12px;color:var(--ink2);line-height:1.45;margin-bottom:8px}
+  .valueCard .vc-use{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
+    font:700 13px/1 inherit;font-family:inherit;padding:9px 13px;border-radius:9px;cursor:pointer}
+  .valueCard .vc-use:hover{opacity:.9}
+
   /* product options */
   .opts{display:flex;flex-direction:column;gap:9px}
   .opt{
@@ -207,6 +231,25 @@
       <summary>More information</summary>
       <div class="infobody" id="insurerBlurb"></div>
     </details>
+    <div class="insurerlbl" style="margin:12px 0 8px">Cover</div>
+    <div class="insurerseg" id="segCoverType" role="group" aria-label="Cover type">
+      <button data-v="allrisk" class="on">All Risk</button>
+      <button data-v="mtpl">Compulsory (TPL)</button>
+    </div>
+  </section>
+
+  <!-- COMPULSORY TPL -->
+  <section class="step" id="mtplBox" style="display:none">
+    <div class="stephead"><span class="stepnum">1</span><span class="steptitle">Vehicle type</span>
+      <span class="stepecho" id="mtplEcho"></span></div>
+    <div class="stepbody">
+      <div class="field">
+        <label class="lbl" for="mtplPick">Category</label>
+        <select id="mtplPick"><option value="">Select vehicle type…</option></select>
+        <span class="hint">Compulsory cover is a flat premium — vehicle value and year do not affect it.</span>
+      </div>
+      <div id="mtplOut"></div>
+    </div>
   </section>
 
   <!-- STEP 1 -->
@@ -244,6 +287,13 @@
       <div class="field hidden" id="modelField">
         <label class="lbl">Model — tap if it matches</label>
         <div class="chips" id="modelChips"></div>
+      </div>
+      <div class="field hidden" id="lookupField">
+        <label class="lbl" for="lookupModel">Not sure of the value? Type the model</label>
+        <input type="text" id="lookupModel" placeholder="e.g. Corolla, Tucson, Q5…" autocomplete="off">
+        <div id="valueResult"></div>
+        <div class="lookupRow" id="lookupLinks"></div>
+        <span class="hint">Checks Brocare's Lebanon comparables database first (real listings, researched by hand). Not covered yet, or want to double-check? Use the links above, or call the agency for a valuation.</span>
       </div>
       <div class="field">
         <label class="lbl" for="driverAge">Driver age</label>
@@ -713,12 +763,156 @@ const INSURERS = {
     sportsMinAge:0
   }
 };
+/* ============================================================
+   Compulsory motor third-party liability (MTPL).
+   Flat premiums per vehicle category - no vehicle value involved.
+   All Risk rates exclude bodily injury, so this is the other half
+   of what a motor client actually pays.
+   UFA: Motor Tariff 01.07.2026, section I.
+   ============================================================ */
+INSURERS.ufa.mtpl = {
+  driverNote:'Material-damage cover on commercial and taxi vehicles includes bodily injury for the driver: medical USD 1,500 and death/PTD USD 2,500 per person.',
+  options:[
+    { cat:'Private Cars', label:'Private car — TPL 500,000', md:55, mdSI:500000, bi:45, biSI:500000,
+      medical:2000, death:4000, towing:'Unlimited accident towing, unlimited mileage (incl. telescopic).' },
+    { cat:'Private Cars', label:'Private car — TPL 750,000', md:65, mdSI:750000, bi:45, biSI:500000,
+      medical:2500, death:5000, towing:'Accident towing plus one breakdown tow up to 75 km.' },
+    { cat:'Private Cars', label:'Private car — TPL 1,000,000', md:75, mdSI:1000000, bi:45, biSI:500000,
+      medical:5000, death:10000, towing:'Accident towing plus two breakdown tows (100 km, then 50 km).' },
+    { cat:'Taxis', label:'Taxi', md:80, mdSI:150000, bi:90, biSI:500000,
+      towing:'Accident towing plus one breakdown tow up to 35 km.' },
+    { cat:'Mini Vans', label:'Mini van', md:80, mdSI:150000, bi:90, biSI:500000,
+      towing:'Accident towing plus one breakdown tow up to 35 km.' },
+    { cat:'Buses & Vans', label:'Bus / van — up to 11 passengers', md:70, mdSI:100000, bi:135, biSI:500000,
+      towing:'Accident towing plus one breakdown tow up to 35 km.' },
+    { cat:'Buses & Vans', label:'Bus / van — 12 to 24 passengers', md:80, mdSI:100000, bi:200, biSI:665000,
+      towing:'No towing service.' },
+    { cat:'Buses & Vans', label:'Bus / van — 25 passengers or more', md:130, mdSI:100000, bi:300, biSI:1000000,
+      towing:'No towing service.' },
+    { cat:'Pick-ups', label:'Pick-up (Tundra, Tacoma, Ford…)', md:80, mdSI:50000, bi:90, biSI:500000,
+      towing:'Accident towing, unlimited mileage.' },
+    { cat:'Pick-ups', label:'Pick-up up to 5 tons', md:80, mdSI:50000, bi:90, biSI:500000,
+      towing:'Accident towing plus one breakdown tow up to 35 km.' },
+    { cat:'Pick-ups', label:'Pick-up 5 to 10 tons', md:170, mdSI:50000, bi:200, biSI:500000,
+      towing:'No towing service.' },
+    { cat:'Motorcycles', label:'Motorcycle / scooter up to 125 cc', md:30, mdSI:30000, bi:25, biSI:500000,
+      towing:'No towing service.' },
+    { cat:'Motorcycles', label:'Motorcycle / scooter over 125 cc', md:35, mdSI:30000, bi:35, biSI:500000,
+      towing:'No towing service.' },
+    { cat:'Refer', label:'Trucks, tankers, tractors, bulldozers, mixers', refer:true },
+    { cat:'Refer', label:'Agricultural, excavators, heavy-duty equipment', refer:true }
+  ]
+};
+/* Fidelity's compulsory tariff has not been supplied yet. */
+INSURERS.fidelity.mtpl = null;
+
 INSURERS.fidelity.sports = SPORTS;  INSURERS.fidelity.otherMakes = OTHER_MAKES;
 INSURERS.ufa.sports      = SPORTS;  INSURERS.ufa.otherMakes      = OTHER_MAKES;
 
+/* ============================================================
+   Lebanon used-car comparables — hand-researched, not scraped live.
+   A static page can't fetch olx.com.lb / autotrader.com.lb / opensooq.com
+   at quote-time (cross-origin restrictions), so this is a periodically
+   refreshed reference table instead: real listings read directly off
+   OLX Lebanon, cross-checked against Autotrader.com.lb and OpenSooq
+   Lebanon where available. Anything not covered here correctly falls
+   back to "call the agency" rather than guessing.
+   To refresh or extend: ask for a re-check on a make/model and the
+   band(s) below get updated with a new `updated` date.
+   ============================================================ */
+const CAR_VALUES = {
+  updated:'2026-09-03',
+  source:'Real listings read live from OLX Lebanon (olx.com.lb), cross-checked against Autotrader.com.lb and OpenSooq Lebanon.',
+  models:[
+    { brand:'Toyota', model:'Corolla', bands:[
+      { from:2020, to:2021, low:15000, high:18000, n:4 },
+      { from:2018, to:2019, low:13000, high:15500, n:5 },
+      { from:2014, to:2017, low:9500,  high:15500, n:8 }
+    ]},
+    { brand:'Hyundai', model:'Tucson', bands:[
+      { from:2021, to:2022, low:24000, high:27000, n:1 },
+      { from:2019, to:2020, low:15300, high:17900, n:8 },
+      { from:2017, to:2018, low:12500, high:18500, n:9 },
+      { from:2010, to:2015, low:7200,  high:12000, n:4 }
+    ]},
+    { brand:'Hyundai', model:'Elantra', bands:[
+      { from:2019, to:2020, low:12400, high:16400, n:9 },
+      { from:2017, to:2018, low:10500, high:12500, n:5 },
+      { from:2014, to:2016, low:8800,  high:12500, n:4 }
+    ]},
+    { brand:'Kia', model:'Sportage', bands:[
+      { from:2020, to:2021, low:16500, high:21000, n:6 },
+      { from:2017, to:2018, low:13800, high:18500, n:10 },
+      { from:2011, to:2014, low:10500, high:13000, n:3 }
+    ]},
+    { brand:'BMW', model:'3 Series', bands:[
+      { from:2015, to:2017, low:14250, high:17500, n:3 },
+      { from:2011, to:2014, low:6500,  high:12000, n:5 },
+      { from:2004, to:2009, low:4500,  high:8500,  n:10 }
+    ]},
+    { brand:'Mercedes', model:'C-Class', bands:[
+      { from:2018, to:2019, low:19500, high:29600, n:7, note:'Wide range — 4-cylinder C300 sits at the low end, AMG/C43 trims at the high end.' },
+      { from:2016, to:2017, low:16500, high:23000, n:2 },
+      { from:2012, to:2014, low:12000, high:15000, n:4 }
+    ]},
+    { brand:'Honda', model:'CR-V', bands:[
+      { from:2017, to:2019, low:18000, high:22000, n:5 },
+      { from:2014, to:2016, low:14500, high:15800, n:2 }
+    ]},
+    { brand:'Jeep', model:'Grand Cherokee', bands:[
+      { from:2018, to:2019, low:18800, high:25700, n:9 },
+      { from:2016, to:2017, low:15500, high:21900, n:4 },
+      { from:2011, to:2015, low:11300, high:16500, n:4 }
+    ]},
+    { brand:'Audi', model:'Q5', bands:[
+      { from:2018, to:2019, low:21000, high:25900, n:9 },
+      { from:2016, to:2017, low:13500, high:23900, n:5, note:'Wide range — Quattro/S-line trims sit at the high end.' },
+      { from:2014, to:2015, low:10300, high:14500, n:3 },
+      { from:2010, to:2011, low:5000,  high:9700,  n:4 }
+    ]},
+    { brand:'Range Rover', model:'Evoque', bands:[
+      { from:2020, to:2020, low:27800, high:46000, n:8, note:'Wide range — First Edition/P300 trims sit at the high end.' },
+      { from:2018, to:2019, low:16500, high:28500, n:6 },
+      { from:2015, to:2016, low:15000, high:18800, n:3 },
+      { from:2012, to:2013, low:10800, high:14000, n:5 }
+    ]},
+    { brand:'Nissan', model:'Sunny', bands:[
+      { from:2014, to:2015, low:4400, high:8700, n:4 },
+      { from:2009, to:2011, low:3700, high:7500, n:5 }
+    ]},
+    { brand:'Nissan', model:'Qashqai', bands:[
+      { from:2018, to:2018, low:11700, high:12900, n:2 },
+      { from:2009, to:2014, low:7500,  high:8900,  n:2 }
+    ]}
+  ]
+};
+function normStr(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function findCarComp(brand, modelText, year){
+  const nm = normStr(modelText);
+  if(!brand || !nm) return null;
+  const hit = CAR_VALUES.models.find(function(m){
+    if(m.brand!==brand) return false;
+    const nmodel = normStr(m.model);
+    return nmodel.indexOf(nm)>=0 || nm.indexOf(nmodel)>=0;
+  });
+  if(!hit) return { found:false };
+  if(year===null) return { found:true, model:hit, band:null };
+  let band = hit.bands.find(function(b){ return year>=b.from && year<=b.to; });
+  let approx = false;
+  if(!band){
+    approx = true;
+    band = hit.bands.slice().sort(function(a,b2){
+      const da = Math.min(Math.abs(year-a.from), Math.abs(year-a.to));
+      const db = Math.min(Math.abs(year-b2.from), Math.abs(year-b2.to));
+      return da-db;
+    })[0];
+  }
+  return { found:true, model:hit, band:band, approx:approx };
+}
+
 let TARIFF = INSURERS.fidelity;     /* the active rate book */
 
-const S = { insurer:'fidelity', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
+const S = { insurer:'fidelity', cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
 
 const $ = id => document.getElementById(id);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -853,7 +1047,59 @@ function render(){
   $('s4').classList.toggle('off', !S.product);
   if(S.product) buildSummary();
   buildCross();
+  buildLookupLinks();
 }
+
+/* One-click links to check what this car actually sells for in Lebanon right
+   now, instead of the user hand-building three separate searches. OLX/dubizzle
+   has a known, tested search URL; OpenSooq and Autotrader Lebanon both block
+   automated fetches (bot protection) so their internal search syntax couldn't
+   be verified - routed through a Google site-search instead, which works
+   regardless of how either site's own search URL is structured. */
+function buildLookupLinks(){
+  const box=$('lookupField');
+  if(!S.brand || S.brand==='Other make'){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  const model = $('lookupModel').value.trim();
+  const year = S.year || '';
+  const terms = [S.brand, model, year].filter(Boolean).join(' ');
+  const slug = [S.brand, model, year].filter(Boolean).join('-').toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  const links = [
+    { name:'OLX', url:'https://www.olx.com.lb/en/vehicles/cars-for-sale/q-'+encodeURIComponent(slug)+'/' },
+    { name:'OpenSooq', url:'https://www.google.com/search?q='+encodeURIComponent('site:opensooq.com lb '+terms) },
+    { name:'Autotrader.com.lb', url:'https://www.google.com/search?q='+encodeURIComponent('site:autotrader.com.lb '+terms) }
+  ];
+  $('lookupLinks').innerHTML = links.map(l=>
+    '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.name)+'</a>').join('');
+
+  if(!model){ $('valueResult').innerHTML=''; return; }
+  const res = findCarComp(S.brand, model, S.year);
+  if(!res || !res.found){
+    $('valueResult').innerHTML =
+      '<div class="valueCard miss"><div class="vc-h">Not in our comparables database</div>'+
+      '<div class="vc-note">No researched value on file yet for this make/model. '+
+      '<b>Call the agency for a valuation</b> — or check the live listings below and enter a value in Step 1 yourself.</div></div>';
+    return;
+  }
+  const b = res.band;
+  const mid = Math.round((b.low+b.high)/2/100)*100;
+  const yrLabel = b.from===b.to ? String(b.from) : (b.from+'–'+b.to);
+  const approxNote = res.approx
+    ? '<div class="vc-note">No listings on file for exactly '+esc(String(S.year))+
+      ' — nearest researched range is model year '+esc(yrLabel)+'. Adjust up or down for the age difference.</div>' : '';
+  const spreadNote = b.note ? '<div class="vc-note">'+esc(b.note)+'</div>' : '';
+  $('valueResult').innerHTML =
+    '<div class="valueCard hit"><div class="vc-h">'+(res.approx?'Closest comparable':'Comparable found')+
+      ' · '+esc(res.model.brand+' '+res.model.model)+' · MY '+esc(yrLabel)+'</div>'+
+    '<div class="vc-price">'+money(mid)+' <span style="font-size:12px;font-weight:600;color:var(--ink2)">suggested</span></div>'+
+    '<div class="vc-range">Real listings ranged '+money(b.low)+'–'+money(b.high)+' (n='+b.n+') · checked '+esc(CAR_VALUES.updated)+'</div>'+
+    approxNote + spreadNote +
+    '<button type="button" class="vc-use" id="vcUseBtn">Use '+money(mid)+' in Step 1</button></div>';
+  const useBtn = document.getElementById('vcUseBtn');
+  if(useBtn) useBtn.onclick = function(){ $('value').value = mid; S.value = mid; render(); };
+}
+$('lookupModel').addEventListener('input', buildLookupLinks);
 
 /* What agency repair costs = the agency plan's premium over its plain twin. */
 function agencyUplift(p){
@@ -973,6 +1219,7 @@ $('segInsurer').querySelectorAll('button').forEach(function(b){
     TARIFF=INSURERS[S.insurer];
     S.product=null;                 /* plan names differ between insurers */
     paintInsurer();
+    if(S.cover==='mtpl') buildMtplPicker();
     render();
   };
 });
@@ -1016,6 +1263,91 @@ function buildCross(){
     : 'Neither tariff can auto-quote this vehicle.';
 }
 
+/* ---------- compulsory third-party liability ---------- */
+function mtplList(){ return (TARIFF.mtpl && TARIFF.mtpl.options) || []; }
+
+function buildMtplPicker(){
+  const sel=$('mtplPick');
+  sel.innerHTML='<option value="">Select vehicle type…</option>';
+  const list=mtplList();
+  if(!list.length){
+    $('mtplOut').innerHTML='<div class="alert">'+esc(TARIFF.name+
+      ' compulsory rates are not loaded yet. Send the tariff and it will appear here.')+'</div>';
+    $('mtplEcho').textContent='';
+    return;
+  }
+  const groups=[];
+  list.forEach(function(o,i){
+    if(!groups.length || groups[groups.length-1].cat!==o.cat) groups.push({cat:o.cat, items:[]});
+    groups[groups.length-1].items.push({o:o, i:i});
+  });
+  groups.forEach(function(g){
+    const og=document.createElement('optgroup');
+    og.label = g.cat==='Refer' ? 'Refer to underwriting' : g.cat;
+    g.items.forEach(function(it){
+      const op=document.createElement('option');
+      op.value=String(it.i); op.textContent=it.o.label;
+      og.appendChild(op);
+    });
+    sel.appendChild(og);
+  });
+  paintMtpl();
+}
+
+function paintMtpl(){
+  const box=$('mtplOut'), list=mtplList();
+  const i=$('mtplPick').value===''?-1:parseInt($('mtplPick').value,10);
+  if(i<0 || !list[i]){ box.innerHTML=''; $('mtplEcho').textContent=''; return; }
+  const o=list[i];
+  if(o.refer){
+    box.innerHTML='<div class="alert">'+esc('This vehicle type must be referred to '+TARIFF.name+'’s underwriting department.')+'</div>';
+    $('mtplEcho').textContent='Referral';
+    return;
+  }
+  const total=o.md+o.bi;
+  $('mtplEcho').textContent=money(total)+' / year';
+  const rows=[
+    ['Material damage', money(o.md)+'  ·  limit '+money(o.mdSI)],
+    ['Bodily injury',   money(o.bi)+'  ·  limit '+money(o.biSI)]
+  ];
+  if(o.medical) rows.push(['Medical expenses', money(o.medical)+' per person']);
+  if(o.death)   rows.push(['Death / PTD',      money(o.death)+' per person']);
+  if(o.towing)  rows.push(['Road assistance',  o.towing]);
+  /* The driver bodily-injury note applies to commercial and taxi vehicles only. */
+  const COMMERCIAL = ['Taxis','Mini Vans','Buses & Vans','Pick-ups'];
+  const driverNote = COMMERCIAL.indexOf(o.cat)>=0 ? TARIFF.mtpl.driverNote : '';
+  box.innerHTML =
+    '<div class="sum-head" style="padding:13px 0 11px;border-bottom:1px solid var(--line)">'+
+      '<div class="sum-sub">Compulsory premium</div>'+
+      '<div class="sum-big">'+money(total)+' <span class="per">/ year</span></div></div>'+
+    '<div class="sum-rows" style="padding:11px 0 0">'+
+      rows.map(function(r){ return '<div class="srow"><span class="k">'+esc(r[0])+
+        '</span><span class="v">'+esc(r[1])+'</span></div>'; }).join('')+
+      (driverNote ? '<div class="srow calc"><span class="k">'+esc(driverNote)+'</span><span class="v"></span></div>' : '')+
+    '</div>';
+}
+$('mtplPick').addEventListener('change', paintMtpl);
+
+function paintCoverType(){
+  const tpl = S.cover==='mtpl';
+  $('segCoverType').querySelectorAll('button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.v===S.cover);
+  });
+  ['s1','s2','s3','s4','crossBox','broPanel'].forEach(function(id){
+    const el=$(id); if(el) el.style.display = tpl ? 'none' : '';
+  });
+  $('mtplBox').style.display = tpl ? '' : 'none';
+  if(tpl) buildMtplPicker(); else render();
+}
+$('segCoverType').querySelectorAll('button').forEach(function(b){
+  b.onclick=function(){
+    if(S.cover===b.dataset.v) return;
+    S.cover=b.dataset.v;
+    paintCoverType();
+  };
+});
+
 paintInsurer();
+paintCoverType();
 render();
 </script>

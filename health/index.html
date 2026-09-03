@@ -270,13 +270,7 @@
 
       <details class="info">
         <summary>More information</summary>
-        <div class="infobody">
-          <p class="tier"><b>Prime</b> — Full hospital network and the highest limits. Nothing excluded, except Bellevue on Class SP.</p>
-          <p class="tier"><b>Smart Plus</b> — Keeps AUBMC. Excludes CMC, Rizk, Saint John and Bellevue.</p>
-          <p class="tier"><b>Smart</b> — Same as Smart Plus but <em>also drops AUBMC</em>, and prosthesis limits are lower.</p>
-          <p class="tier"><b>Essential</b> — Smallest network: also excludes KMC. Class SP only. Bariatric surgery not covered, and a $50 co-pay on emergencies not followed by admission.</p>
-          <p class="note">A / B / SP is the hospitalisation class and sets the money limits — organ transplant is covered to $60,000 / $40,000 / $20,000 a year respectively. Prime · Smart Plus · Smart · Essential set which hospitals you can use.</p>
-        </div>
+        <div class="infobody" id="levelInfoBody"></div>
       </details>
     </div>
 
@@ -599,7 +593,16 @@
     if(b.length >= MAXCOLS) return;
     b.push(e); setBasket(b);
     try{ sessionStorage.setItem(CCLI, ($('broClient').value||'').trim()); }catch(err){}
-    location.reload();          /* cleanest possible reset of the quoter */
+    /* Bank the plan in place - no reload. Ages, DOBs and family members stay
+       exactly as entered; only the coverage level clears, so the next plan
+       can be picked for the same people without retyping anyone's date of birth. */
+    $('broWarn').style.display = 'none';
+    state.level = null;
+    paintGroup(levelsBox, null);
+    $('broFinal').value = '';
+    delete $('broFinal').dataset.touched;
+    paintCmp();
+    calc();
   }
 
   function finishComparison(){
@@ -677,11 +680,14 @@ INSURERS.ufa.key='ufa';
 INSURERS.ufa.name='UFA';
 INSURERS.ufa.tariffTag='October 2025 tariff';
 INSURERS.ufa.blurb=[
-  ['Optimum','UFA Lifetime Care Optimum — the full hospital network, unlimited sum insured.'],
-  ['Standard','UFA Lifetime Care Standard — the limited network. Out-patient is capped at USD 5,000.'],
-  ['A / B / SP','The hospitalisation class. Class SP is sold on the Standard plan only, at one flat price for any family up to 6.'],
-  ['Family size','UFA prices each exact family size from 1 to 6 — the premium per person falls as the family grows.'],
-  ['Ambulatory','85% is available on both networks; 100% is sold on the full (Optimum) network only.']
+  ['Optimum','Full network, MENA + France coverage. Ambulatory unlimited. Classes A & B only — no SP. Includes emergency treatment abroad up to $65,000 and medical assistance abroad up to $100,000, neither of which Standard has at all.'],
+  ['Standard','Limited network (excludes CMC, KMC, SGO, Bellevue), Lebanon only. Ambulatory capped at $5,000/year. Sold on Classes A, B and SP.'],
+  ['Organ transplant','Class A: $100,000 Optimum vs $60,000 Standard. Class B: $80,000 vs $40,000. Class SP (Standard only): $20,000. All per case, per lifetime.'],
+  ['Bariatric & infertility','Optimum covers bariatric surgery and in-hospital infertility with no stated dollar cap (still subject to full eligibility criteria); Standard caps bariatric at $3,000 and infertility at $3,000/year combined in+out.'],
+  ['Other Optimum-only extras','Radiotherapy (IMRT) $7,500 vs $5,500. Immunotherapy up to $30,000/lifetime — not covered at all on Standard. Rehab after a cardiac or stroke event — not covered on Standard. Coma up to 120 days vs 60. Personal accident (death) $15,000 vs $10,000.'],
+  ['A / B / SP','The hospitalisation class, same idea as Fidelity — but SP only exists on the Standard plan, priced flat for a family of any size up to 6.'],
+  ['Family size','UFA prices each exact family size from 1 to 6 — the premium per person falls as the family grows, unlike Fidelity’s two size bands.'],
+  ['Ambulatory %','85% is available on both networks; 100% is sold on the full (Optimum) network only.']
 ];
 
 let BOOK = INSURERS.fidelity;   /* active insurer */
@@ -778,8 +784,10 @@ function paintInsurer(){
   $('segInsurer').querySelectorAll('button').forEach(b=>
     b.classList.toggle('on', b.dataset.v===state.insurer));
   $('tariffTag').innerHTML = BOOK.tariffTag.replace(/\s*tariff$/,'') + '<br>tariff';
-  $('insurerBlurb').innerHTML = BOOK.blurb.map(r=>
+  const blurbHtml = BOOK.blurb.map(r=>
     '<p><b>'+esc(r[0])+'</b> — '+esc(r[1])+'</p>').join('');
+  $('insurerBlurb').innerHTML = blurbHtml;
+  $('levelInfoBody').innerHTML = blurbHtml;   /* same content, shown again next to the level picker */
   /* UFA prices each exact family size, so its size buttons are meaningless */
   $('sizeField').style.display = BOOK.sizeMode==='count' ? 'none' : '';
   $('ufaOpts').style.display   = BOOK.sizeMode==='count' ? '' : 'none';
