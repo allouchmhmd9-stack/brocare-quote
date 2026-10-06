@@ -204,7 +204,27 @@
   .foot b{color:var(--ink2);font-weight:700}
   .hidden{display:none!important}
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+
+  .bandgrid{display:grid;grid-template-columns:1fr auto;gap:4px 14px;font-size:13px;font-variant-numeric:tabular-nums}
+  .bandgrid b{text-align:right;color:var(--price)}
+
+  /* scan IDs / birth-date lists */
+  .scanbox{border:1px dashed var(--accent);border-radius:12px;padding:11px;background:var(--accent-soft);margin-bottom:12px}
+  .scanbtns{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+  .scanbtns button{flex:1 1 140px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);
+    font:700 13px/1.2 inherit;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer}
+  .scanbtns button:hover{background:var(--accent);color:var(--accent-ink)}
+  .scanstatus{font-size:12.5px;color:var(--ink2);margin-top:7px;line-height:1.4}
+  .scanstatus:empty{display:none}
+  .scanrev{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+  .scanrow{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:center;font-size:12px;color:var(--ink2)}
+  .scanrow input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px;font:600 14px inherit;font-family:inherit}
+  .scanrow .warn{color:var(--warn);font-weight:700}
+  .scanrow button{border:0;background:transparent;color:var(--ink2);font-size:17px;cursor:pointer}
+  .scanapply{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:700 13px/1 inherit;
+    font-family:inherit;padding:10px 13px;border-radius:9px;cursor:pointer;margin-top:4px}
 </style>
+<link rel="stylesheet" href="../brocare-theme.css">
 
 <div class="wrap">
   <a class="backlink" href="../">‹ All Brocare tools</a>
@@ -231,6 +251,17 @@
   </section>
 
   <div class="card">
+    <div class="scanbox">
+      <label class="lbl">Fill from a photo instead of typing</label>
+      <div class="scanbtns">
+        <button type="button" id="scanIds">Scan ID cards</button>
+        <button type="button" id="scanList">Scan a list of birth dates</button>
+      </div>
+      <input type="file" id="scanFile" accept="image/*" multiple hidden>
+      <div class="hint" style="margin-top:6px">ID cards: one photo per person, pick several at once. A list: one screenshot holding everyone's dates. You can also paste a screenshot (Ctrl+V). Images are read inside this browser and never uploaded.</div>
+      <div class="scanstatus" id="scanStatus"></div>
+      <div class="scanrev hidden" id="scanReview"></div>
+    </div>
     <div class="field">
       <label class="lbl">Quote for</label>
       <div class="seg" id="segMode" role="group" aria-label="Quote mode">
@@ -316,6 +347,11 @@
     <div class="price-rows" id="priceRows"></div>
     <div class="msg" id="msg"></div>
   </div>
+
+  <details class="info card" id="bandsBox" style="padding:0">
+    <summary>Price by age band</summary>
+    <div class="infobody" id="bandsBody"></div>
+  </details>
 
   
 <!--BROCARE-DOC-HANDOFF-->
@@ -424,7 +460,7 @@
         ? 'UFA limited hospital network. Class SP is one flat price for a family of up to 6.'
         : 'UFA limited hospital network. Out-patient is capped at USD 5,000.';
     if(/Smart Plus$/i.test(l))
-      return 'Full hospital network excluding CMC, Rizk, Saint John and Bellevue. AUBMC is included.';
+      return 'Full hospital network excluding CMC and Bellevue. AUBMC, Rizk and Saint John are included.';
     if(/Essential$/i.test(l))
       return 'Full hospital network excluding AUBMC, CMC, KMC, Rizk, Saint John and Bellevue.';
     if(/Smart$/i.test(l))
@@ -671,7 +707,7 @@ INSURERS.fidelity.name='Fidelity';
 INSURERS.fidelity.tariffTag='April 2026 tariff';
 INSURERS.fidelity.blurb=[
   ['Prime','Full hospital network — no hospital excluded (Class SP loses Bellevue only). Highest limits.'],
-  ['Smart Plus','Keeps AUBMC. Excludes CMC, Rizk, Saint John and Bellevue.'],
+  ['Smart Plus','Keeps AUBMC, Rizk and Saint John. Excludes only CMC and Bellevue.'],
   ['Smart','Also drops AUBMC, and prosthesis limits are lower.'],
   ['Essential','Smallest network: also excludes KMC. Class SP only. Bariatric not covered.'],
   ['A / B / SP','The hospitalisation class — it sets the money limits (organ transplant $60,000 / $40,000 / $20,000 a year).']
@@ -1040,6 +1076,153 @@ function calc(){
   addRow((state.biz==='new'?'New':'Renewal')+' · '+state.level, money(total),'total');
 }
 
+/* ---------- age bands ----------
+   Ages whose yearly price (in-patient + out-patient) is identical for the
+   selection on screen, read straight from the rate book — nothing hardcoded. */
+function paintBands(){
+  const out=$('bandsBody');
+  if(!state.level){ out.innerHTML='<p>Pick a cover level to see where its price changes with age.</p>'; return; }
+  const T=DATA[state.biz], lvl=T.inpatient[state.level];
+  const byCopay = BOOK.sizeMode==='count' ? (lvl && lvl[state.copay]) : (lvl && lvl[state.size] && lvl[state.size][state.copay]);
+  if(!byCopay){ out.innerHTML='<p>No rates for this combination.</p>'; return; }
+  const ages=Object.keys(byCopay).map(Number).sort((a,b)=>a-b), bands=[];
+  ages.forEach(a=>{
+    const p=pricePerson(a), v=p.err ? null : Math.round((p.ip+p.amb)*100)/100;
+    const last=bands[bands.length-1];
+    if(last && last.v===v && last.to===a-1) last.to=a; else bands.push({from:a, to:a, v});
+  });
+  const ctx=state.level+' · '+(state.amb==='none'?'no out-patient':state.amb+'% out-patient')+' · '+
+    (BOOK.sizeMode==='count' ? 'family of '+Math.min(familySize(),6) : 'size '+state.size)+' · '+(state.biz==='new'?'new business':'renewal');
+  out.innerHTML='<p><b>'+esc(ctx)+'</b> — price per person per year. Moving into the next band changes the price.</p>'+
+    '<div class="bandgrid">'+bands.map(b=>'<span>'+(b.from===b.to?'Age '+b.from:'Ages '+b.from+'–'+b.to)+'</span><b>'+
+      (b.v===null?'not sold':money(b.v))+'</b>').join('')+'</div>'+
+    '<p class="hint">Excludes the one-off cost of policy.</p>';
+}
+const calcOnly=calc;
+calc=function(){ calcOnly(); if($('bandsBox').open) paintBands(); };
+$('bandsBox').addEventListener('toggle', ()=>{ if($('bandsBox').open) paintBands(); });
+
+/* ---------- fill members from photos ----------
+   OCR runs in this browser with Tesseract.js (English + Arabic). The engine and
+   language files download from the CDN on first use; the images never leave the
+   page. Nothing is applied until the dates have been reviewed. */
+const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker=null, scanMode='list', scanRows=[];   /* a pasted screenshot is usually a list */
+function loadScript(src){
+  return new Promise((ok,no)=>{
+    if(window.Tesseract) return ok();
+    const s=document.createElement('script'); s.src=src; s.onload=ok;
+    s.onerror=()=>no(new Error('The text reader could not be downloaded — check the connection.'));
+    document.head.appendChild(s);
+  });
+}
+async function getWorker(){
+  if(ocrWorker) return ocrWorker;
+  await loadScript(OCR_SRC);
+  ocrWorker=await Tesseract.createWorker(['eng','ara']);
+  return ocrWorker;
+}
+function westernDigits(s){
+  return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+/* every date in the text; Lebanese order (day/month/year) when it is ambiguous */
+function findDates(text){
+  const t=westernDigits(text), out=[], re=/(\d{1,4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,4})/g;
+  let m;
+  while((m=re.exec(t))){
+    const a=+m[1], b=+m[2], c=+m[3];
+    let y,mo,d,amb=false;
+    if(m[1].length===4){ y=a; mo=b; d=c; }
+    else if(m[3].length===4){ y=c; if(a>12){ d=a; mo=b; } else if(b>12){ d=b; mo=a; } else { d=a; mo=b; amb=a!==b; } }
+    else continue;
+    if(mo<1||mo>12||d<1||d>31) continue;
+    const iso=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dt=new Date(iso+'T00:00:00');
+    if(isNaN(dt) || dt.getDate()!==d) continue;
+    out.push({iso, idx:m.index, amb});
+  }
+  return out;
+}
+const isDob = iso => { const a=ageFromDob(iso); return a!==null && a>=0 && a<=100; };
+const DOB_LABEL=/(date\s*of\s*birth|birth\s*date|d\.?o\.?b|n[ée]e?\s*le|تاريخ\s*الولادة|تاريخ\s*الميلاد|الولادة|الميلاد)/i;
+/* an ID card carries several dates; the birth date is the one after its label,
+   else the earliest (issue and expiry dates are always later) */
+function idCardDob(text){
+  const dates=findDates(text).filter(d=>isDob(d.iso));
+  if(!dates.length) return null;
+  const lab=westernDigits(text).search(DOB_LABEL);
+  if(lab>=0){
+    const after=dates.filter(d=>d.idx>lab).sort((a,b)=>a.idx-b.idx);
+    if(after.length) return Object.assign({}, after[0], {why:'next to the birth-date label'});
+  }
+  return Object.assign({}, dates.slice().sort((a,b)=>a.iso<b.iso?-1:1)[0], {why:'earliest date on the card'});
+}
+async function runScan(files){
+  files=[...files].filter(f=>/^image\//.test(f.type));
+  if(!files.length) return;
+  const st=$('scanStatus');
+  st.textContent='Preparing the text reader (first time takes a few seconds)…';
+  let w;
+  try{ w=await getWorker(); } catch(e){ st.textContent=e.message; return; }
+  scanRows=[];
+  for(let i=0;i<files.length;i++){
+    st.textContent='Reading image '+(i+1)+' of '+files.length+'…';
+    const text=(await w.recognize(files[i])).data.text;
+    const src=files.length>1 ? 'Image '+(i+1) : 'Image';
+    if(scanMode==='id'){
+      const d=idCardDob(text);
+      scanRows.push(d ? {iso:d.iso, amb:d.amb, note:src+' · '+d.why} : {iso:'', amb:false, note:src+' · no birth date found — type it'});
+    } else {
+      findDates(text).filter(d=>isDob(d.iso)).forEach(d=>scanRows.push({iso:d.iso, amb:d.amb, note:src}));
+    }
+  }
+  st.textContent = scanRows.length
+    ? 'Check these before applying. Each one is editable.'
+    : 'No birth dates could be read. Try a sharper, straighter photo, or type them in.';
+  paintScanReview();
+}
+function paintScanReview(){
+  const box=$('scanReview');
+  box.classList.toggle('hidden', !scanRows.length);
+  if(!scanRows.length){ box.innerHTML=''; return; }
+  const today=new Date().toISOString().slice(0,10);
+  box.innerHTML=scanRows.map((r,i)=>
+    '<div class="scanrow"><input type="date" data-i="'+i+'" value="'+r.iso+'" min="1920-01-01" max="'+today+'">'+
+    '<span>'+(r.iso?'age '+ageFromDob(r.iso)+' · ':'')+esc(r.note)+
+      (r.amb?' · <span class="warn">day and month could be swapped — check</span>':'')+'</span>'+
+    '<button type="button" data-x="'+i+'" aria-label="Remove">×</button></div>').join('')+
+    '<div><button type="button" class="scanapply" id="scanApply">Use '+scanRows.length+
+    (scanRows.length===1?' date (individual)':' dates (family)')+'</button></div>';
+  box.querySelectorAll('input[data-i]').forEach(el=>el.addEventListener('change',()=>{ scanRows[+el.dataset.i].iso=el.value; scanRows[+el.dataset.i].amb=false; }));
+  box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ scanRows.splice(+b.dataset.x,1); paintScanReview(); });
+  $('scanApply').onclick=applyScan;
+}
+function applyScan(){
+  const dates=scanRows.map(r=>r.iso).filter(Boolean);
+  if(!dates.length){ $('scanStatus').textContent='Add at least one date first.'; return; }
+  if(dates.length===1){
+    document.querySelector('#segMode [data-v="individual"]').click();
+    $('dob').value=dates[0]; $('dob').dispatchEvent(new Event('change'));
+  } else {
+    document.querySelector('#segMode [data-v="family"]').click();
+    members=dates.map(d=>({id:++mid, dob:d, age:ageFromDob(d)}));
+    renderMembers(); calc();
+  }
+  scanRows=[]; paintScanReview();
+  $('scanStatus').textContent='Filled '+dates.length+(dates.length===1?' date of birth':' members')+' — now choose the cover level.';
+  $('levels').scrollIntoView({behavior:'smooth', block:'center'});
+}
+$('scanIds').onclick=()=>{ scanMode='id'; $('scanFile').click(); };
+$('scanList').onclick=()=>{ scanMode='list'; $('scanFile').click(); };
+$('scanFile').addEventListener('change', e=>{ runScan(e.target.files); e.target.value=''; });
+document.addEventListener('paste', e=>{
+  const imgs=[...(e.clipboardData||{}).items||[]].filter(it=>it.kind==='file' && /^image\//.test(it.type)).map(it=>it.getAsFile());
+  if(!imgs.length) return;
+  e.preventDefault();
+  runScan(imgs);
+});
+
 paintInsurer();
 calc();
 </script>
+<script src="../shell.js"></script>

@@ -148,6 +148,39 @@
   .valueCard .vc-use{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);
     font:700 13px/1 inherit;font-family:inherit;padding:9px 13px;border-radius:9px;cursor:pointer}
   .valueCard .vc-use:hover{opacity:.9}
+  .valueCard .vc-use.sm{padding:6px 11px;font-size:12px}
+  .valueCard.info{border-color:var(--line)}
+  .valueCard .chips{margin:6px 0 8px}
+  .vc-groups{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+  .vc-groups button{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 12.5px/1 inherit;
+    font-family:inherit;padding:7px 10px;border-radius:999px;cursor:pointer;font-variant-numeric:tabular-nums}
+  .vc-groups button b{color:var(--accent)}
+  .vc-groups button:hover{border-color:var(--accent)}
+  .vc-list{margin-top:10px;font-size:12.5px}
+  .vc-list summary{cursor:pointer;font-weight:700;color:var(--accent);padding:4px 0}
+  .vc-row{display:grid;grid-template-columns:80px 1fr auto;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums}
+  .vc-row span{color:var(--ink2)}
+  .vc-row a{color:var(--accent);font-weight:700;text-decoration:none}
+
+  .ivgrid{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .ivgrid b{text-align:right;color:var(--price)}
+  .ivgrid .ivdrop{grid-column:1 / -1;font-style:normal;font-size:11.5px;font-weight:700;color:var(--warn)}
+
+  /* scan the car registration (defter sayyara) */
+  .scanbox{border:1px dashed var(--accent);border-radius:12px;padding:11px;background:var(--accent-soft)}
+  .scanbox button.scanbtn{width:100%;border:1px solid var(--accent);background:var(--surface);color:var(--accent);
+    font:700 13px/1.2 inherit;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;margin-top:7px}
+  .scanbox button.scanbtn:hover{background:var(--accent);color:var(--accent-ink)}
+  .scanstatus{font-size:12.5px;color:var(--ink2);margin-top:7px;line-height:1.4}
+  .scanstatus:empty{display:none}
+  .scanrev{margin-top:9px;display:grid;grid-template-columns:110px 1fr;gap:7px 9px;align-items:center;font-size:12.5px}
+  .scanrev label{color:var(--ink2);font-weight:700}
+  .scanrev input,.scanrev select{padding:8px;font-size:14px}
+  .scanrev .why{grid-column:2;font-size:11.5px;color:var(--ink2);margin-top:-4px}
+  .scanrev .full{grid-column:1 / -1}
+  .scanapply{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:700 13px/1 inherit;
+    font-family:inherit;padding:10px 13px;border-radius:9px;cursor:pointer}
 
   /* product options */
   .opts{display:flex;flex-direction:column;gap:9px}
@@ -166,6 +199,7 @@
   .optprice{margin-left:auto;text-align:right;font-size:19px;font-weight:800;color:var(--price);font-variant-numeric:tabular-nums;white-space:nowrap}
   .optprice small{display:block;font-size:11px;font-weight:600;color:var(--ink2)}
   .optprice.na{font-size:13px;font-weight:700;color:var(--ink2);white-space:normal;max-width:130px}
+  .optdelta.bad{color:var(--warn)}
 
   .alert{
     border-radius:11px;padding:12px 13px;font-size:13.5px;font-weight:600;line-height:1.4;
@@ -208,6 +242,7 @@
   .hidden{display:none!important}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
+<link rel="stylesheet" href="../brocare-theme.css">
 
 <div class="wrap">
   <a class="backlink" href="../">‹ All Brocare tools</a>
@@ -256,6 +291,14 @@
   <section class="step" id="s1">
     <div class="stephead"><span class="stepnum">1</span><span class="steptitle">Vehicle</span><span class="stepecho" id="e1"></span></div>
     <div class="stepbody">
+      <div class="scanbox">
+        <label class="lbl">Fill from the car registration (دفتر السيارة)</label>
+        <button type="button" class="scanbtn" id="scanCar">Scan the registration photo</button>
+        <input type="file" id="scanCarFile" accept="image/*" hidden>
+        <div class="hint" style="margin-top:6px">Reads the make, model, year and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card — add it in Step 2.</div>
+        <div class="scanstatus" id="scanCarStatus"></div>
+        <div class="scanrev hidden" id="scanCarReview"></div>
+      </div>
       <div class="field">
         <label class="lbl" for="year">Year of make</label>
         <select id="year"><option value="">Select year…</option></select>
@@ -269,7 +312,7 @@
         <input type="text" id="lookupModel" placeholder="e.g. Corolla, Tucson, Q5…" autocomplete="off">
         <div id="valueResult"></div>
         <div class="lookupRow" id="lookupLinks"></div>
-        <span class="hint">Checks Brocare's Lebanon comparables database first (real listings, researched by hand). Not covered yet, or want to double-check? Use the links above, or call the agency for a valuation.</span>
+        <span class="hint">Values this exact make, model and year from every listing on OLX, OpenSooq and Autotrader. It only names a price when the listings agree; otherwise it shows you the spread to decide, or tells you to call the agency. The links above open the live searches.</span>
       </div>
       <div class="field">
         <label class="lbl" for="value">Vehicle value (USD)</label>
@@ -328,6 +371,12 @@
     <div class="xgrid" id="crossGrid"></div>
     <div class="xnote" id="crossNote"></div>
   </section>
+
+  <!-- VALUE INTERVALS -->
+  <details class="info" id="ivBox" style="background:var(--surface);margin-top:0">
+    <summary>Price intervals by car value</summary>
+    <div class="infobody" id="ivBody"></div>
+  </details>
 
   
 <!--BROCARE-DOC-HANDOFF-->
@@ -638,6 +687,7 @@
   </div>
 </div>
 
+<script src="car-listings.js"></script>
 <script>
 /* ============================================================
    TARIFF DATA — Fidelity Motor All Risk, April 1st 2026
@@ -679,10 +729,12 @@ const INSURERS = {
       ['Prime Drive','Widest cover. Agency dealer repair included, and no depreciation on new spare parts.'],
       ['Smart Drive','Comprehensive cover, but spare parts follow a depreciation scale and there is no agency repair.'],
       ['Collision','Collision damage only — a cut-down cover for older or lower-value cars.'],
-      ['Total Loss','Pays out only if the car is a write-off (repairs reaching 65% of its value).']
+      ['Total Loss','Pays out only if the car is a write-off (repairs reaching 65% of its value).'],
+      ['Electric Drive Plus','Fidelity’s electric-car tariff with agency dealer repair, which is only available where the make has an authorized dealer in Lebanon. Tesla is excluded.'],
+      ['Electric Drive','Fidelity’s electric-car tariff without agency repair. Tesla is excluded. Fidelity sells no Collision or Total Loss plan on electric cars.']
     ],
     products:[
-      { id:'prime', name:'Prime Drive', min:785, agency:true, pairWith:'smart',
+      { id:'prime', name:'Prime Drive', min:785, agency:true, pairWith:'smart', fuels:['Gasoline','Hybrid'],
         note:'Widest cover · agency dealer repair · no depreciation on new spare parts',
         bands:[[0,19999],[20000,49999],[50000,99999],[100000,300000]],
         years:[
@@ -690,7 +742,7 @@ const INSURERS = {
           { from:2020, to:2022, rates:[4.25,3.75,3.00,2.75] },
           { from:2018, to:2019, rates:[null,4.50,3.50,2.95] }
         ] },
-      { id:'smart', name:'Smart Drive', min:675, agency:false,
+      { id:'smart', name:'Smart Drive', min:675, agency:false, fuels:['Gasoline','Hybrid'],
         note:'Comprehensive cover · depreciation scale on spare parts',
         bands:[[0,49999],[50000,99999],[100000,300000]],
         years:[
@@ -699,17 +751,34 @@ const INSURERS = {
           { from:2018, to:2019, rates:[3.50,3.00,2.75] },
           { from:2010, to:2017, rates:[3.80,3.25,3.00] }
         ] },
-      { id:'collision', name:'Collision', min:405, agency:false,
+      { id:'collision', name:'Collision', min:405, agency:false, fuels:['Gasoline','Hybrid'],
         note:'Collision damage cover',
         bands:[[0,Infinity]],
         years:[ { from:2016, to:2026, rates:[1.75] }, { from:2005, to:2015, rates:[2.00] } ] },
-      { id:'total', name:'Total Loss', min:305, agency:false,
+      { id:'total', name:'Total Loss', min:305, agency:false, fuels:['Gasoline','Hybrid'],
         note:'Total loss cover only',
         bands:[[0,Infinity]],
-        years:[ { from:2016, to:2026, rates:[1.25] }, { from:2005, to:2015, rates:[1.75] } ] }
+        years:[ { from:2016, to:2026, rates:[1.25] }, { from:2005, to:2015, rates:[1.75] } ] },
+      /* Fidelity's separate electric-car tariff (April 1st, 2026): no Collision or Total Loss plan,
+         Tesla excluded from both, agency repair only on Electric Drive Plus. */
+      { id:'fid-ev-plus', name:'Electric Drive Plus', min:785, agency:true, pairWith:'fid-ev', fuels:['Electric'],
+        note:'Electric-car cover · agency dealer repair · only where the make has an authorized dealer in Lebanon',
+        bands:[[0,19999],[20000,49999],[50000,99999],[100000,300000]],
+        years:[
+          { from:2023, to:2026, rates:[3.75,3.25,2.65,2.50] },
+          { from:2020, to:2022, rates:[4.25,3.75,3.00,2.75] }
+        ] },
+      { id:'fid-ev', name:'Electric Drive', min:705, agency:false, fuels:['Electric'],
+        note:'Electric-car cover · no agency repair',
+        bands:[[0,49999],[50000,300000]],
+        years:[ { from:2020, to:2026, rates:[3.75,3.25] } ] }
     ],
     driverRules:[ { min:50000, max:100000, age:21 }, { min:100001, max:Infinity, age:26 } ],
-    sportsMinAge:30
+    sportsMinAge:30,
+    /* Makes Fidelity will not quote at all, and makes with no authorized dealer (so no agency repair). */
+    referMakes:{ 'Tesla':'Fidelity’s electric-car tariff excludes Tesla.' },
+    noAgencyMakes:{ 'Tesla':'Tesla has no authorized dealer in Lebanon.' },
+    agencyNeedsDealer:'Fidelity agency repair is subject to an existing authorized dealer in Lebanon for this make — confirm before promising it.'
   },
 
   ufa: {
@@ -745,7 +814,7 @@ const INSURERS = {
         note:'Lux cover with official dealer repair · 2024–2027 vehicles only',
         bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
         years:[ { from:2024, to:2027, rates:[3.50,2.80,2.70,2.40,2.30] } ] },
-      { id:'ufa-ev-lux', name:'Lux Plan (Electric)', min:675, agency:false, fuels:['Electric'],
+      { id:'ufa-ev-lux', name:'Lux Plan (Electric)', min:675, agency:false, fuels:['Electric'], approvalToYear:2021,
         note:'Electric-vehicle tariff · battery covered when damaged in an accident',
         bands:[[0,20000],[20001,50000],[50001,70000],[70001,100000],[100001,150000]],
         years:[ { from:2020, to:2027, rates:[3.20,2.50,2.40,2.30,2.20] } ] },
@@ -760,7 +829,24 @@ const INSURERS = {
     ],
     /* UFA's tariff sets no driver-age bands — it requires a valid licence only. */
     driverRules:[],
-    sportsMinAge:0
+    sportsMinAge:0,
+    /* "Subject to UFA Special Approval" (Motor All Risk, general guidelines): Chinese cars and
+       High-End Agency vehicles. BUMC is read as Lexus (Boustany United Machineries is the Toyota/Lexus
+       importer) — Toyota itself is NOT treated as high-end; confirm with UFA. */
+    referMakes:{
+      'BYD':'UFA needs special approval for Chinese cars.', 'Chery':'UFA needs special approval for Chinese cars.',
+      'MG':'UFA needs special approval for Chinese cars.', 'Geely':'UFA needs special approval for Chinese cars.',
+      'Mercedes':'UFA needs special approval for High-End Agency vehicles (T. Gargour).',
+      'Land Rover':'UFA needs special approval for High-End Agency vehicles (Tewtel).',
+      'Range Rover':'UFA needs special approval for High-End Agency vehicles (Tewtel).',
+      'Lexus':'UFA needs special approval for High-End Agency vehicles (BUMC).'
+    },
+    noAgencyMakes:{ 'Tesla':'Tesla has no authorized dealer in Lebanon.' },
+    agencyNeedsDealer:'UFA agency repair is for 2024–2027 cars of makes with an authorized dealer in Lebanon.',
+    makeNotes:{
+      'Kia':'UFA requires an agency-fitted (or UFA-certified) anti-theft alarm and immobilizer on Kia SUVs.',
+      'Hyundai':'UFA requires an agency-fitted (or UFA-certified) anti-theft alarm and immobilizer on Hyundai SUVs.'
+    }
   }
 };
 /* ============================================================
@@ -810,104 +896,76 @@ INSURERS.fidelity.sports = SPORTS;  INSURERS.fidelity.otherMakes = OTHER_MAKES;
 INSURERS.ufa.sports      = SPORTS;  INSURERS.ufa.otherMakes      = OTHER_MAKES;
 
 /* ============================================================
-   Lebanon used-car comparables — hand-researched, not scraped live.
-   A static page can't fetch olx.com.lb / autotrader.com.lb / opensooq.com
-   at quote-time (cross-origin restrictions), so this is a periodically
-   refreshed reference table instead: real listings read directly off
-   OLX Lebanon, cross-checked against Autotrader.com.lb and OpenSooq
-   Lebanon where available. Anything not covered here correctly falls
-   back to "call the agency" rather than guessing.
-   To refresh or extend: ask for a re-check on a make/model and the
-   band(s) below get updated with a new `updated` date.
+   Lebanon used-car valuation.
+   Individual listings live in car-listings.js (window.CAR_LISTINGS), rebuilt by
+   tools/car-values/refresh.py from OLX, OpenSooq and Autotrader.com.lb. The
+   quoter never guesses: it finds the listings for this exact make / model /
+   year, then only names a value when the market genuinely agrees.
    ============================================================ */
-const CAR_VALUES = {
-  updated:'2026-09-03',
-  source:'Real listings read live from OLX Lebanon (olx.com.lb), cross-checked against Autotrader.com.lb and OpenSooq Lebanon.',
-  models:[
-    { brand:'Toyota', model:'Corolla', bands:[
-      { from:2020, to:2021, low:15000, high:18000, n:4 },
-      { from:2018, to:2019, low:13000, high:15500, n:5 },
-      { from:2014, to:2017, low:9500,  high:15500, n:8 }
-    ]},
-    { brand:'Hyundai', model:'Tucson', bands:[
-      { from:2021, to:2022, low:24000, high:27000, n:1 },
-      { from:2019, to:2020, low:15300, high:17900, n:8 },
-      { from:2017, to:2018, low:12500, high:18500, n:9 },
-      { from:2010, to:2015, low:7200,  high:12000, n:4 }
-    ]},
-    { brand:'Hyundai', model:'Elantra', bands:[
-      { from:2019, to:2020, low:12400, high:16400, n:9 },
-      { from:2017, to:2018, low:10500, high:12500, n:5 },
-      { from:2014, to:2016, low:8800,  high:12500, n:4 }
-    ]},
-    { brand:'Kia', model:'Sportage', bands:[
-      { from:2020, to:2021, low:16500, high:21000, n:6 },
-      { from:2017, to:2018, low:13800, high:18500, n:10 },
-      { from:2011, to:2014, low:10500, high:13000, n:3 }
-    ]},
-    { brand:'BMW', model:'3 Series', bands:[
-      { from:2015, to:2017, low:14250, high:17500, n:3 },
-      { from:2011, to:2014, low:6500,  high:12000, n:5 },
-      { from:2004, to:2009, low:4500,  high:8500,  n:10 }
-    ]},
-    { brand:'Mercedes', model:'C-Class', bands:[
-      { from:2018, to:2019, low:19500, high:29600, n:7, note:'Wide range — 4-cylinder C300 sits at the low end, AMG/C43 trims at the high end.' },
-      { from:2016, to:2017, low:16500, high:23000, n:2 },
-      { from:2012, to:2014, low:12000, high:15000, n:4 }
-    ]},
-    { brand:'Honda', model:'CR-V', bands:[
-      { from:2017, to:2019, low:18000, high:22000, n:5 },
-      { from:2014, to:2016, low:14500, high:15800, n:2 }
-    ]},
-    { brand:'Jeep', model:'Grand Cherokee', bands:[
-      { from:2018, to:2019, low:18800, high:25700, n:9 },
-      { from:2016, to:2017, low:15500, high:21900, n:4 },
-      { from:2011, to:2015, low:11300, high:16500, n:4 }
-    ]},
-    { brand:'Audi', model:'Q5', bands:[
-      { from:2018, to:2019, low:21000, high:25900, n:9 },
-      { from:2016, to:2017, low:13500, high:23900, n:5, note:'Wide range — Quattro/S-line trims sit at the high end.' },
-      { from:2014, to:2015, low:10300, high:14500, n:3 },
-      { from:2010, to:2011, low:5000,  high:9700,  n:4 }
-    ]},
-    { brand:'Range Rover', model:'Evoque', bands:[
-      { from:2020, to:2020, low:27800, high:46000, n:8, note:'Wide range — First Edition/P300 trims sit at the high end.' },
-      { from:2018, to:2019, low:16500, high:28500, n:6 },
-      { from:2015, to:2016, low:15000, high:18800, n:3 },
-      { from:2012, to:2013, low:10800, high:14000, n:5 }
-    ]},
-    { brand:'Nissan', model:'Sunny', bands:[
-      { from:2014, to:2015, low:4400, high:8700, n:4 },
-      { from:2009, to:2011, low:3700, high:7500, n:5 }
-    ]},
-    { brand:'Nissan', model:'Qashqai', bands:[
-      { from:2018, to:2018, low:11700, high:12900, n:2 },
-      { from:2009, to:2014, low:7500,  high:8900,  n:2 }
-    ]}
-  ]
+const VAL = {
+  minListings: 3,     /* fewer listings than this -> no verdict, call the agency        */
+  sameWithin: 0.02,   /* prices within 2% of each other count as "the same price"        */
+  minCluster: 3,      /* a "most common price" needs at least this many listings          */
+  majority: 0.5,      /* ...and at least this share of all listings                       */
+  tightSpread: 0.12,  /* no majority price, but all within 12% of the median -> median    */
+  outlierLow: 0.4,    /* listings below 40% / above 250% of the median are typos or parts */
+  outlierHigh: 2.5
 };
+const SRC_NAME = { o:'OLX', s:'OpenSooq', a:'Autotrader' };
 function normStr(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
-function findCarComp(brand, modelText, year){
-  const nm = normStr(modelText);
-  if(!brand || !nm) return null;
-  const hit = CAR_VALUES.models.find(function(m){
-    if(m.brand!==brand) return false;
-    const nmodel = normStr(m.model);
-    return nmodel.indexOf(nm)>=0 || nm.indexOf(nmodel)>=0;
+function makeKey(b){ const k=normStr(b); return (k==='rangerover'||k==='landrover') ? 'landrover' : k; }
+function median(a){ const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+const round50 = n => Math.round(n/50)*50;
+
+let LISTINGS=null;
+function allListings(){
+  if(LISTINGS) return LISTINGS;
+  const d=window.CAR_LISTINGS;
+  if(!d || !d.rows) return null;
+  LISTINGS=d.rows.map(function(r){
+    return { make:r[0], model:r[1], year:r[2], price:r[3], km:r[4], src:r[5], url:r[6],
+             mk:makeKey(r[0]), hay:normStr(r[0]+' '+r[1]+' '+r[6]) };
   });
-  if(!hit) return { found:false };
-  if(year===null) return { found:true, model:hit, band:null };
-  let band = hit.bands.find(function(b){ return year>=b.from && year<=b.to; });
-  let approx = false;
-  if(!band){
-    approx = true;
-    band = hit.bands.slice().sort(function(a,b2){
-      const da = Math.min(Math.abs(year-a.from), Math.abs(year-a.to));
-      const db = Math.min(Math.abs(year-b2.from), Math.abs(year-b2.to));
-      return da-db;
-    })[0];
+  return LISTINGS;
+}
+function listingUrl(r){
+  if(!r.url) return '';
+  return r.src==='o' ? 'https://www.olx.com.lb/ad/'+r.url+'.html'
+       : r.src==='a' ? 'https://www.autotrader.com.lb/'+r.url : '';
+}
+/* every typed word must appear in the listing's make/model/title, so "320i" or "Q4 e-tron" both work */
+function matchModel(rows, brand, modelText){
+  const toks=String(modelText||'').toLowerCase().split(/\s+/).map(normStr).filter(Boolean);
+  const mk=makeKey(brand);
+  return rows.filter(r => r.mk===mk && toks.every(t => r.hay.indexOf(t)>=0));
+}
+/* Decide what the listings say. Never forces a number. */
+function consensus(rows){
+  const all=rows.map(r=>r.price).sort((a,b)=>a-b);
+  if(!all.length) return {kind:'none', n:0};
+  const med0=median(all);
+  const kept=all.filter(p => p>=med0*VAL.outlierLow && p<=med0*VAL.outlierHigh);
+  const ignored=all.length-kept.length, n=kept.length;
+  if(n<VAL.minListings) return {kind:'few', n, ignored};
+  const clusters=[]; let cur=null;
+  kept.forEach(function(p){
+    if(cur && p<=cur.start*(1+VAL.sameWithin)) cur.v.push(p);
+    else { cur={start:p, v:[p]}; clusters.push(cur); }
+  });
+  clusters.forEach(c => c.price=round50(median(c.v)));
+  const top=clusters.slice().sort((a,b)=>b.v.length-a.v.length)[0];
+  const lo=kept[0], hi=kept[n-1];
+  if(top.v.length>=VAL.minCluster && top.v.length/n>=VAL.majority){
+    return {kind:'value', method:'mode', value:top.price, n, ignored, lo, hi,
+      reason:top.v.length+' of '+n+' listings sit at about '+money(top.price)+' — the most common price. '+((n-top.v.length)===1?'The other one is not used.':'The other '+(n-top.v.length)+' are not used.')};
   }
-  return { found:true, model:hit, band:band, approx:approx };
+  const spread=(hi-lo)/median(kept);
+  if(spread<=VAL.tightSpread){
+    return {kind:'value', method:'median', value:round50(median(kept)), n, ignored, lo, hi,
+      reason:'No single price repeats, but all '+n+' listings fall between '+money(lo)+' and '+money(hi)+'. This is the middle one.'};
+  }
+  return {kind:'spread', n, ignored, lo, hi,
+    groups:clusters.map(c=>({price:c.price, count:c.v.length})).sort((a,b)=>a.price-b.price)};
 }
 
 let TARIFF = INSURERS.fidelity;     /* the active rate book */
@@ -942,10 +1000,12 @@ function bandIndex(product, value){
   }
   return -1;
 }
-function quote(product, value, year){
-  if(value>TARIFF.maxValue) return {na:TARIFF.referNote};
+function quote(product, value, year, book){
+  book = book || TARIFF;
+  if(value>book.maxValue) return {na:book.referNote};
   const yr=product.years.find(y=>year>=y.from && year<=y.to);
   if(!yr) return {na:'Year not covered'};
+  if(product.approvalToYear && year<=product.approvalToYear) return {na:'Needs '+book.name+' special approval'};
   const bi=bandIndex(product,value);
   if(bi<0) return {na:'Value not in tariff'};
   const rate=yr.rates[bi];
@@ -953,6 +1013,30 @@ function quote(product, value, year){
   const raw=value*rate/100;
   const premium=Math.max(raw,product.min);
   return {rate:rate, raw:raw, premium:premium, atMin:premium>raw};
+}
+
+/* ---------- what an insurer may offer for the vehicle on screen ----------
+   The single source of truth for both the quote screen and the Fidelity-vs-UFA
+   panel. Everything here comes from the insurers' tariff documents: makes they
+   refuse or send to special approval, and the conditions for agency repair. */
+function referReason(book){
+  if(!S.brand || !book.referMakes) return null;
+  const r=book.referMakes[S.brand];
+  return r ? r+' Refer to '+book.name+'.' : null;
+}
+/* null = agency repair may be offered; otherwise the reason it must not be. */
+function agencyBlock(book){
+  if(!S.brand) return 'Choose the make to check whether agency repair is available.';
+  if(S.brand==='Other make') return 'Agency repair can’t be confirmed for a make that isn’t on the list.';
+  if(book.noAgencyMakes && book.noAgencyMakes[S.brand]) return book.noAgencyMakes[S.brand];
+  return null;
+}
+function offeredPlans(book){
+  const blocked=agencyBlock(book);
+  return book.products.filter(function(p){
+    if(p.fuels && p.fuels.indexOf(S.fuel)<0) return false;
+    return !(p.agency && blocked);
+  });
 }
 
 /* ---------- eligibility ---------- */
@@ -964,6 +1048,8 @@ function eligibility(){
     }
     return {block:m};
   }
+  const rr=referReason(TARIFF);
+  if(rr) return {block:rr};
   if(S.value!==null && S.value>TARIFF.maxValue){
     return {block:'Vehicle value is above $'+TARIFF.maxValue.toLocaleString()+
       ' — refer to '+TARIFF.name+' for a quote.'};
@@ -976,7 +1062,7 @@ function eligibility(){
       }
     }
   }
-  return {block:null};
+  return {block:null, note:(S.brand && TARIFF.makeNotes && TARIFF.makeNotes[S.brand]) || ''};
 }
 
 /* ---------- wiring ---------- */
@@ -1032,7 +1118,8 @@ function render(){
 
   $('s2').classList.toggle('off', !step1ok);
   const elig=eligibility();
-  $('eligAlert').innerHTML = elig.block ? '<div class="alert">'+esc(elig.block)+'</div>' : '';
+  $('eligAlert').innerHTML = elig.block ? '<div class="alert">'+esc(elig.block)+'</div>'
+    : (elig.note ? '<span class="hint">'+esc(elig.note)+'</span>' : '');
   const step2ok = step1ok && S.brand!=='' && S.driverAge!==null && !elig.block;
   $('s2').classList.toggle('done', step2ok);
   $('e2').textContent = S.brand ? (S.brand + (S.driverAge!==null?(' · driver '+S.driverAge):'')) : '';
@@ -1048,6 +1135,7 @@ function render(){
   if(S.product) buildSummary();
   buildCross();
   buildLookupLinks();
+  if($('ivBox').open) paintIntervals();
 }
 
 /* One-click links to check what this car actually sells for in Lebanon right
@@ -1062,6 +1150,9 @@ function buildLookupLinks(){
   box.classList.remove('hidden');
   const model = $('lookupModel').value.trim();
   const year = S.year || '';
+  const sig=[S.brand,model,year].join('|');
+  if(sig===lastFinderSig) return;
+  lastFinderSig=sig;
   const terms = [S.brand, model, year].filter(Boolean).join(' ');
   const slug = [S.brand, model, year].filter(Boolean).join('-').toLowerCase()
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
@@ -1073,32 +1164,85 @@ function buildLookupLinks(){
   $('lookupLinks').innerHTML = links.map(l=>
     '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.name)+'</a>').join('');
 
-  if(!model){ $('valueResult').innerHTML=''; return; }
-  const res = findCarComp(S.brand, model, S.year);
-  if(!res || !res.found){
-    $('valueResult').innerHTML =
-      '<div class="valueCard miss"><div class="vc-h">Not in our comparables database</div>'+
-      '<div class="vc-note">No researched value on file yet for this make/model. '+
-      '<b>Call the agency for a valuation</b> — or check the live listings below and enter a value in Step 1 yourself.</div></div>';
+  renderFinder(model);
+}
+let lastFinderSig='';
+function vcCard(cls, head, body){
+  return '<div class="valueCard '+cls+'"><div class="vc-h">'+esc(head)+'</div>'+body+'</div>';
+}
+function vcTable(rows){
+  const list=rows.slice().sort((a,b)=>a.price-b.price);
+  return '<details class="vc-list"><summary>Show the '+list.length+' listing'+(list.length===1?'':'s')+'</summary>'+
+    list.map(function(r){
+      const u=listingUrl(r), src=SRC_NAME[r.src]||r.src;
+      return '<div class="vc-row"><b>'+money(r.price)+'</b><span>'+r.year+(r.km!=null?' · '+Math.round(r.km/1000)+'k km':'')+'</span>'+
+        (u?'<a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(src)+'</a>':'<span>'+esc(src)+'</span>')+'</div>';
+    }).join('')+'</details>';
+}
+function vcSources(rows){
+  const c={}; rows.forEach(r=>{ c[r.src]=(c[r.src]||0)+1; });
+  return Object.keys(c).map(k=>(SRC_NAME[k]||k)+' '+c[k]).join(' · ');
+}
+function vcFresh(){
+  const d=window.CAR_LISTINGS||{}, age=d.generatedAt ? Math.floor((Date.now()-new Date(d.generatedAt).getTime())/864e5) : null;
+  return '<div class="vc-note">Listings refreshed '+esc(d.generatedAt||'?')+(age!==null && age>14?' — '+age+' days old, refresh before relying on this':'')+'.</div>';
+}
+function renderFinder(model){
+  const out=$('valueResult'), rows=allListings();
+  if(!rows){
+    out.innerHTML=vcCard('miss','Listings database not loaded','<div class="vc-note">car-listings.js did not load next to this page, so no valuation can be given. Upload it with the quoter, or <b>call the agency</b>.</div>');
     return;
   }
-  const b = res.band;
-  const mid = Math.round((b.low+b.high)/2/100)*100;
-  const yrLabel = b.from===b.to ? String(b.from) : (b.from+'–'+b.to);
-  const approxNote = res.approx
-    ? '<div class="vc-note">No listings on file for exactly '+esc(String(S.year))+
-      ' — nearest researched range is model year '+esc(yrLabel)+'. Adjust up or down for the age difference.</div>' : '';
-  const spreadNote = b.note ? '<div class="vc-note">'+esc(b.note)+'</div>' : '';
-  $('valueResult').innerHTML =
-    '<div class="valueCard hit"><div class="vc-h">'+(res.approx?'Closest comparable':'Comparable found')+
-      ' · '+esc(res.model.brand+' '+res.model.model)+' · MY '+esc(yrLabel)+'</div>'+
-    '<div class="vc-price">'+money(mid)+' <span style="font-size:12px;font-weight:600;color:var(--ink2)">suggested</span></div>'+
-    '<div class="vc-range">Real listings ranged '+money(b.low)+'–'+money(b.high)+' (n='+b.n+') · checked '+esc(CAR_VALUES.updated)+'</div>'+
-    approxNote + spreadNote +
-    '<button type="button" class="vc-use" id="vcUseBtn">Use '+money(mid)+' in Step 1</button></div>';
-  const useBtn = document.getElementById('vcUseBtn');
-  if(useBtn) useBtn.onclick = function(){ $('value').value = mid; S.value = mid; render(); };
+  if(!model){ out.innerHTML=''; return; }
+  const matched=matchModel(rows,S.brand,model);
+  if(!matched.length){
+    const byModel={}; rows.filter(r=>r.mk===makeKey(S.brand)).forEach(r=>{ byModel[r.model]=(byModel[r.model]||0)+1; });
+    const top=Object.keys(byModel).sort((a,b)=>byModel[b]-byModel[a]).slice(0,8);
+    out.innerHTML=vcCard('miss','No listings found for '+S.brand+' '+model,
+      '<div class="vc-note">Nothing matching is for sale on OLX, OpenSooq or Autotrader right now. <b>Call the agency for a valuation.</b>'+
+      (top.length?' Check the spelling, or tap a model that does have listings:':'')+'</div>'+
+      (top.length?'<div class="chips">'+top.map(m=>'<button type="button" data-model="'+esc(m)+'">'+esc(m)+' ('+byModel[m]+')</button>').join('')+'</div>':'')+vcFresh());
+    return;
+  }
+  if(!S.year){
+    out.innerHTML=vcCard('info','Pick the year of make','<div class="vc-note">'+matched.length+' '+esc(S.brand+' '+model)+' listings found across all years. Choose the year above to value this exact car.</div>');
+    return;
+  }
+  const exact=matched.filter(r=>r.year===S.year), c=consensus(exact), label=S.brand+' '+model+' '+S.year;
+  if(c.kind==='value'){
+    out.innerHTML=vcCard('hit','Suggested value · '+label,
+      '<div class="vc-price">'+money(c.value)+'</div>'+
+      '<div class="vc-note"><b>Why:</b> '+esc(c.reason)+'</div>'+
+      '<div class="vc-range">'+c.n+' listings ('+esc(vcSources(exact))+') · range '+money(c.lo)+'–'+money(c.hi)+
+        (c.ignored?' · '+c.ignored+' ignored as probable typos':'')+'</div>'+
+      '<button type="button" class="vc-use" data-use="'+c.value+'">Use '+money(c.value)+' in the value field</button>'+
+      vcTable(exact)+vcFresh());
+    return;
+  }
+  if(c.kind==='spread'){
+    out.innerHTML=vcCard('miss','No single price — you decide · '+label,
+      '<div class="vc-note">'+c.n+' listings range from '+money(c.lo)+' to '+money(c.hi)+', and no price is shared by most of them:</div>'+
+      '<div class="vc-groups">'+c.groups.map(g=>'<button type="button" data-use="'+g.price+'" title="Use '+money(g.price)+'"><b>'+g.count+'</b> × '+money(g.price)+'</button>').join('')+'</div>'+
+      '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap — open the listings and judge which sits closest to this car.</div>'+
+      vcTable(exact)+vcFresh());
+    return;
+  }
+  const near=[S.year-1,S.year+1].map(function(y){
+    const r=matched.filter(x=>x.year===y); return r.length ? y+': '+r.length+' listing'+(r.length===1?'':'s')+', middle '+money(round50(median(r.map(x=>x.price)))) : null;
+  }).filter(Boolean);
+  out.innerHTML=vcCard('miss','Not enough '+S.year+' listings · '+S.brand+' '+model,
+    '<div class="vc-note">'+(exact.length?'Only '+exact.length+' listing'+(exact.length===1?'':'s')+' for '+S.year:'No '+S.year+' listings')+
+    ' — too few to name a value. <b>Call the agency for a valuation.</b>'+
+    (near.length?' For reference only, nearby years: '+esc(near.join(' · '))+'.':'')+'</div>'+
+    (exact.length?vcTable(exact):'')+vcFresh());
 }
+$('valueResult').addEventListener('click', function(e){
+  const use=e.target.closest('[data-use]');
+  if(use){ const v=Number(use.dataset.use); $('value').value=v; S.value=v; render(); return; }
+  const mdl=e.target.closest('[data-model]');
+  if(mdl){ $('lookupModel').value=mdl.dataset.model; $('lookupModel').dispatchEvent(new Event('input',{bubbles:true})); }
+});
+
 $('lookupModel').addEventListener('input', buildLookupLinks);
 
 /* What agency repair costs = the agency plan's premium over its plain twin. */
@@ -1111,21 +1255,26 @@ function agencyUplift(p){
   return {amount:qa.premium-qb.premium, base:base.name};
 }
 
-/* Plans a given fuel type is allowed on. UFA prices EVs separately; Fidelity
-   makes no fuel distinction, so its plans carry no `fuels` list at all. */
-function plansForFuel(){
-  return TARIFF.products.filter(function(p){
-    return !p.fuels || p.fuels.indexOf(S.fuel) >= 0;
-  });
+/* Why no agency-repair plan can be offered for this car, in words. */
+function agencyWhyNot(book){
+  const blocked=agencyBlock(book);
+  if(blocked) return blocked;
+  const ag=book.products.filter(function(p){ return p.agency && (!p.fuels || p.fuels.indexOf(S.fuel)>=0); });
+  if(!ag.length) return book.name+' has no agency-repair plan for '+S.fuel.toLowerCase()+' cars.';
+  const yrs=[].concat.apply([],ag.map(function(p){ return p.years; }));
+  const lo=Math.min.apply(null,yrs.map(function(y){return y.from;})), hi=Math.max.apply(null,yrs.map(function(y){return y.to;}));
+  if(S.year<lo || S.year>hi) return book.name+' only quotes agency repair for model years '+lo+'–'+hi+'.';
+  return book.name+' doesn’t offer agency repair at this value.';
 }
 
 function buildOptions(){
   const box=$('opts'); box.innerHTML='';
-  const list=plansForFuel();
+  const list=offeredPlans(TARIFF);
   let agencyNames=[];
   list.forEach(function(p){
     const q=quote(p,S.value,S.year);
     const ok = q.premium!==undefined;
+    if(p.agency && !ok) return;     /* never show an agency plan the car doesn't qualify for */
     const up = ok ? agencyUplift(p) : null;
     const btn=document.createElement('button');
     btn.type='button';
@@ -1133,8 +1282,10 @@ function buildOptions(){
     const price = ok
       ? '<div class="optprice">'+money(q.premium)+'<small>'+q.rate.toFixed(2)+'%'+(q.atMin?' · minimum':'')+'</small></div>'
       : '<div class="optprice na">'+esc(q.na)+'</div>';
-    const delta = up
-      ? '<div class="optdelta">+'+money(up.amount)+' over '+esc(up.base)+' — this is what agency repair costs</div>' : '';
+    const delta = !up ? ''
+      : up.amount>0 ? '<div class="optdelta">+'+money(up.amount)+' over '+esc(up.base)+' — this is what agency repair costs</div>'
+      : '<div class="optdelta bad">Confirm with '+esc(TARIFF.name)+' before quoting: its tariff prices this agency-repair plan '+
+        (up.amount<0?money(-up.amount)+' below':'the same as')+' '+esc(up.base)+', which has no agency repair. That can’t be right.</div>';
     btn.innerHTML='<div><div class="optname">'+esc(p.name)+'</div><div class="optmeta">'+esc(p.note)+'</div>'+delta+'</div>'+price;
     if(ok){
       if(p.agency) agencyNames.push(p.name);
@@ -1143,8 +1294,8 @@ function buildOptions(){
     box.appendChild(btn);
   });
   $('agencyHint').textContent = agencyNames.length
-    ? 'Agency dealer repair is available on ' + agencyNames.join(' and ') + ' only.'
-    : 'No plan with agency dealer repair is available for this vehicle.';
+    ? 'Agency dealer repair is available on ' + agencyNames.join(' and ') + ' only. ' + (TARIFF.agencyNeedsDealer||'')
+    : 'No agency-repair plan is offered for this car. ' + agencyWhyNot(TARIFF);
 }
 
 function buildSummary(){
@@ -1161,7 +1312,7 @@ function buildSummary(){
     ['Agency repair', p.agency?'Included':'Not available on this cover']
   ];
   const up=agencyUplift(p);
-  if(up) rows.push(['— cost of that agency repair', '+'+money(up.amount)+' vs '+up.base]);
+  if(up) rows.push(['— cost of that agency repair', up.amount>0 ? '+'+money(up.amount)+' vs '+up.base : 'tariff prices it at or below '+up.base+' — confirm with '+TARIFF.name]);
   let html=rows.map(r=>'<div class="srow"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
   html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
         + '<span class="v">'+(q.atMin?('minimum '+money(p.min)):money(q.raw))+'</span></div>';
@@ -1182,7 +1333,7 @@ $('copyBtn').onclick=function(){
     'Fuel: '+S.fuel,
     'Driver age: '+S.driverAge,
     'Cover: '+p.name+(p.agency?' (agency dealer repair included)':''),
-    up ? 'Agency repair costs +'+money(up.amount)+' vs '+up.base+'.' : '',
+    up ? (up.amount>0 ? 'Agency repair costs +'+money(up.amount)+' vs '+up.base+'.' : 'Price to be confirmed with '+TARIFF.name+'.') : '',
     '',
     'ANNUAL PREMIUM: '+money(q.premium),
     '',
@@ -1210,7 +1361,7 @@ function paintInsurer(){
   }).join('');
   $('fuelHint').textContent = TARIFF.key==='ufa'
     ? 'UFA prices electric vehicles on a separate tariff, so this changes which plans you see.'
-    : 'Recorded on the quote — Fidelity applies no rate difference by fuel.';
+    : 'Fidelity prices electric cars on a separate tariff (Tesla excluded); hybrids use the standard private-car tariff.';
 }
 $('segInsurer').querySelectorAll('button').forEach(function(b){
   b.onclick=function(){
@@ -1227,40 +1378,46 @@ $('segInsurer').querySelectorAll('button').forEach(function(b){
 /* ---------- Fidelity vs UFA on the same vehicle ---------- */
 function crossQuote(insurerKey){
   const book=INSURERS[insurerKey], out=[];
-  book.products.forEach(function(p){
-    if(p.fuels && p.fuels.indexOf(S.fuel)<0) return;
-    if(S.value>book.maxValue) return;
-    const yr=p.years.find(y=>S.year>=y.from && S.year<=y.to);
-    if(!yr) return;
-    let bi=-1;
-    for(let i=0;i<p.bands.length;i++){ if(S.value>=p.bands[i][0] && S.value<=p.bands[i][1]){ bi=i; break; } }
-    if(bi<0) return;
-    const rate=yr.rates[bi];
-    if(rate===null||rate===undefined) return;
-    out.push({ name:p.name, rate:rate, premium:Math.max(S.value*rate/100, p.min), agency:!!p.agency });
+  if(S.sports) return {plans:[], why:'On the sports & luxury referral list.'};
+  const rr=referReason(book);
+  if(rr) return {plans:[], why:rr};
+  offeredPlans(book).forEach(function(p){
+    const q=quote(p,S.value,S.year,book);
+    if(q.premium===undefined) return;
+    out.push({ id:p.id, pairWith:p.pairWith, name:p.name, rate:q.rate, premium:q.premium, agency:!!p.agency });
   });
-  return out;
+  /* an agency plan priced at or below its no-agency twin is a tariff error to confirm, not a bargain */
+  out.forEach(function(x){
+    const twin=x.agency && x.pairWith && out.find(function(y){ return y.id===x.pairWith; });
+    if(twin && x.premium<=twin.premium) x.check=true;
+  });
+  return {plans:out, why:book.referNote};
 }
 function buildCross(){
   const box=$('crossBox');
   if(S.value===null || S.year===null){ box.style.display='none'; return; }
   box.style.display='block';
-  const f=crossQuote('fidelity'), u=crossQuote('ufa');
+  const fq=crossQuote('fidelity'), uq=crossQuote('ufa');
+  const f=fq.plans, u=uq.plans;
   const side=function(title,list,book){
+    const why=(book===INSURERS.fidelity?fq:uq).why;
     if(!list.length) return '<div class="xcol"><div class="xh">'+title+'</div>'+
-      '<div class="xna">No plan available — '+esc(book.referNote)+'</div></div>';
-    const cheapest=Math.min.apply(null,list.map(function(x){return x.premium;}));
+      '<div class="xna">No plan available — '+esc(why)+'</div></div>';
+    const cheapest=Math.min.apply(null,list.filter(function(x){return !x.check;}).map(function(x){return x.premium;}));
     return '<div class="xcol"><div class="xh">'+title+'</div>'+list.map(function(x){
-      return '<div class="xrow'+(x.premium===cheapest?' best':'')+'"><span>'+esc(x.name)+'</span>'+
+      return '<div class="xrow'+(x.premium===cheapest && !x.check?' best':'')+'"><span>'+esc(x.name)+
+             (x.check?' <b style="color:var(--warn)">· confirm</b>':'')+'</span>'+
              '<span class="xp">'+money(x.premium)+'</span></div>';
     }).join('')+'</div>';
   };
   $('crossGrid').innerHTML = side('Fidelity',f,INSURERS.fidelity) + side('UFA',u,INSURERS.ufa);
-  const all=f.concat(u);
-  $('crossNote').textContent = all.length
-    ? 'Cheapest overall: '+money(Math.min.apply(null,all.map(function(x){return x.premium;})))+
+  const all=f.concat(u), sure=all.filter(function(x){ return !x.check; });
+  $('crossNote').textContent = (sure.length
+    ? 'Cheapest overall: '+money(Math.min.apply(null,sure.map(function(x){return x.premium;})))+
       ' · same vehicle, same declared value, both tariffs.'
-    : 'Neither tariff can auto-quote this vehicle.';
+    : 'Neither tariff can auto-quote this vehicle.') +
+    (all.some(function(x){ return x.check; })
+      ? ' “Confirm” = the tariff prices agency repair at or below the same cover without it; check with the insurer before quoting.' : '');
 }
 
 /* ---------- compulsory third-party liability ---------- */
@@ -1347,7 +1504,211 @@ $('segCoverType').querySelectorAll('button').forEach(function(b){
   };
 });
 
+/* ---------- value intervals ----------
+   Motor premium = value x rate, floored at the plan minimum. So the price is
+   flat only while the minimum applies; inside a rate band it moves with every
+   dollar; and at a band edge the rate drops, so the premium can go DOWN as the
+   value goes up. All of it is derived from the rate book on screen. */
+function intervalsFor(p, year, book){
+  const yr=p.years.find(y=>year>=y.from && year<=y.to);
+  if(!yr) return null;
+  const out=[];
+  p.bands.forEach(function(b,i){
+    const lo=b[0], hi=Math.min(b[1], book.maxValue), rate=yr.rates[i];
+    if(lo>hi) return;
+    if(rate===null || rate===undefined){ out.push({lo, hi, na:true}); return; }
+    const floorTo=Math.ceil(p.min*100/rate)-1;          /* below this the minimum premium applies */
+    if(floorTo>=lo){
+      out.push({lo, hi:Math.min(hi,floorTo), flat:p.min, rate});
+      if(floorTo<hi) out.push({lo:floorTo+1, hi, rate});
+    } else out.push({lo, hi, rate});
+  });
+  /* neighbouring bands that are both at the same flat minimum read as one interval */
+  return out.reduce(function(acc,x){
+    const last=acc[acc.length-1];
+    if(last && last.flat && x.flat===last.flat && x.lo===last.hi+1) last.hi=x.hi; else acc.push(x);
+    return acc;
+  },[]);
+}
+function paintIntervals(){
+  const out=$('ivBody');
+  if(S.year===null){ out.innerHTML='<p>Choose the year of make to see the value intervals.</p>'; return; }
+  const rr=S.sports ? 'This make/model is referred, so there are no auto-quote intervals.' : referReason(TARIFF);
+  if(rr){ out.innerHTML='<p>'+esc(rr)+'</p>'; return; }
+  const plans=offeredPlans(TARIFF);
+  out.innerHTML='<p><b>'+esc(TARIFF.name)+' · model year '+S.year+' · '+esc(S.fuel)+'</b></p>'+plans.map(function(p){
+    const iv=intervalsFor(p, S.year, TARIFF);
+    if(!iv) return '<p><b>'+esc(p.name)+'</b> — not offered for '+S.year+'.</p>';
+    let prevEnd=null;
+    const rows=iv.map(function(x){
+      const range=money(x.lo)+' – '+(x.hi>=TARIFF.maxValue?money(TARIFF.maxValue):money(x.hi));
+      if(x.na) return '<span>'+range+'</span><b>not offered</b>';
+      const startP=x.flat||Math.max(x.lo*x.rate/100,p.min), endP=x.flat||x.hi*x.rate/100;
+      const drop=prevEnd!==null && startP<prevEnd-0.5;
+      prevEnd=endP;
+      return '<span>'+range+'</span><b>'+(x.flat ? money(x.flat)+' flat (minimum)' : x.rate.toFixed(2)+'% → '+money(startP)+'–'+money(endP))+'</b>'+
+        (drop?'<em class="ivdrop">↓ premium drops at '+money(x.lo)+' — the rate falls to '+x.rate.toFixed(2)+'%</em>':'');
+    }).join('');
+    return '<p style="margin-top:6px"><b>'+esc(p.name)+'</b>'+(p.agency?' · agency repair':'')+'</p><div class="ivgrid">'+rows+'</div>';
+  }).join('');
+}
+$('ivBox').addEventListener('toggle', ()=>{ if($('ivBox').open) paintIntervals(); });
+
+/* ---------- fill the vehicle from the registration (defter sayyara) ----------
+   OCR runs in this browser with Tesseract.js (English + Arabic); the photo never
+   leaves the page. The chassis number (VIN) is printed in Latin characters and
+   reads reliably: its first three characters name the manufacturer, its 10th
+   usually the model year. Labels and brand names on the card fill the rest.
+   Nothing is applied until it has been checked. */
+const OCR_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker=null, carScan=null;
+function loadScript(src){
+  return new Promise((ok,no)=>{
+    if(window.Tesseract) return ok();
+    const s=document.createElement('script'); s.src=src; s.onload=ok;
+    s.onerror=()=>no(new Error('The text reader could not be downloaded — check the connection.'));
+    document.head.appendChild(s);
+  });
+}
+async function getWorker(){
+  if(ocrWorker) return ocrWorker;
+  await loadScript(OCR_SRC);
+  ocrWorker=await Tesseract.createWorker(['eng','ara']);
+  return ocrWorker;
+}
+function wDigits(s){
+  return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+/* World Manufacturer Identifier (first VIN characters) -> make as named in the dropdown */
+const WMI = {
+  JTH:'Lexus',JTJ:'Lexus','2T2':'Lexus',JT:'Toyota','4T':'Toyota','5T':'Toyota','2T':'Toyota',SB1:'Toyota',NMT:'Toyota',
+  JHM:'Honda',JHL:'Honda','1HG':'Honda','2HG':'Honda','5J6':'Honda',SHH:'Honda',
+  KMT:'Genesis',KMH:'Hyundai','5NP':'Hyundai','5NM':'Hyundai',TMA:'Hyundai',NLH:'Hyundai',
+  KNA:'Kia',KNC:'Kia',KND:'Kia','5XY':'Kia',U5Y:'Kia',
+  JNK:'Infiniti',JNR:'Infiniti','5N3':'Infiniti',JN1:'Nissan',JN8:'Nissan','1N4':'Nissan','5N1':'Nissan','3N1':'Nissan',SJN:'Nissan',VSK:'Nissan',
+  WBA:'BMW',WBS:'BMW',WBY:'BMW','4US':'BMW','5UX':'BMW','5YM':'BMW',WMW:'Mini',
+  WDB:'Mercedes',WDD:'Mercedes',WDC:'Mercedes',WDF:'Mercedes',W1K:'Mercedes',W1N:'Mercedes',W1V:'Mercedes','4JG':'Mercedes','55S':'Mercedes',
+  WAU:'Audi',WA1:'Audi',WUA:'Audi',TRU:'Audi',
+  WVW:'Volkswagen',WVG:'Volkswagen',WV1:'Volkswagen',WV2:'Volkswagen','3VW':'Volkswagen','1VW':'Volkswagen',
+  WP0:'Porsche',WP1:'Porsche',SAL:'Land Rover','5YJ':'Tesla','7SA':'Tesla',LRW:'Tesla',XP7:'Tesla',
+  JM1:'Mazda',JM3:'Mazda',JMZ:'Mazda',JSA:'Suzuki',JS2:'Suzuki',TSM:'Suzuki',MA3:'Suzuki',
+  VF1:'Renault',VF3:'Peugeot',VR3:'Peugeot',VF7:'Citroen',VR7:'Citroen',ZFA:'Fiat',YV1:'Volvo',YV4:'Volvo',
+  JF1:'Subaru',JF2:'Subaru','4S3':'Subaru','4S4':'Subaru','1C4':'Jeep','1J4':'Jeep','1J8':'Jeep',
+  '1FA':'Ford','1FM':'Ford','1FT':'Ford','2FM':'Ford','3FA':'Ford',WF0:'Ford',
+  '1G1':'Chevrolet','1GC':'Chevrolet','1GN':'Chevrolet','2G1':'Chevrolet','3GN':'Chevrolet',KL1:'Chevrolet',KL7:'Chevrolet',
+  '1GT':'GMC','1GK':'GMC','1GY':'Cadillac','1B3':'Dodge','2B3':'Dodge',
+  JA3:'Mitsubishi',JA4:'Mitsubishi',JMB:'Mitsubishi',JMY:'Mitsubishi',ML3:'Mitsubishi',
+  VSS:'Seat',TMB:'Skoda',LGX:'BYD',LC0:'BYD',LVV:'Chery',LVT:'Chery',L6T:'Geely',LSJ:'MG',JAL:'Isuzu',JAA:'Isuzu',
+  ZAM:'Maserati',ZFF:'Ferrari',ZHW:'Lamborghini',SCB:'Bentley',SCA:'Rolls Royce',SCC:'Lotus',SBM:'McLaren'
+};
+const AR_MAKES = { 'تويوتا':'Toyota','لكزس':'Lexus','هوندا':'Honda','هيونداي':'Hyundai','هونداي':'Hyundai','كيا':'Kia',
+  'نيسان':'Nissan','انفينيتي':'Infiniti','مرسيدس':'Mercedes','بي ام':'BMW','اودي':'Audi','أودي':'Audi','فولكس':'Volkswagen',
+  'بورش':'Porsche','لاند روفر':'Land Rover','رينج روفر':'Range Rover','رنج روفر':'Range Rover','تسلا':'Tesla','تيسلا':'Tesla',
+  'مازدا':'Mazda','سوزوكي':'Suzuki','رينو':'Renault','بيجو':'Peugeot','ستروين':'Citroen','سيتروين':'Citroen','فيات':'Fiat',
+  'فولفو':'Volvo','سوبارو':'Subaru','جيب':'Jeep','فورد':'Ford','شيفروليه':'Chevrolet','شفروليه':'Chevrolet','جي ام سي':'GMC',
+  'كاديلاك':'Cadillac','ميتسوبيشي':'Mitsubishi','متسوبيشي':'Mitsubishi','سكودا':'Skoda','بي واي دي':'BYD','شيري':'Chery',
+  'جيلي':'Geely','ام جي':'MG','ميني':'Mini','جينيسيس':'Genesis' };
+const VIN_YEAR='ABCDEFGHJKLMNPRSTVWXY123456789';
+function findVin(text){
+  const lines=String(text).toUpperCase().split(/\n/);
+  for(const l of lines){
+    const s=l.replace(/[^A-Z0-9]/g,'').replace(/O/g,'0').replace(/[IQ]/g,m=>m==='I'?'1':'0');
+    const m=s.match(/[A-HJ-NPR-Z0-9]{17}/);
+    if(m && /[A-Z]/.test(m[0]) && /\d/.test(m[0])) return m[0];
+  }
+  return null;
+}
+function vinMake(vin){
+  for(const n of [3,2]){ const k=vin.slice(0,n); if(WMI[k]) return WMI[k]; }
+  return null;
+}
+function vinYear(vin){
+  const i=VIN_YEAR.indexOf(vin[9]); if(i<0) return null;
+  const max=new Date().getFullYear()+1;
+  /* North American VINs: a digit in position 7 means the 1980–2009 cycle */
+  const cands=[1980+i,2010+i,2040+i].filter(y=>y<=max && y>=2001);
+  if(!cands.length) return null;
+  return /\d/.test(vin[6]) && cands.indexOf(1980+i)>=0 ? 1980+i : cands[cands.length-1];
+}
+function readCard(text){
+  const t=wDigits(text), r={why:{}};
+  const vin=findVin(t);
+  if(vin){ r.vin=vin; }
+  const lab=t.match(/(سنة\s*الصنع|سنة\s*الإنتاج|سنة\s*الانتاج|الطراز|model\s*year|year\s*of\s*make|year|ann[ée]e|mod[èe]le)\D{0,20}((?:19|20)\d{2})/i);
+  if(lab && +lab[2]<=new Date().getFullYear()+1){ r.year=+lab[2]; r.why.year='read next to "'+lab[1].trim()+'" on the card'; }
+  else if(vin && vinYear(vin)){ r.year=vinYear(vin); r.why.year='decoded from the chassis number — confirm, not every maker encodes the year'; }
+  const makes=[...$('brand').options].map(o=>o.value).filter(v=>v && v!=='Other make');
+  const latin=makes.filter(m=>new RegExp('\\b'+m.replace(/\s+/g,'\\s*')+'\\b','i').test(t)).sort((a,b)=>b.length-a.length)[0];
+  const arab=Object.keys(AR_MAKES).filter(k=>t.indexOf(k)>=0).sort((a,b)=>b.length-a.length)[0];
+  if(latin){ r.make=latin; r.why.make='written on the card'; }
+  else if(arab){ r.make=AR_MAKES[arab]; r.why.make='written on the card ('+arab+')'; }
+  else if(vin && vinMake(vin)){ r.make=vinMake(vin); r.why.make='decoded from the chassis number'; }
+  /* model: whole-word match against models that really exist for this make in the listings */
+  const rows=allListings();
+  if(r.make && rows){
+    const toks=t.replace(vin||'#none#','').split(/[^A-Za-z0-9]+/).map(normStr).filter(Boolean), grams=new Set();
+    toks.forEach((_,i)=>{ let s=''; for(let k=i;k<Math.min(i+3,toks.length);k++){ s+=toks[k]; grams.add(s); } });
+    const models=[...new Set(rows.filter(x=>x.mk===makeKey(r.make)).map(x=>x.model))];
+    const hit=models.filter(m=>grams.has(normStr(m)) && normStr(m)!==normStr(r.make)).sort((a,b)=>b.length-a.length)[0];
+    if(hit){ r.model=hit; r.why.model='matched a model that is on the market'; }
+  }
+  if(/hybrid|هجين|هايبرد|هايبريد/i.test(t)) r.fuel='Hybrid';
+  else if(/electric|كهرب/i.test(t)) r.fuel='Electric';
+  r.text=text;
+  return r;
+}
+async function runCarScan(file){
+  if(!file || !/^image\//.test(file.type)) return;
+  const st=$('scanCarStatus');
+  st.textContent='Preparing the text reader (first time takes a few seconds)…';
+  let w;
+  try{ w=await getWorker(); } catch(e){ st.textContent=e.message; return; }
+  st.textContent='Reading the registration…';
+  carScan=readCard((await w.recognize(file)).data.text);
+  const found=['year','make','model','vin'].filter(k=>carScan[k]);
+  st.textContent = found.length ? 'Check what was read, correct anything wrong, then fill the form.'
+    : 'Nothing usable could be read. Try a sharper, straighter photo in good light.';
+  paintCarReview();
+}
+function paintCarReview(){
+  const box=$('scanCarReview'), r=carScan;
+  box.classList.toggle('hidden', !r);
+  if(!r){ box.innerHTML=''; return; }
+  const yearOpts=[...$('year').options].map(o=>'<option value="'+o.value+'"'+(String(r.year||'')===o.value?' selected':'')+'>'+esc(o.textContent)+'</option>').join('');
+  const makeOpts=[...$('brand').options].map(o=>'<option value="'+esc(o.value)+'"'+((r.make||'')===o.value?' selected':'')+'>'+esc(o.textContent)+'</option>').join('');
+  const why=k=>r.why[k]?'<div class="why">'+esc(r.why[k])+'</div>':'';
+  box.innerHTML=
+    '<label for="scY">Year</label><select id="scY">'+yearOpts+'</select>'+why('year')+
+    '<label for="scM">Make</label><select id="scM">'+makeOpts+'</select>'+why('make')+
+    '<label for="scMo">Model</label><input type="text" id="scMo" value="'+esc(r.model||'')+'" placeholder="not read — type it">'+why('model')+
+    '<label for="scF">Fuel</label><select id="scF">'+['Gasoline','Hybrid','Electric'].map(f=>'<option'+((r.fuel||S.fuel)===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'+
+    (r.fuel?'':'<div class="why">not stated on the card — check</div>')+
+    '<label>Chassis no.</label><span style="font-family:monospace">'+esc(r.vin||'not found')+'</span>'+
+    '<details class="full"><summary class="hint" style="cursor:pointer">Show the text it read</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">'+esc(r.text)+'</pre></details>'+
+    '<div class="full"><button type="button" class="scanapply" id="scApply">Fill the vehicle details</button></div>';
+  $('scApply').onclick=applyCarScan;
+}
+function applyCarScan(){
+  const y=$('scY').value, m=$('scM').value, mo=$('scMo').value.trim(), f=$('scF').value;
+  if(y){ $('year').value=y; $('year').dispatchEvent(new Event('change')); }
+  if(m){ $('brand').value=m; $('brand').dispatchEvent(new Event('change')); }
+  const fb=document.querySelector('#segFuel [data-v="'+f+'"]'); if(fb) fb.click();
+  if(mo){ $('lookupModel').value=mo; $('lookupModel').dispatchEvent(new Event('input',{bubbles:true})); }
+  carScan=null; paintCarReview();
+  $('scanCarStatus').textContent='Vehicle filled from the registration. Check the value below, then add the driver age.';
+}
+$('scanCar').onclick=()=>$('scanCarFile').click();
+$('scanCarFile').addEventListener('change', e=>{ runCarScan(e.target.files[0]); e.target.value=''; });
+document.addEventListener('paste', e=>{
+  if(S.cover!=='allrisk') return;
+  const it=[...((e.clipboardData||{}).items||[])].find(x=>x.kind==='file' && /^image\//.test(x.type));
+  if(!it) return;
+  e.preventDefault();
+  runCarScan(it.getAsFile());
+});
+
 paintInsurer();
 paintCoverType();
 render();
 </script>
+<script src="../shell.js"></script>

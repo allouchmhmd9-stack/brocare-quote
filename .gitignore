@@ -1,0 +1,2 @@
+# raw scraper output and caches - only motor/car-listings.js is published
+tools/car-values/*.json

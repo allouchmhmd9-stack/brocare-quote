@@ -1,0 +1,96 @@
+/* Brocare tools: the console's palette and a full-width layout.
+   Loaded after each tool's own styles. The triple :root outranks the tools'
+   :root[data-theme] and prefers-color-scheme blocks, so every tool renders in
+   the same navy and blue as the console, whatever the OS theme is. */
+:root:root:root{
+  color-scheme:dark;
+  --bg:#05081A; --surface:#0D1440; --surface2:#131D55;
+  --ink:#EAF1FF; --ink2:#93A7CC; --line:#1E3A6E;
+  --accent:#2D6FFF; --accent-ink:#FFFFFF; --accent-soft:rgba(45,111,255,.14);
+  --brand:#EAF1FF; --price:#4FC3F7; --warn:#FFB020;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px rgba(0,0,0,.28);
+}
+body{background:var(--bg)}
+::selection{background:rgba(45,111,255,.45)}
+input,select,textarea{color-scheme:dark}
+button{transition:background .12s,border-color .12s,color .12s,transform .06s}
+button:active:not(:disabled){transform:translateY(1px)}
+.seg button:hover:not(.on),.levels button:hover:not(.on),.insurerseg button:hover:not(.on){border-color:var(--accent);color:var(--ink)}
+.logo{background:linear-gradient(135deg,#2D6FFF,#1A3BDB)!important}
+.brandname b{color:#4FC3F7}
+.insurerbox{border-width:1px}
+.price-big{letter-spacing:-.03em}
+
+/* Inside the console: the console already names the tool and links back. */
+html.embedded .backlink{display:none}
+html.embedded body{padding-top:18px}
+
+.col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.col-side > *{flex-shrink:0}   /* the pinned column scrolls; its cards never get squashed */
+
+/* Wide screens: inputs on the left, the price and the document panel on the
+   right, pinned while you scroll. shell.js builds the two columns. */
+@media (min-width:980px){
+  .wrap.cols{max-width:1240px;display:grid;grid-template-columns:minmax(0,1fr) 420px;
+    gap:22px;align-items:start}
+  .wrap.cols > .backlink,.wrap.cols > .brandbar{grid-column:1 / -1}
+  .wrap.cols > .brandbar{padding-bottom:6px}
+  .col-side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;
+    scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-bottom:4px}
+  .col-side #broPanel{margin-top:0}
+  .price-big{font-size:46px}
+  .wrap.cols > .foot{grid-column:1 / -1}
+}
+@media (min-width:1500px){ .wrap.cols{grid-template-columns:minmax(0,1fr) 460px} }
+
+/* Wide screens: controls sit side by side instead of one long column, so the
+   whole quote fits on screen with the price pinned on the right. */
+@media (min-width:980px){
+  /* motor: insurer | cover on one row */
+  .insurerbox{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;align-items:end}
+  .insurerbox > .insurerlbl{grid-row:1}
+  .insurerbox > .insurerlbl[style]{margin:0!important}
+  .insurerbox > #segInsurer{grid-column:1;grid-row:2}
+  .insurerbox > #segCoverType{grid-column:2;grid-row:2}
+  .insurerbox > details.info{grid-column:1 / -1;grid-row:3}
+  .insurerseg button{padding:11px 8px}
+
+  /* motor step 1: year | make | fuel, then the value finder, then the value */
+  #s1 .stepbody{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px;align-items:start}
+  #s1 .stepbody > .scanbox{grid-column:1 / -1;order:0}
+  #s1 .stepbody > .field:has(#year){order:1}
+  #s1 .stepbody > .field:has(#brand){order:2}
+  #s1 .stepbody > .field:has(#segFuel){order:3}
+  #s1 .stepbody > #lookupField{grid-column:1 / -1;order:4}
+  #s1 .stepbody > .field:has(#value){order:5}
+
+  /* motor step 2: driver age beside the eligibility result */
+  #s2 .stepbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px 14px;align-items:start}
+  #s2 .stepbody > #modelField{grid-column:1 / -1}
+
+  /* motor step 3: plan cards two across */
+  #opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #opts .opt{height:100%;align-items:flex-start}
+
+  /* health: the member card's controls in rows */
+  .card:has(#segMode){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;align-items:start}
+  .card:has(#segMode) > .scanbox,
+  .card:has(#segMode) > #familyBlock,
+  .card:has(#segMode) > .field:has(#levels){grid-column:1 / -1}
+  .card:has(#segMode) > *{margin:0}
+  .levels{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+
+/* The tools library page */
+.wrap .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+@media (min-width:980px){ .wrap:has(.tiles){max-width:1000px} }
+
+/* Document Studio: same chrome palette; the documents themselves stay white. */
+.top{background:rgba(5,8,26,.9);backdrop-filter:blur(10px)}
+.top .dot{background:linear-gradient(135deg,#2D6FFF,#1A3BDB)!important;color:#fff!important}
+.rail{background:var(--surface)}
+.del:hover,#broPanel .x:hover{color:var(--warn)}
+
+/* The document hand-off panel is a card in every quoter (motor never styled .card). */
+#broPanel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+@media (min-width:980px){ .col-side #s4.off{opacity:.55} }
