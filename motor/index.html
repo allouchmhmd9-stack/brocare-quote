@@ -924,7 +924,7 @@ function allListings(){
   if(!d || !d.rows) return null;
   LISTINGS=d.rows.map(function(r){
     return { make:r[0], model:r[1], year:r[2], price:r[3], km:r[4], src:r[5], url:r[6],
-             mk:makeKey(r[0]), hay:normStr(r[0]+' '+r[1]+' '+r[6]) };
+             mk:makeKey(r[0]), mgrams:wordGrams(r[1]), grams:wordGrams(r[1]+' '+r[6]) };
   });
   return LISTINGS;
 }
@@ -934,10 +934,19 @@ function listingUrl(r){
        : r.src==='a' ? 'https://www.autotrader.com.lb/'+r.url : '';
 }
 /* every typed word must appear in the listing's make/model/title, so "320i" or "Q4 e-tron" both work */
+/* Whole words of a listing, plus runs of up to 3 joined words, so "C-Class" finds
+   "C Class" but not "GLC Class", and "Q5" finds "Q5" but not "SQ5". */
+function wordGrams(s){
+  const w=String(s||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), g=new Set();
+  for(let i=0;i<w.length;i++){ let j='', k; for(k=i;k<Math.min(i+3,w.length);k++){ j+=w[k]; g.add(j); } }
+  return g;
+}
 function matchModel(rows, brand, modelText){
   const toks=String(modelText||'').toLowerCase().split(/\s+/).map(normStr).filter(Boolean);
   const mk=makeKey(brand);
-  return rows.filter(r => r.mk===mk && toks.every(t => r.hay.indexOf(t)>=0));
+  const own=rows.filter(r => r.mk===mk && toks.every(t => r.mgrams.has(t)));
+  if(own.length) return own;            /* the listing's own model field matches: trust only those */
+  return rows.filter(r => r.mk===mk && toks.every(t => r.grams.has(t)));   /* else trims named in titles, e.g. 320i */
 }
 /* Decide what the listings say. Never forces a number. */
 function consensus(rows){
@@ -1223,7 +1232,8 @@ function renderFinder(model){
     out.innerHTML=vcCard('miss','No single price — you decide · '+label,
       '<div class="vc-note">'+c.n+' listings range from '+money(c.lo)+' to '+money(c.hi)+', and no price is shared by most of them:</div>'+
       '<div class="vc-groups">'+c.groups.map(g=>'<button type="button" data-use="'+g.price+'" title="Use '+money(g.price)+'"><b>'+g.count+'</b> × '+money(g.price)+'</button>').join('')+'</div>'+
-      '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap — open the listings and judge which sits closest to this car.</div>'+
+      '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap — open the listings and judge which sits closest to this car.'+
+        (c.n>=12?' <b>Tip:</b> add the trim to the model (for example “C300”, “AMG”, “Limited”, “Hybrid”) to narrow it down.':'')+'</div>'+
       vcTable(exact)+vcFresh());
     return;
   }
