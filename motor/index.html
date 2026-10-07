@@ -1619,9 +1619,17 @@ async function getWorker(){
 function dropWorker(){
   if(ocrWorker){ try{ ocrWorker.terminate(); }catch(_){} }
   if(engWorker){ try{ engWorker.terminate(); }catch(_){} }
-  ocrWorker=null; engWorker=null;
+  if(araWorker){ try{ araWorker.terminate(); }catch(_){} }
+  ocrWorker=null; engWorker=null; araWorker=null;
 }
-let engWorker=null;
+let engWorker=null, araWorker=null;
+async function getAraWorker(){       /* Arabic only, one line: the fuel word beside the engine power */
+  if(araWorker) return araWorker;
+  await loadScript(OCR_SRC);
+  araWorker=await Tesseract.createWorker('ara');
+  await araWorker.setParameters({tessedit_pageseg_mode:'7'});
+  return araWorker;
+}
 async function getEngWorker(){       /* English only, one line at a time: for the values on the card */
   if(engWorker) return engWorker;
   await loadScript(OCR_SRC);
@@ -1743,6 +1751,25 @@ function cropCanvas(src,x0,y0,x1,y1){
   c.getContext('2d').drawImage(src,x0,y0,c.width,c.height,0,0,c.width,c.height);
   return c;
 }
+/* Black-or-white by Otsu's method on this crop alone: some cards print the values
+   near-black, others light grey, so a fixed cut-off erases one or the other. */
+function otsu(c){
+  const g=c.getContext('2d',{willReadFrequently:true}), d=g.getImageData(0,0,c.width,c.height), p=d.data;
+  const h=new Array(256).fill(0), n=p.length/4;
+  for(let i=0;i<p.length;i+=4){ const l=Math.round(0.299*p[i]+0.587*p[i+1]+0.114*p[i+2]); p[i]=l; h[l]++; }
+  let sum=0; for(let t=0;t<256;t++) sum+=t*h[t];
+  let sumB=0, wB=0, best=0, thr=128;
+  for(let t=0;t<256;t++){
+    wB+=h[t]; if(!wB) continue;
+    const wF=n-wB; if(!wF) break;
+    sumB+=t*h[t];
+    const v=wB*wF*Math.pow(sumB/wB-(sum-sumB)/wF,2);
+    if(v>best){ best=v; thr=t; }
+  }
+  for(let i=0;i<p.length;i+=4){ const v=p[i]<=thr?0:255; p[i]=p[i+1]=p[i+2]=v; }
+  g.putImageData(d,0,0);
+  return c;
+}
 function ocrWords(data){
   const out=[];
   (data.blocks||[]).forEach(b=>b.paragraphs.forEach(p=>p.lines.forEach(l=>l.words.forEach(w=>out.push({t:w.text,b:w.bbox})))));
@@ -1760,14 +1787,75 @@ function cardLayout(words, W){
   });
   const rows=new Set(pts.map(p=>p.row));
   if(rows.size<2) return {rows:rows.size};
+  /* a photographed card is rarely flat, so spacing drifts down the card: keep each
+     row's own label height when it was read, per side, to place that row exactly */
+  const anchors={R:{}, L:{}}, leftStartAt={};
+  let spanX0=Infinity, spanX1=-Infinity;
+  words.forEach(function(w){
+    const n=arNorm(w.t), xc=(w.b.x0+w.b.x1)/2, side=xc>W*0.55?'R':'L', map=side==='R'?CARD_RIGHT:CARD_LEFT;
+    const key=Object.keys(map).find(k=>n.indexOf(k)>=0);
+    if(!key) return;
+    spanX0=Math.min(spanX0,w.b.x0); spanX1=Math.max(spanX1,w.b.x1);
+    const row=map[key];
+    if(anchors[side][row]===undefined) anchors[side][row]=(w.b.y0+w.b.y1)/2;
+    if(side==='L') leftStartAt[row]=Math.min(leftStartAt[row]===undefined?Infinity:leftStartAt[row], w.b.x0);
+  });
   const mx=pts.reduce((s,p)=>s+p.row,0)/pts.length, my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
   let sxy=0, sxx=0; pts.forEach(p=>{ sxy+=(p.row-mx)*(p.y-my); sxx+=(p.row-mx)*(p.row-mx); });
   const pitch=sxy/sxx, top=my-pitch*mx;
   if(!(pitch>0)) return {rows:0};
-  return { rows:rows.size, top, pitch,
+  /* left labels end at different points per row (وزنها الإجمالي is longer than
+     قوة المحرك), so the left values stop at the labels' typical start, not the extreme */
+  const leftStarts=left.map(b=>b.x0).sort((a,b)=>a-b);
+  const leftStart=leftStarts.length ? leftStarts[Math.floor(leftStarts.length/2)] : W*0.22;
+  /* y of row i on one side: its own label, else the nearest read label on either side, stepped by the pitch */
+  const rowAt=function(side, i){
+    if(anchors[side][i]!==undefined) return anchors[side][i];
+    const other=side==='R'?'L':'R';
+    if(anchors[other][i]!==undefined) return anchors[other][i];
+    let bestJ=null, bestY=null;
+    ['R','L'].forEach(s=>Object.keys(anchors[s]).forEach(function(j){ j=+j; if(bestJ===null || Math.abs(j-i)<Math.abs(bestJ-i)){ bestJ=j; bestY=anchors[s][j]; } }));
+    return bestJ===null ? top+pitch*i : bestY+(i-bestJ)*pitch;
+  };
+  /* how wide the card is in this image: labels found on both sides span most of it */
+  const labelSpan = (Object.keys(anchors.R).length && Object.keys(anchors.L).length) ? spanX1-spanX0 : null;
+  return { rows:rows.size, top, pitch, W, rowAt, leftStartAt, labelSpan,
     valX0:(left.length ? Math.max.apply(null,left.map(b=>b.x1)) : W*0.38)+W*0.01,
     valX1:(right.length ? Math.min.apply(null,right.map(b=>b.x0)) : W*0.80)-W*0.01,
-    leftX1:(left.length ? Math.min.apply(null,left.map(b=>b.x0)) : W*0.20)-W*0.005 };
+    leftX1:leftStart-W*0.005 };
+}
+/* The values are printed in neutral grey or black; the security pattern behind
+   them is green and blue. Keep only dark, colourless pixels. */
+/* whiten solid bars (photo edge, box borders): no character fills 70% of a line */
+function clearBars(c){
+  const g=c.getContext('2d',{willReadFrequently:true}), d=g.getImageData(0,0,c.width,c.height), p=d.data, W=c.width, H=c.height;
+  const dark=(x,y)=>p[(y*W+x)*4]===0;
+  for(let x=0;x<W;x++){ let n=0; for(let y=0;y<H;y++) if(dark(x,y)) n++; if(n>0.7*H) for(let y=0;y<H;y++){ const i=(y*W+x)*4; p[i]=p[i+1]=p[i+2]=255; } }
+  for(let y=0;y<H;y++){ let n=0; for(let x=0;x<W;x++) if(dark(x,y)) n++; if(n>0.7*W) for(let x=0;x<W;x++){ const i=(y*W+x)*4; p[i]=p[i+1]=p[i+2]=255; } }
+  g.putImageData(d,0,0);
+  return c;
+}
+function greyInk(c, adaptive){
+  const g=c.getContext('2d',{willReadFrequently:true}), d=g.getImageData(0,0,c.width,c.height), p=d.data;
+  /* fixed: dark and colourless (lum <= 160). adaptive, for very faint print: the
+     cut-off is Otsu over the colourless pixels only, so the pattern can't pull it */
+  const h=new Array(256).fill(0); let n=0;
+  for(let i=0;i<p.length;i+=4){
+    const mx=Math.max(p[i],p[i+1],p[i+2]), mn=Math.min(p[i],p[i+1],p[i+2]);
+    if(mx-mn<30){ h[Math.round(0.299*p[i]+0.587*p[i+1]+0.114*p[i+2])]++; n++; }
+  }
+  let sum=0; for(let t=0;t<256;t++) sum+=t*h[t];
+  let sumB=0, wB=0, best=0, thr=160;
+  for(let t=0;t<256;t++){ wB+=h[t]; if(!wB) continue; const wF=n-wB; if(!wF) break; sumB+=t*h[t];
+    const v=wB*wF*Math.pow(sumB/wB-(sum-sumB)/wF,2); if(v>best){ best=v; thr=t; } }
+  thr = adaptive ? Math.min(200, Math.max(120, thr)) : 160;
+  for(let i=0;i<p.length;i+=4){
+    const mx=Math.max(p[i],p[i+1],p[i+2]), mn=Math.min(p[i],p[i+1],p[i+2]);
+    const v=(mx-mn)<30 && (0.299*p[i]+0.587*p[i+1]+0.114*p[i+2])<=thr ? 0 : 255;
+    p[i]=p[i+1]=p[i+2]=v;
+  }
+  g.putImageData(d,0,0);
+  return c;
 }
 const lev=(a,b)=>{ const d=Array.from({length:a.length+1},(_,i)=>[i]); for(let j=1;j<=b.length;j++) d[0][j]=j;
   for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
@@ -1885,38 +1973,82 @@ function snapModel(make, text){
   }
   return {model:String(text).trim(), why:'read from طرازها; not in the model list'+(make?' for '+make:'')+', check it'};
 }
+/* The engine-power line carries one of a few known words. A faint photo reads them
+   imperfectly ("بين" for بنزين), so take the known word the readings are closest to,
+   and only when it is clearly closer than the others. Never a default. */
+const FUEL_WORDS = [
+  {w:'كهرباء', fuel:'Electric', why:'"كهرباء" (electric) on the engine-power line. Hybrids carry it too: switch to Hybrid if this car is one'},
+  {w:'بنزين',  fuel:'Gasoline', why:'"بنزين" (petrol) on the engine-power line'},
+  {w:'مازوت',  fuel:'Gasoline', why:'"مازوت" (diesel) on the engine-power line; neither insurer prices diesel separately'},
+  {w:'ديزل',   fuel:'Gasoline', why:'"ديزل" (diesel) on the engine-power line; neither insurer prices diesel separately'},
+  {w:'هجين',   fuel:'Hybrid',   why:'"هجين" (hybrid) on the engine-power line'}
+];
+function fuelWord(readings){
+  let best=null, second=Infinity;
+  readings.forEach(function(t){
+    (arNorm(t).match(/[ء-ي]{2,}/g)||[]).forEach(function(tok){
+      FUEL_WORDS.forEach(function(F){
+        const d=lev(tok, arNorm(F.w));
+        if(!best || d<best.d){ if(best && best.F!==F) second=Math.min(second,best.d); best={F,d}; }
+        else if(F!==best.F) second=Math.min(second,d);
+      });
+    });
+  });
+  if(!best) return {};
+  const sure = best.d===0 || (best.d<=Math.floor(arNorm(best.F.w).length/2) && second-best.d>=2);
+  return sure ? {fuel:best.F.fuel, why:best.F.why+(best.d?' (read as a near match)':''), sure:true} : {};
+}
 async function readRegistration(file, say){
   const bmp=await createImageBitmap(file);
-  const s1=2400/Math.max(bmp.width,bmp.height);
   const ara=await getWorker(); await ara.setParameters({tessedit_pageseg_mode:'3'});
   const turns = bmp.height>bmp.width ? [270,90,0,180] : [0,180,270,90];
   let best=null;
-  for(const deg of turns){
+  /* find the card's labels: every rotation at the normal size, then, for a card shot
+     from far whose labels are too small to find, the two likeliest rotations larger */
+  const tries=turns.map(d=>[d,2400]).concat(turns.slice(0,2).map(d=>[d,4000]));
+  for(const [deg,size] of tries){
+    if(best && best.L.rows>=3) break;
     say('Reading the card…');
-    const c=await cardCanvas(bmp,deg,s1,130), data=(await ara.recognize(c,{},{blocks:true})).data;
+    const s=size/Math.max(bmp.width,bmp.height);
+    const c=await cardCanvas(bmp,deg,s,130), data=(await ara.recognize(c,{},{blocks:true})).data;
     const L=cardLayout(ocrWords(data), c.width);
-    if(!best || L.rows>best.L.rows) best={deg,L,text:data.text};
-    if(L.rows>=3) break;
+    if(!best || L.rows>best.L.rows) best={deg,L,s,text:data.text};
   }
   if(!best || !best.L.pitch) return {fallbackText: best ? best.text : ''};
+  const s1=best.s;
   say('Reading the values…');
-  const L=best.L, f=4/3, ink=await cardCanvas(bmp,best.deg,s1*f,130);
-  const half=0.45*L.pitch*f, rowY=i=>(L.top+L.pitch*i)*f;
+  /* values are cut to black and white row by row (Otsu), so grey print survives */
+  /* zoom to the card, not the photo: rows ~140px apart read best, so a card shot
+     from far (small rows) gets enlarged and a close-up is left alone */
+  const L=best.L, f=Math.min(4, Math.max(1, 140/L.pitch)), gray=await cardCanvas(bmp,best.deg,s1*f,0);
+  const half=0.5*L.pitch*f, rowY=i=>L.rowAt('R',i)*f, leftY=i=>L.rowAt('L',i)*f;
   const eng=await getEngWorker();
-  const mid=async(i,src)=>(await eng.recognize(cropCanvas(src||ink, L.valX0*f, rowY(i)-half, L.valX1*f, rowY(i)+half))).data.text.trim();
+  const midBox=(i,src)=>cropCanvas(src||gray, L.valX0*f, rowY(i)-half, L.valX1*f, rowY(i)+half);
+  const mid=async(i,src)=>(await eng.recognize(src ? midBox(i,src) : clearBars(greyInk(midBox(i))))).data.text.trim();
   /* only what a quote needs: الماركة, تاريخ الصنع, طرازها, and قوة المحرك for the fuel */
   const raw={make:await mid(0), year:await mid(1), model:await mid(2)};
-  await ara.setParameters({tessedit_pageseg_mode:'7'});
-  const lft=async i=>(await ara.recognize(cropCanvas(ink, 0, rowY(i)-half, L.leftX1*f, rowY(i)+half))).data.text.trim();
-  raw.power=await lft(0); raw.cylinders=await lft(1);
-  await ara.setParameters({tessedit_pageseg_mode:'3'});
+  /* left column, first row: the fuel word beside the engine power. Only the word
+     matters. Read it three ways with an Arabic-only reader; the box stops at this
+     row's own label when that label was read. */
+  const leftEnd=i=>Math.min(L.leftX1, L.leftStartAt[i]!==undefined ? L.leftStartAt[i]-0.005*L.W : Infinity);
+  const lftBox=i=>cropCanvas(gray, Math.max(0,(L.leftX1-0.32*L.W))*f, leftY(i)-half, leftEnd(i)*f, leftY(i)+half);
+  const arw=await getAraWorker();
+  raw.power=[];
+  for(const prep of [c=>c, c=>clearBars(greyInk(c)), c=>clearBars(greyInk(c,true))]){
+    raw.power.push((await arw.recognize(prep(lftBox(0)))).data.text.trim());
+    if(fuelWord(raw.power).sure) break;
+  }
 
   const r={why:{}, layout:true};
-  const yearOf=t=>{ const m=wDigits(t).match(/(19[89]\d|20[0-4]\d)/); return m && +m[1]<=new Date().getFullYear()+1 ? +m[1] : null; };
+  /* the year row holds nothing but a year, so letters there are misread digits (ZOZ3 -> 2023) */
+  const asDigits=t=>wDigits(t).toUpperCase().replace(/[OQD]/g,'0').replace(/[IL|!]/g,'1').replace(/Z/g,'2').replace(/S/g,'5').replace(/B/g,'8').replace(/G/g,'6').replace(/T/g,'7').replace(/\s+/g,'');
+  const yearOf=t=>{ const m=asDigits(t).match(/(19[89]\d|20[0-4]\d)/); return m && +m[1]<=new Date().getFullYear()+1 ? +m[1] : null; };
   /* a row that doesn't parse gets re-read under a lighter and a heavier cleanup */
   let others=null;
   const retry=async(i,ok)=>{
-    others=others||[await cardCanvas(bmp,best.deg,s1*f,0), await cardCanvas(bmp,best.deg,s1*f,165)];
+    const t0=(await eng.recognize(otsu(midBox(i)))).data.text.trim();
+    if(ok(t0)) return t0;
+    others=others||[await cardCanvas(bmp,best.deg,s1*f,130), await cardCanvas(bmp,best.deg,s1*f,165)];
     for(const c of others){ const t=await mid(i,c); if(ok(t)) return t; }
     return null;
   };
@@ -1928,17 +2060,9 @@ async function readRegistration(file, say){
   if(yearOf(raw.year)){ r.year=yearOf(raw.year); r.why.year='read from تاريخ الصنع on the card'; }
   const snap=snapModel(r.make, raw.model);
   if(snap.model){ r.model=snap.model; r.why.model=snap.why; }
-  /* كهرباء beside the engine power = electric or hybrid; both carry it, so the
-     cylinder count (0 on a pure electric car) tells them apart */
-  const pw=arNorm(raw.power), electricWord=/كهرب/.test(pw), hybridWord=/هجين|هايبر/.test(pw);
-  const petrolWord=/بنزين|بنزبن|بنزن/.test(pw), dieselWord=/مازوت|ديزل/.test(pw);
-  const cyl=wDigits(raw.cylinders).match(/\d+/), cylinders=cyl?+cyl[0]:null;
-  if(petrolWord && !electricWord){ r.fuel='Gasoline'; r.why.fuel='"بنزين" (petrol) next to the engine power'; }
-  else if(dieselWord && !electricWord){ r.fuel='Gasoline'; r.why.fuel='diesel next to the engine power; neither insurer prices diesel separately'; }
-  else if(hybridWord || (electricWord && cylinders>0)){ r.fuel='Hybrid'; r.why.fuel='"كهرباء" next to the engine power, and the car has '+cylinders+' cylinders, so hybrid. Confirm it'; }
-  else if(electricWord){ r.fuel='Electric'; r.why.fuel='"كهرباء" next to the engine power'+(cylinders===0?', and 0 cylinders':''); }
-  else if(/\d/.test(wDigits(raw.power))){ r.fuel='Gasoline'; r.why.fuel='no "كهرباء" next to the engine power'; }
-  r.text='Make row: '+raw.make+'\nYear row: '+raw.year+'\nModel row: '+raw.model+'\nEngine power: '+raw.power+'\nCylinders: '+raw.cylinders;
+  const fw=fuelWord(raw.power);
+  if(fw.fuel){ r.fuel=fw.fuel; r.why.fuel=fw.why; }
+  r.text='Make row: '+raw.make+'\nYear row: '+raw.year+'\nModel row: '+raw.model+'\nFuel word: '+raw.power.join('  |  ');
   return r;
 }
 async function runCarScan(file){
