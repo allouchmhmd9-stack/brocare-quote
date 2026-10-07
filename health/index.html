@@ -239,7 +239,7 @@
 
   <!-- INSURER -->
   <section class="insurerbox">
-    <div class="insurerlbl">Insurer — rates come from whichever you pick</div>
+    <div class="insurerlbl">Insurer: rates come from whichever you pick</div>
     <div class="insurerseg" id="segInsurer" role="group" aria-label="Insurer">
       <button data-v="fidelity" class="on">Fidelity</button>
       <button data-v="ufa">UFA</button>
@@ -342,7 +342,7 @@
   <div class="price-card" id="priceCard">
     <div class="price-head">
       <div class="price-sub" id="priceSub">Total owed / year</div>
-      <div class="price-big" id="priceBig">—</div>
+      <div class="price-big" id="priceBig">–</div>
     </div>
     <div class="price-rows" id="priceRows"></div>
     <div class="msg" id="msg"></div>
@@ -409,12 +409,12 @@
   <div id="broDiscs"></div>
   <button type="button" class="addb" id="broAdd">+ Add discount</button>
 
-  <div class="tot"><span>Quoted price</span><span id="broQuoted">&mdash;</span></div>
+  <div class="tot"><span>Quoted price</span><span id="broQuoted">&ndash;</span></div>
   <div class="bf" style="margin-top:10px">
     <label for="broFinal">Final price you are confirming (USD)</label>
     <input id="broFinal" type="number" step="1" min="0">
   </div>
-  <div class="warn" id="broWarn">Get a price above first &mdash; the quoter has nothing to hand over yet.</div>
+  <div class="warn" id="broWarn">Get a price above first. The quoter has nothing to hand over yet.</div>
 
   <div id="broCmpBox">
     <div class="cmph"><span id="broCmpTitle">Comparison</span><button type="button" id="broCmpClear">Clear all</button></div>
@@ -467,7 +467,7 @@
       return 'Full hospital network excluding AUBMC, CMC, Rizk, Saint John and Bellevue.';
     if(/Prime$/i.test(l))
       return isSP ? 'Full hospital network excluding Bellevue only.'
-                  : 'Full hospital network — no hospital excluded.';
+                  : 'Full hospital network, no hospital excluded.';
     return '';
   }
 
@@ -496,8 +496,8 @@
       if(ambTxt && /^\d+%$/.test(ambTxt)) ambTxt = ambTxt + ' covered';
       return { total: total,
         sub: niceSub,
-        chips: [ {k:'Insurer', v: (typeof BOOK!=='undefined' && BOOK.name) || '\u2014'},
-                 {k:'Plan', v: lvl || '\u2014'}, {k:'Out-patient', v: ambTxt || '\u2014'} ],
+        chips: [ {k:'Insurer', v: (typeof BOOK!=='undefined' && BOOK.name) || '\u2013'},
+                 {k:'Plan', v: lvl || '\u2013'}, {k:'Out-patient', v: ambTxt || '\u2013'} ],
         members: dobs.join(' \u00b7 '),
         network: networkFor(lvl),
         cover: 'Medical insurance' };
@@ -512,8 +512,8 @@
     var veh = [brand, model, year].filter(Boolean).join(' ');
     return { total: total2,
       sub: veh || 'Motor insurance',
-      chips: [ {k:'Vehicle', v: veh || '\u2014'},
-               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2014'} ],
+      chips: [ {k:'Vehicle', v: veh || '\u2013'},
+               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2013'} ],
       members: '', cover: 'Motor insurance' };
   }
 
@@ -542,7 +542,7 @@
     var q = readQuote();
     var net = Math.max(0, q.total - discTotal());
     if(!$('broFinal').dataset.touched) $('broFinal').value = net || '';
-    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2014';
+    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2013';
   }
 
   $('broFinal').addEventListener('input', function(){ this.dataset.touched='1'; });
@@ -575,7 +575,7 @@
       desc: q.network || '', descLabel:'Hospitals covered',
       discounts: discs.filter(function(d){ return Number(d.amt)>0; })
                       .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
-      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: q.total || price }],
       invNo: r.invNo });
   }
 
@@ -591,7 +591,7 @@
 
   function optionName(q){
     var c = (q.chips||[]).filter(function(x){ return /plan|cover/i.test(x.k); })[0];
-    return (c && c.v && c.v !== '\u2014') ? c.v : (q.sub || 'Option');
+    return (c && c.v && c.v !== '\u2013') ? c.v : (q.sub || 'Option');
   }
   function currentEntry(){
     var q = readQuote();
@@ -605,7 +605,7 @@
     var b = getBasket(), box = $('broCmpBox'), btn = $('broCompare');
     if(!b.length){ box.style.display='none'; btn.textContent='Comparison'; btn.disabled=false; return; }
     box.style.display='block';
-    $('broCmpTitle').textContent = 'Comparison \u2014 ' + b.length + ' saved';
+    $('broCmpTitle').textContent = 'Comparison: ' + b.length + ' saved';
     $('broCmpList').innerHTML = b.map(function(e,i){
       return '<div class="cmprow"><span>'+(i+1)+'. '+esc2(e.name)+'</span>'+
              '<span class="p">USD '+Number(e.price).toLocaleString('en-US')+'</span>'+
@@ -619,7 +619,7 @@
     btn.disabled = full;
     $('broCmpHint').textContent = full
       ? 'Maximum of ' + MAXCOLS + ' columns. Press Finish to build the document.'
-      : 'Quote again above, then "Add to comparison" for another column \u2014 or press Finish to include the quote on screen now.';
+      : 'Quote again above, then "Add to comparison" for another column, or press Finish to include the quote on screen now.';
   }
 
   function addToComparison(){
@@ -706,23 +706,23 @@ INSURERS.fidelity.key='fidelity';
 INSURERS.fidelity.name='Fidelity';
 INSURERS.fidelity.tariffTag='April 2026 tariff';
 INSURERS.fidelity.blurb=[
-  ['Prime','Full hospital network — no hospital excluded (Class SP loses Bellevue only). Highest limits.'],
+  ['Prime','Full hospital network, no hospital excluded (Class SP loses Bellevue only). Highest limits.'],
   ['Smart Plus','Keeps AUBMC, Rizk and Saint John. Excludes only CMC and Bellevue.'],
   ['Smart','Also drops AUBMC, and prosthesis limits are lower.'],
   ['Essential','Smallest network: also excludes KMC. Class SP only. Bariatric not covered.'],
-  ['A / B / SP','The hospitalisation class — it sets the money limits (organ transplant $60,000 / $40,000 / $20,000 a year).']
+  ['A / B / SP','The hospitalisation class: it sets the money limits (organ transplant $60,000 / $40,000 / $20,000 a year).']
 ];
 INSURERS.ufa.key='ufa';
 INSURERS.ufa.name='UFA';
 INSURERS.ufa.tariffTag='October 2025 tariff';
 INSURERS.ufa.blurb=[
-  ['Optimum','Full network, MENA + France coverage. Ambulatory unlimited. Classes A & B only — no SP. Includes emergency treatment abroad up to $65,000 and medical assistance abroad up to $100,000, neither of which Standard has at all.'],
+  ['Optimum','Full network, MENA + France coverage. Ambulatory unlimited. Classes A & B only, no SP. Includes emergency treatment abroad up to $65,000 and medical assistance abroad up to $100,000, neither of which Standard has at all.'],
   ['Standard','Limited network (excludes CMC, KMC, SGO, Bellevue), Lebanon only. Ambulatory capped at $5,000/year. Sold on Classes A, B and SP.'],
   ['Organ transplant','Class A: $100,000 Optimum vs $60,000 Standard. Class B: $80,000 vs $40,000. Class SP (Standard only): $20,000. All per case, per lifetime.'],
   ['Bariatric & infertility','Optimum covers bariatric surgery and in-hospital infertility with no stated dollar cap (still subject to full eligibility criteria); Standard caps bariatric at $3,000 and infertility at $3,000/year combined in+out.'],
-  ['Other Optimum-only extras','Radiotherapy (IMRT) $7,500 vs $5,500. Immunotherapy up to $30,000/lifetime — not covered at all on Standard. Rehab after a cardiac or stroke event — not covered on Standard. Coma up to 120 days vs 60. Personal accident (death) $15,000 vs $10,000.'],
-  ['A / B / SP','The hospitalisation class, same idea as Fidelity — but SP only exists on the Standard plan, priced flat for a family of any size up to 6.'],
-  ['Family size','UFA prices each exact family size from 1 to 6 — the premium per person falls as the family grows, unlike Fidelity’s two size bands.'],
+  ['Other Optimum-only extras','Radiotherapy (IMRT) $7,500 vs $5,500. Immunotherapy up to $30,000/lifetime, not covered at all on Standard. Rehab after a cardiac or stroke event, not covered on Standard. Coma up to 120 days vs 60. Personal accident (death) $15,000 vs $10,000.'],
+  ['A / B / SP','The hospitalisation class, same idea as Fidelity, but SP only exists on the Standard plan, priced flat for a family of any size up to 6.'],
+  ['Family size','UFA prices each exact family size from 1 to 6: the premium per person falls as the family grows, unlike Fidelity’s two size bands.'],
   ['Ambulatory %','85% is available on both networks; 100% is sold on the full (Optimum) network only.']
 ];
 
@@ -821,7 +821,7 @@ function paintInsurer(){
     b.classList.toggle('on', b.dataset.v===state.insurer));
   $('tariffTag').innerHTML = BOOK.tariffTag.replace(/\s*tariff$/,'') + '<br>tariff';
   const blurbHtml = BOOK.blurb.map(r=>
-    '<p><b>'+esc(r[0])+'</b> — '+esc(r[1])+'</p>').join('');
+    '<p><b>'+esc(r[0])+'</b>: '+esc(r[1])+'</p>').join('');
   $('insurerBlurb').innerHTML = blurbHtml;
   $('levelInfoBody').innerHTML = blurbHtml;   /* same content, shown again next to the level picker */
   /* UFA prices each exact family size, so its size buttons are meaningless */
@@ -982,12 +982,12 @@ function pricePerson(age){
   }
   if(byCount && BOOK.maxEntryAge && state.biz==='new' && age>BOOK.maxEntryAge){
     return {err:'Age '+age+' is above '+BOOK.name+'’s last entry age of '+BOOK.maxEntryAge+
-      '. These rates apply to renewals only — switch Business to Renewal.'};
+      '. These rates apply to renewals only. Switch Business to Renewal.'};
   }
   const cell=byCopay[age];
   if(cell===undefined){
     const ages=Object.keys(byCopay).map(Number);
-    return {err:'Age '+age+' is out of range — this tariff covers ages '+Math.min(...ages)+'–'+Math.max(...ages)+'.'};
+    return {err:'Age '+age+' is out of range. This tariff covers ages '+Math.min(...ages)+'–'+Math.max(...ages)+'.'};
   }
   let ip;
   if(byCount){
@@ -1012,7 +1012,7 @@ function pricePerson(age){
 
 function resetPrice(sub, need){
   $('priceCard').classList.remove('error');
-  $('priceBig').textContent='—'; clearRows(); $('priceSub').textContent=sub||'Total owed / year';
+  $('priceBig').textContent='–'; clearRows(); $('priceSub').textContent=sub||'Total owed / year';
   if(need){
     const d=document.createElement('div');
     d.className='needmsg';
@@ -1098,7 +1098,7 @@ function paintBands(){
   });
   const ctx=state.level+' · '+(state.amb==='none'?'no out-patient':state.amb+'% out-patient')+' · '+
     (BOOK.sizeMode==='count' ? 'family of '+Math.min(familySize(),6) : 'size '+state.size)+' · '+(state.biz==='new'?'new business':'renewal');
-  out.innerHTML='<p><b>'+esc(ctx)+'</b> — price per person per year. Moving into the next band changes the price.</p>'+
+  out.innerHTML='<p><b>'+esc(ctx)+'</b>: price per person per year. Moving into the next band changes the price.</p>'+
     '<div class="bandgrid">'+bands.map(b=>'<span>'+(b.from===b.to?'Age '+b.from:'Ages '+b.from+'–'+b.to)+'</span><b>'+
       (b.v===null?'not sold':money(b.v))+'</b>').join('')+'</div>'+
     '<p class="hint">Excludes the one-off cost of policy.</p>';
@@ -1193,7 +1193,7 @@ async function runScan(files){
     const src=files.length>1 ? 'Image '+(i+1) : 'Image';
     if(scanMode==='id'){
       const d=idCardDob(text);
-      scanRows.push(d ? {iso:d.iso, amb:d.amb, note:src+' · '+d.why} : {iso:'', amb:false, note:src+' · no birth date found — type it'});
+      scanRows.push(d ? {iso:d.iso, amb:d.amb, note:src+' · '+d.why} : {iso:'', amb:false, note:src+' · no birth date found, type it'});
     } else {
       findDates(text).filter(d=>isDob(d.iso)).forEach(d=>scanRows.push({iso:d.iso, amb:d.amb, note:src}));
     }
@@ -1211,7 +1211,7 @@ function paintScanReview(){
   box.innerHTML=scanRows.map((r,i)=>
     '<div class="scanrow"><input type="date" data-i="'+i+'" value="'+r.iso+'" min="1920-01-01" max="'+today+'">'+
     '<span>'+(r.iso?'age '+ageFromDob(r.iso)+' · ':'')+esc(r.note)+
-      (r.amb?' · <span class="warn">day and month could be swapped — check</span>':'')+'</span>'+
+      (r.amb?' · <span class="warn">day and month could be swapped, check</span>':'')+'</span>'+
     '<button type="button" data-x="'+i+'" aria-label="Remove">×</button></div>').join('')+
     '<div><button type="button" class="scanapply" id="scanApply">Use '+scanRows.length+
     (scanRows.length===1?' date (individual)':' dates (family)')+'</button></div>';
@@ -1231,7 +1231,7 @@ function applyScan(){
     renderMembers(); calc();
   }
   scanRows=[]; paintScanReview();
-  $('scanStatus').textContent='Filled '+dates.length+(dates.length===1?' date of birth':' members')+' — now choose the cover level.';
+  $('scanStatus').textContent='Filled '+dates.length+(dates.length===1?' date of birth':' members')+'. Now choose the cover level.';
   $('levels').scrollIntoView({behavior:'smooth', block:'center'});
 }
 $('scanIds').onclick=()=>{ scanMode='id'; $('scanFile').click(); };

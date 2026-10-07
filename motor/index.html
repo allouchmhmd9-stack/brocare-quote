@@ -257,7 +257,7 @@
 
   <!-- INSURER -->
   <section class="insurerbox">
-    <div class="insurerlbl">Insurer — rates come from whichever you pick</div>
+    <div class="insurerlbl">Insurer: rates come from whichever you pick</div>
     <div class="insurerseg" id="segInsurer" role="group" aria-label="Insurer">
       <button data-v="fidelity" class="on">Fidelity</button>
       <button data-v="ufa">UFA</button>
@@ -281,7 +281,7 @@
       <div class="field">
         <label class="lbl" for="mtplPick">Category</label>
         <select id="mtplPick"><option value="">Select vehicle type…</option></select>
-        <span class="hint">Compulsory cover is a flat premium — vehicle value and year do not affect it.</span>
+        <span class="hint">Compulsory cover is a flat premium: vehicle value and year do not affect it.</span>
       </div>
       <div id="mtplOut"></div>
     </div>
@@ -295,7 +295,7 @@
         <label class="lbl">Fill from the car registration (دفتر السيارة)</label>
         <button type="button" class="scanbtn" id="scanCar">Scan the registration photo</button>
         <input type="file" id="scanCarFile" accept="image/*" hidden>
-        <div class="hint" style="margin-top:6px">Reads the make, model, year and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card — add it in Step 2.</div>
+        <div class="hint" style="margin-top:6px">Reads the make, model, year and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card, so add it in Step 2.</div>
         <div class="scanstatus" id="scanCarStatus"></div>
         <div class="scanrev hidden" id="scanCarReview"></div>
       </div>
@@ -335,7 +335,7 @@
     <div class="stephead"><span class="stepnum">2</span><span class="steptitle">Eligibility check</span><span class="stepecho" id="e2"></span></div>
     <div class="stepbody">
       <div class="field hidden" id="modelField">
-        <label class="lbl">Model — tap if it matches</label>
+        <label class="lbl">Model: tap if it matches</label>
         <div class="chips" id="modelChips"></div>
       </div>
       <div class="field">
@@ -359,7 +359,7 @@
   <section class="step off" id="s4">
     <div class="sum-head">
       <div class="sum-sub">Annual premium</div>
-      <div class="sum-big" id="sumBig">—</div>
+      <div class="sum-big" id="sumBig">–</div>
     </div>
     <div class="sum-rows" id="sumRows"></div>
     <button class="copybtn" id="copyBtn" type="button">Copy quote for client</button>
@@ -367,7 +367,7 @@
 
   <!-- BOTH INSURERS, SAME VEHICLE -->
   <section id="crossBox">
-    <div class="xtitle">Fidelity vs UFA — same vehicle</div>
+    <div class="xtitle">Fidelity vs UFA: same vehicle</div>
     <div class="xgrid" id="crossGrid"></div>
     <div class="xnote" id="crossNote"></div>
   </section>
@@ -434,12 +434,12 @@
   <div id="broDiscs"></div>
   <button type="button" class="addb" id="broAdd">+ Add discount</button>
 
-  <div class="tot"><span>Quoted price</span><span id="broQuoted">&mdash;</span></div>
+  <div class="tot"><span>Quoted price</span><span id="broQuoted">&ndash;</span></div>
   <div class="bf" style="margin-top:10px">
     <label for="broFinal">Final price you are confirming (USD)</label>
     <input id="broFinal" type="number" step="1" min="0">
   </div>
-  <div class="warn" id="broWarn">Get a price above first &mdash; the quoter has nothing to hand over yet.</div>
+  <div class="warn" id="broWarn">Get a price above first. The quoter has nothing to hand over yet.</div>
 
   <div id="broCmpBox">
     <div class="cmph"><span id="broCmpTitle">Comparison</span><button type="button" id="broCmpClear">Clear all</button></div>
@@ -495,7 +495,7 @@
       if(ambTxt && /^\d+%$/.test(ambTxt)) ambTxt = ambTxt + ' covered';
       return { total: total,
         sub: niceSub,
-        chips: [ {k:'Plan', v: lvl || '\u2014'}, {k:'Out-patient', v: ambTxt || '\u2014'} ],
+        chips: [ {k:'Plan', v: lvl || '\u2013'}, {k:'Out-patient', v: ambTxt || '\u2013'} ],
         members: dobs.join(' \u00b7 '),
         cover: 'Medical insurance' };
     }
@@ -512,10 +512,10 @@
     var prod = po ? po.textContent.trim() : '';
     return { total: total2,
       sub: veh || 'Motor insurance',
-      chips: [ {k:'Insurer', v: (typeof TARIFF!=='undefined' && TARIFF.name) || '\u2014'},
-               {k:'Cover', v: prod || '\u2014'},
-               {k:'Vehicle', v: veh || '\u2014'},
-               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2014'} ],
+      chips: [ {k:'Insurer', v: (typeof TARIFF!=='undefined' && TARIFF.name) || '\u2013'},
+               {k:'Cover', v: prod || '\u2013'},
+               {k:'Vehicle', v: veh || '\u2013'},
+               {k:'Sum insured', v: val ? 'USD '+val.toLocaleString('en-US') : '\u2013'} ],
       members: '', cover: 'Motor insurance' };
   }
 
@@ -544,7 +544,7 @@
     var q = readQuote();
     var net = Math.max(0, q.total - discTotal());
     if(!$('broFinal').dataset.touched) $('broFinal').value = net || '';
-    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2014';
+    $('broQuoted').textContent = q.total ? 'USD '+q.total.toLocaleString('en-US') : '\u2013';
   }
 
   $('broFinal').addEventListener('input', function(){ this.dataset.touched='1'; });
@@ -576,7 +576,7 @@
       chips: q.chips, members: q.members,
       discounts: discs.filter(function(d){ return Number(d.amt)>0; })
                       .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
-      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ' \u2014 '+q.sub : ''), amount: q.total || price }],
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: q.total || price }],
       invNo: r.invNo });
   }
 
@@ -592,7 +592,7 @@
 
   function optionName(q){
     var c = (q.chips||[]).filter(function(x){ return /plan|cover/i.test(x.k); })[0];
-    return (c && c.v && c.v !== '\u2014') ? c.v : (q.sub || 'Option');
+    return (c && c.v && c.v !== '\u2013') ? c.v : (q.sub || 'Option');
   }
   function currentEntry(){
     var q = readQuote();
@@ -606,7 +606,7 @@
     var b = getBasket(), box = $('broCmpBox'), btn = $('broCompare');
     if(!b.length){ box.style.display='none'; btn.textContent='Comparison'; btn.disabled=false; return; }
     box.style.display='block';
-    $('broCmpTitle').textContent = 'Comparison \u2014 ' + b.length + ' saved';
+    $('broCmpTitle').textContent = 'Comparison: ' + b.length + ' saved';
     $('broCmpList').innerHTML = b.map(function(e,i){
       return '<div class="cmprow"><span>'+(i+1)+'. '+esc2(e.name)+'</span>'+
              '<span class="p">USD '+Number(e.price).toLocaleString('en-US')+'</span>'+
@@ -620,7 +620,7 @@
     btn.disabled = full;
     $('broCmpHint').textContent = full
       ? 'Maximum of ' + MAXCOLS + ' columns. Press Finish to build the document.'
-      : 'Quote again above, then "Add to comparison" for another column \u2014 or press Finish to include the quote on screen now.';
+      : 'Quote again above, then "Add to comparison" for another column, or press Finish to include the quote on screen now.';
   }
 
   function addToComparison(){
@@ -682,8 +682,8 @@
 </script>
 
 <div class="foot">
-    Prepared by <b>Brocare</b> · Private cars · Fidelity Motor All Risk, April 2026.<br>
-    Rates exclude bodily injury (MBY) cover. Indicative only — no cover until risk acceptance from Fidelity.
+    Prepared by <b>Brocare</b> · Private cars · Fidelity Motor All Risk, April 2026 · UFA Motor Tariff, July 2026.<br>
+    Rates exclude bodily injury (MBY) cover. Indicative only, no cover until risk acceptance from the insurer.
   </div>
 </div>
 
@@ -728,7 +728,7 @@ const INSURERS = {
     blurb:[
       ['Prime Drive','Widest cover. Agency dealer repair included, and no depreciation on new spare parts.'],
       ['Smart Drive','Comprehensive cover, but spare parts follow a depreciation scale and there is no agency repair.'],
-      ['Collision','Collision damage only — a cut-down cover for older or lower-value cars.'],
+      ['Collision','Collision damage only, a cut-down cover for older or lower-value cars.'],
       ['Total Loss','Pays out only if the car is a write-off (repairs reaching 65% of its value).'],
       ['Electric Drive Plus','Fidelity’s electric-car tariff with agency dealer repair, which is only available where the make has an authorized dealer in Lebanon. Tesla is excluded.'],
       ['Electric Drive','Fidelity’s electric-car tariff without agency repair. Tesla is excluded. Fidelity sells no Collision or Total Loss plan on electric cars.']
@@ -778,7 +778,7 @@ const INSURERS = {
     /* Makes Fidelity will not quote at all, and makes with no authorized dealer (so no agency repair). */
     referMakes:{ 'Tesla':'Fidelity’s electric-car tariff excludes Tesla.' },
     noAgencyMakes:{ 'Tesla':'Tesla has no authorized dealer in Lebanon.' },
-    agencyNeedsDealer:'Fidelity agency repair is subject to an existing authorized dealer in Lebanon for this make — confirm before promising it.'
+    agencyNeedsDealer:'Fidelity agency repair is subject to an existing authorized dealer in Lebanon for this make. Confirm before promising it.'
   },
 
   ufa: {
@@ -787,7 +787,7 @@ const INSURERS = {
     blurb:[
       ['Standard Plan','Comprehensive cover for cars up to USD 50,000. Spare parts depreciate, no agency repair, and SRCC or natural-hazard damage is capped at USD 1,000.'],
       ['Lux Plan','Higher limits (third-party USD 1.5m), scratching and denting covered, natural hazards up to the full car value, replacement car at USD 50 a day.'],
-      ['Lux Plan + Agency Repair','The Lux Plan with repairs at the official dealer — cars made 2024–2027 only.'],
+      ['Lux Plan + Agency Repair','The Lux Plan with repairs at the official dealer, for cars made 2024–2027 only.'],
       ['Lux Plan (Electric)','The Lux Plan on UFA’s separate electric-vehicle tariff. The battery is covered when damaged in an accident.'],
       ['Total Loss','Pays out only on a write-off, with a 10% deductible on own-damage total loss.']
     ],
@@ -859,21 +859,21 @@ const INSURERS = {
 INSURERS.ufa.mtpl = {
   driverNote:'Material-damage cover on commercial and taxi vehicles includes bodily injury for the driver: medical USD 1,500 and death/PTD USD 2,500 per person.',
   options:[
-    { cat:'Private Cars', label:'Private car — TPL 500,000', md:55, mdSI:500000, bi:45, biSI:500000,
+    { cat:'Private Cars', label:'Private car, TPL 500,000', md:55, mdSI:500000, bi:45, biSI:500000,
       medical:2000, death:4000, towing:'Unlimited accident towing, unlimited mileage (incl. telescopic).' },
-    { cat:'Private Cars', label:'Private car — TPL 750,000', md:65, mdSI:750000, bi:45, biSI:500000,
+    { cat:'Private Cars', label:'Private car, TPL 750,000', md:65, mdSI:750000, bi:45, biSI:500000,
       medical:2500, death:5000, towing:'Accident towing plus one breakdown tow up to 75 km.' },
-    { cat:'Private Cars', label:'Private car — TPL 1,000,000', md:75, mdSI:1000000, bi:45, biSI:500000,
+    { cat:'Private Cars', label:'Private car, TPL 1,000,000', md:75, mdSI:1000000, bi:45, biSI:500000,
       medical:5000, death:10000, towing:'Accident towing plus two breakdown tows (100 km, then 50 km).' },
     { cat:'Taxis', label:'Taxi', md:80, mdSI:150000, bi:90, biSI:500000,
       towing:'Accident towing plus one breakdown tow up to 35 km.' },
     { cat:'Mini Vans', label:'Mini van', md:80, mdSI:150000, bi:90, biSI:500000,
       towing:'Accident towing plus one breakdown tow up to 35 km.' },
-    { cat:'Buses & Vans', label:'Bus / van — up to 11 passengers', md:70, mdSI:100000, bi:135, biSI:500000,
+    { cat:'Buses & Vans', label:'Bus / van, up to 11 passengers', md:70, mdSI:100000, bi:135, biSI:500000,
       towing:'Accident towing plus one breakdown tow up to 35 km.' },
-    { cat:'Buses & Vans', label:'Bus / van — 12 to 24 passengers', md:80, mdSI:100000, bi:200, biSI:665000,
+    { cat:'Buses & Vans', label:'Bus / van, 12 to 24 passengers', md:80, mdSI:100000, bi:200, biSI:665000,
       towing:'No towing service.' },
-    { cat:'Buses & Vans', label:'Bus / van — 25 passengers or more', md:130, mdSI:100000, bi:300, biSI:1000000,
+    { cat:'Buses & Vans', label:'Bus / van, 25 passengers or more', md:130, mdSI:100000, bi:300, biSI:1000000,
       towing:'No towing service.' },
     { cat:'Pick-ups', label:'Pick-up (Tundra, Tacoma, Ford…)', md:80, mdSI:50000, bi:90, biSI:500000,
       towing:'Accident towing, unlimited mileage.' },
@@ -967,7 +967,7 @@ function consensus(rows){
   const lo=kept[0], hi=kept[n-1];
   if(top.v.length>=VAL.minCluster && top.v.length/n>=VAL.majority){
     return {kind:'value', method:'mode', value:top.price, n, ignored, lo, hi,
-      reason:top.v.length+' of '+n+' listings sit at about '+money(top.price)+' — the most common price. '+((n-top.v.length)===1?'The other one is not used.':'The other '+(n-top.v.length)+' are not used.')};
+      reason:top.v.length+' of '+n+' listings sit at about '+money(top.price)+', the most common price. '+((n-top.v.length)===1?'The other one is not used.':'The other '+(n-top.v.length)+' are not used.')};
   }
   const spread=(hi-lo)/median(kept);
   if(spread<=VAL.tightSpread){
@@ -995,7 +995,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 })();
 (function initBrands(){
   const sel=$('brand');
-  const g1=document.createElement('optgroup'); g1.label='Sports / luxury — referral';
+  const g1=document.createElement('optgroup'); g1.label='Sports / luxury (referral)';
   Object.keys(TARIFF.sports).forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g1.appendChild(o); });
   const g2=document.createElement('optgroup'); g2.label='Other makes';
   TARIFF.otherMakes.forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g2.appendChild(o); });
@@ -1068,7 +1068,7 @@ function driverBlock(book){
 }
 function eligibility(){
   if(S.sports){
-    let m='This make/model is on the sports & luxury list — it must be referred to '+TARIFF.name+' for a quote.';
+    let m='This make/model is on the sports & luxury list and must be referred to '+TARIFF.name+' for a quote.';
     if(TARIFF.sportsMinAge && S.driverAge!==null && S.driverAge<TARIFF.sportsMinAge){
       m+=' Driver must also be at least '+TARIFF.sportsMinAge+'.';
     }
@@ -1078,7 +1078,7 @@ function eligibility(){
   if(rr) return {block:rr};
   if(S.value!==null && S.value>TARIFF.maxValue){
     return {block:'Vehicle value is above $'+TARIFF.maxValue.toLocaleString()+
-      ' — refer to '+TARIFF.name+' for a quote.'};
+      '. Refer to '+TARIFF.name+' for a quote.'};
   }
   const db=driverBlock(TARIFF);
   if(db) return {block:db};
@@ -1205,7 +1205,7 @@ function vcSources(rows){
 }
 function vcFresh(){
   const d=window.CAR_LISTINGS||{}, age=d.generatedAt ? Math.floor((Date.now()-new Date(d.generatedAt).getTime())/864e5) : null;
-  return '<div class="vc-note">Listings refreshed '+esc(d.generatedAt||'?')+(age!==null && age>14?' — '+age+' days old, refresh before relying on this':'')+'.</div>';
+  return '<div class="vc-note">Listings refreshed '+esc(d.generatedAt||'?')+(age!==null && age>14?', '+age+' days old. Refresh before relying on this':'')+'.</div>';
 }
 function renderFinder(model){
   const out=$('valueResult'), rows=allListings();
@@ -1240,10 +1240,10 @@ function renderFinder(model){
     return;
   }
   if(c.kind==='spread'){
-    out.innerHTML=vcCard('miss','No single price — you decide · '+label,
+    out.innerHTML=vcCard('miss','No single price, you decide · '+label,
       '<div class="vc-note">'+c.n+' listings range from '+money(c.lo)+' to '+money(c.hi)+', and no price is shared by most of them:</div>'+
       '<div class="vc-groups">'+c.groups.map(g=>'<button type="button" data-use="'+g.price+'" title="Use '+money(g.price)+'"><b>'+g.count+'</b> × '+money(g.price)+'</button>').join('')+'</div>'+
-      '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap — open the listings and judge which sits closest to this car.'+
+      '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap. Open the listings and judge which sits closest to this car.'+
         (c.n>=12?' <b>Tip:</b> add the trim to the model (for example “C300”, “AMG”, “Limited”, “Hybrid”) to narrow it down.':'')+'</div>'+
       vcTable(exact)+vcFresh());
     return;
@@ -1253,7 +1253,7 @@ function renderFinder(model){
   }).filter(Boolean);
   out.innerHTML=vcCard('miss','Not enough '+S.year+' listings · '+S.brand+' '+model,
     '<div class="vc-note">'+(exact.length?'Only '+exact.length+' listing'+(exact.length===1?'':'s')+' for '+S.year:'No '+S.year+' listings')+
-    ' — too few to name a value. <b>Call the agency for a valuation.</b>'+
+    ', too few to name a value. <b>Call the agency for a valuation.</b>'+
     (near.length?' For reference only, nearby years: '+esc(near.join(' · '))+'.':'')+'</div>'+
     (exact.length?vcTable(exact):'')+vcFresh());
 }
@@ -1304,7 +1304,7 @@ function buildOptions(){
       ? '<div class="optprice">'+money(q.premium)+'<small>'+q.rate.toFixed(2)+'%'+(q.atMin?' · minimum':'')+'</small></div>'
       : '<div class="optprice na">'+esc(q.na)+'</div>';
     const delta = !up ? ''
-      : up.amount>0 ? '<div class="optdelta">+'+money(up.amount)+' over '+esc(up.base)+' — this is what agency repair costs</div>'
+      : up.amount>0 ? '<div class="optdelta">+'+money(up.amount)+' over '+esc(up.base)+': this is what agency repair costs</div>'
       : '<div class="optdelta bad">Confirm with '+esc(TARIFF.name)+' before quoting: its tariff prices this agency-repair plan '+
         (up.amount<0?money(-up.amount)+' below':'the same as')+' '+esc(up.base)+', which has no agency repair. That can’t be right.</div>';
     btn.innerHTML='<div><div class="optname">'+esc(p.name)+'</div><div class="optmeta">'+esc(p.note)+'</div>'+delta+'</div>'+price;
@@ -1333,7 +1333,7 @@ function buildSummary(){
     ['Agency repair', p.agency?'Included':'Not available on this cover']
   ];
   const up=agencyUplift(p);
-  if(up) rows.push(['— cost of that agency repair', up.amount>0 ? '+'+money(up.amount)+' vs '+up.base : 'tariff prices it at or below '+up.base+' — confirm with '+TARIFF.name]);
+  if(up) rows.push(['Cost of that agency repair', up.amount>0 ? '+'+money(up.amount)+' vs '+up.base : 'tariff prices it at or below '+up.base+', confirm with '+TARIFF.name]);
   let html=rows.map(r=>'<div class="srow"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
   html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
         + '<span class="v">'+(q.atMin?('minimum '+money(p.min)):money(q.raw))+'</span></div>';
@@ -1346,7 +1346,7 @@ $('copyBtn').onclick=function(){
   const q=quote(p,S.value,S.year);
   const up=agencyUplift(p);
   const txt=[
-    'BROCARE — Motor All Risk quote',
+    'BROCARE · Motor All Risk quote',
     '',
     'Insurer: '+TARIFF.name,
     'Vehicle: '+S.brand+(S.models.length?(' '+S.models.join(', ')):'')+' · '+S.year,
@@ -1358,7 +1358,7 @@ $('copyBtn').onclick=function(){
     '',
     'ANNUAL PREMIUM: '+money(q.premium),
     '',
-    'Excludes bodily injury cover. Indicative only —',
+    'Excludes bodily injury cover. Indicative only,',
     'no cover until risk acceptance from '+TARIFF.name+'.',
     TARIFF.name+' motor tariff, '+TARIFF.tariffTag+'.'
   ].join('\n');
@@ -1378,7 +1378,7 @@ function paintInsurer(){
   });
   $('tariffTag').innerHTML = TARIFF.tariffTag.replace(/\s*tariff$/,'') + '<br>tariff';
   $('insurerBlurb').innerHTML = TARIFF.blurb.map(function(r){
-    return '<p><b>'+esc(r[0])+'</b> — '+esc(r[1])+'</p>';
+    return '<p><b>'+esc(r[0])+'</b>: '+esc(r[1])+'</p>';
   }).join('');
   $('fuelHint').textContent = TARIFF.key==='ufa'
     ? 'UFA prices electric vehicles on a separate tariff, so this changes which plans you see.'
@@ -1425,7 +1425,7 @@ function buildCross(){
   const side=function(title,list,book){
     const why=(book===INSURERS.fidelity?fq:uq).why;
     if(!list.length) return '<div class="xcol"><div class="xh">'+title+'</div>'+
-      '<div class="xna">No plan available — '+esc(why)+'</div></div>';
+      '<div class="xna">No plan available: '+esc(why)+'</div></div>';
     const cheapest=Math.min.apply(null,list.filter(function(x){return !x.check;}).map(function(x){return x.premium;}));
     return '<div class="xcol"><div class="xh">'+title+'</div>'+list.map(function(x){
       return '<div class="xrow'+(x.premium===cheapest && !x.check?' best':'')+'"><span>'+esc(x.name)+
@@ -1561,7 +1561,7 @@ function paintIntervals(){
   const plans=offeredPlans(TARIFF);
   out.innerHTML='<p><b>'+esc(TARIFF.name)+' · model year '+S.year+' · '+esc(S.fuel)+'</b></p>'+plans.map(function(p){
     const iv=intervalsFor(p, S.year, TARIFF);
-    if(!iv) return '<p><b>'+esc(p.name)+'</b> — not offered for '+S.year+'.</p>';
+    if(!iv) return '<p><b>'+esc(p.name)+'</b>: not offered for '+S.year+'.</p>';
     let prevEnd=null;
     const rows=iv.map(function(x){
       const range=money(x.lo)+' – '+(x.hi>=TARIFF.maxValue?money(TARIFF.maxValue):money(x.hi));
@@ -1570,7 +1570,7 @@ function paintIntervals(){
       const drop=prevEnd!==null && startP<prevEnd-0.5;
       prevEnd=endP;
       return '<span>'+range+'</span><b>'+(x.flat ? money(x.flat)+' flat (minimum)' : x.rate.toFixed(2)+'% → '+money(startP)+'–'+money(endP))+'</b>'+
-        (drop?'<em class="ivdrop">↓ premium drops at '+money(x.lo)+' — the rate falls to '+x.rate.toFixed(2)+'%</em>':'');
+        (drop?'<em class="ivdrop">↓ premium drops at '+money(x.lo)+', the rate falls to '+x.rate.toFixed(2)+'%</em>':'');
     }).join('');
     return '<p style="margin-top:6px"><b>'+esc(p.name)+'</b>'+(p.agency?' · agency repair':'')+'</p><div class="ivgrid">'+rows+'</div>';
   }).join('');
@@ -1665,7 +1665,7 @@ function readCard(text){
   if(vin){ r.vin=vin; }
   const lab=t.match(/(سنة\s*الصنع|سنة\s*الإنتاج|سنة\s*الانتاج|الطراز|model\s*year|year\s*of\s*make|year|ann[ée]e|mod[èe]le)\D{0,20}((?:19|20)\d{2})/i);
   if(lab && +lab[2]<=new Date().getFullYear()+1){ r.year=+lab[2]; r.why.year='read next to "'+lab[1].trim()+'" on the card'; }
-  else if(vin && vinYear(vin)){ r.year=vinYear(vin); r.why.year='decoded from the chassis number — confirm, not every maker encodes the year'; }
+  else if(vin && vinYear(vin)){ r.year=vinYear(vin); r.why.year='decoded from the chassis number. Confirm, not every maker encodes the year'; }
   const makes=[...$('brand').options].map(o=>o.value).filter(v=>v && v!=='Other make');
   const latin=makes.filter(m=>new RegExp('\\b'+m.replace(/\s+/g,'\\s*')+'\\b','i').test(t)).sort((a,b)=>b.length-a.length)[0];
   const arab=Object.keys(AR_MAKES).filter(k=>t.indexOf(k)>=0).sort((a,b)=>b.length-a.length)[0];
@@ -1721,9 +1721,9 @@ function paintCarReview(){
   box.innerHTML=
     '<label for="scY">Year</label><select id="scY">'+yearOpts+'</select>'+why('year')+
     '<label for="scM">Make</label><select id="scM">'+makeOpts+'</select>'+why('make')+
-    '<label for="scMo">Model</label><input type="text" id="scMo" value="'+esc(r.model||'')+'" placeholder="not read — type it">'+why('model')+
+    '<label for="scMo">Model</label><input type="text" id="scMo" value="'+esc(r.model||'')+'" placeholder="not read, type it">'+why('model')+
     '<label for="scF">Fuel</label><select id="scF">'+['Gasoline','Hybrid','Electric'].map(f=>'<option'+((r.fuel||S.fuel)===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'+
-    (r.fuel?'':'<div class="why">not stated on the card — check</div>')+
+    (r.fuel?'':'<div class="why">not stated on the card, check</div>')+
     '<label>Chassis no.</label><span style="font-family:monospace">'+esc(r.vin||'not found')+'</span>'+
     '<details class="full"><summary class="hint" style="cursor:pointer">Show the text it read</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">'+esc(r.text)+'</pre></details>'+
     '<div class="full"><button type="button" class="scanapply" id="scApply">Fill the vehicle details</button></div>';
