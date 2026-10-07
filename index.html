@@ -74,18 +74,49 @@
   .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:4px 8px 0;line-height:1.5}
   .foot b{font-weight:700}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+  .signin{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
+  .signin .sh{font-size:18px;font-weight:800;margin-bottom:6px}
+  .signin label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+  .signin input{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;
+    padding:12px;font:600 16px/1.2 inherit;font-family:inherit;margin-bottom:6px}
+  .signin input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .signin button{margin-top:6px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;
+    padding:13px;font:800 15px/1 inherit;font-family:inherit;cursor:pointer}
+  .signin button:disabled{opacity:.6;cursor:wait}
+  .serr{font-size:13px;font-weight:600;color:#E0565B;min-height:18px}
+  .hello{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .hello h1{font-size:22px;line-height:1.25;margin:0;letter-spacing:-.01em}
+  .signout{margin-left:auto;flex:none;border:1px solid var(--line);background:transparent;color:var(--ink2);
+    border-radius:9px;padding:8px 11px;font:700 12.5px/1 inherit;font-family:inherit;cursor:pointer}
+  .signout:hover{border-color:var(--accent);color:var(--ink)}
 </style>
 <link rel="stylesheet" href="brocare-theme.css">
 
 <div class="wrap">
   <div class="brandbar">
-    <div class="logo" aria-hidden="true">B</div>
+    <img class="brandlogo" src="brocare-logo.png" alt="BroCare Insurance Brokerage">
     <div class="brandtext">
-      <span class="brandname"><b>Bro</b>care</span>
       <span class="brandsub">Broker tools</span>
     </div>
   </div>
 
+  <!-- SIGN-IN -->
+  <form class="signin" id="signin" hidden autocomplete="on">
+    <div class="sh">Sign in</div>
+    <label for="su">Username</label>
+    <input id="su" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    <label for="sp">Password</label>
+    <input id="sp" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" id="sgo">Sign in</button>
+    <div class="serr" id="serr" role="alert"></div>
+  </form>
+
+  <!-- SIGNED IN -->
+  <div id="home" hidden>
+  <div class="hello"><h1 id="hello"></h1>
+    <button type="button" class="signout" id="signout">Sign out</button></div>
   <nav class="tiles">
     <a class="tile" href="health/">
       <span class="ico" aria-hidden="true">🏥</span>
@@ -114,9 +145,41 @@
       <span class="chev" aria-hidden="true">›</span>
     </a>
   </nav>
+  </div>
 
   <div class="foot">
     <b>Brocare</b> · April 2026 tariffs · rates indicative and non-binding.
   </div>
 </div>
+<script src="users.js"></script>
+<script src="auth.js"></script>
+<script>
+(function(){
+  var $=function(i){ return document.getElementById(i); };
+  /* only come back to a page on this site: never an outside address */
+  function nextPage(){
+    var n=new URLSearchParams(location.search).get('next')||'';
+    return /^\/(?!\/)/.test(n) ? n : null;
+  }
+  function show(){
+    var me=BrocareAuth.current();
+    $('signin').hidden=!!me; $('home').hidden=!me;
+    if(me) $('hello').textContent='Hi '+me.first+', what are we working on today?';
+    else setTimeout(function(){ $('su').focus(); },0);
+  }
+  $('signin').addEventListener('submit', async function(e){
+    e.preventDefault();
+    $('serr').textContent=''; $('sgo').disabled=true; $('sgo').textContent='Checking…';
+    var me=null;
+    try{ me=await BrocareAuth.signIn($('su').value, $('sp').value); }
+    catch(err){ $('serr').textContent='This browser can’t check passwords here. Open the tools from their https link.'; }
+    $('sgo').disabled=false; $('sgo').textContent='Sign in'; $('sp').value='';
+    if(!me){ if(!$('serr').textContent) $('serr').textContent='That username and password don’t match.'; $('sp').focus(); return; }
+    var n=nextPage();
+    if(n) location.replace(n); else show();
+  });
+  $('signout').onclick=function(){ BrocareAuth.signOut(); show(); };
+  show();
+})();
+</script>
 <script src="shell.js"></script>

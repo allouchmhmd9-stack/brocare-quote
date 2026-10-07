@@ -12,7 +12,7 @@ import argparse, filecmp, shutil, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ["index.html", "brocare-theme.css", "shell.js",
+FILES = ["index.html", "brocare-theme.css", "shell.js", "users.js", "auth.js", "brocare-logo.png",
          "health/index.html", "motor/index.html", "motor/car-listings.js", "docs/index.html"]
 
 

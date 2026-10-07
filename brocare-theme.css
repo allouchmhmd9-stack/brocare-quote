@@ -94,3 +94,7 @@ html.embedded body{padding-top:18px}
 /* The document hand-off panel is a card in every quoter (motor never styled .card). */
 #broPanel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
 @media (min-width:980px){ .col-side #s4.off{opacity:.55} }
+
+/* the real BroCare logo in the top-left brand bar */
+.brandlogo{height:68px;width:auto;display:block;flex:none}
+@media (max-width:520px){.brandlogo{height:54px}}
