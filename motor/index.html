@@ -1821,7 +1821,8 @@ function cardLayout(words, W){
   const labelSpan = (Object.keys(anchors.R).length && Object.keys(anchors.L).length) ? spanX1-spanX0 : null;
   return { rows:rows.size, top, pitch, W, rowAt, leftStartAt, labelSpan,
     valX0:(left.length ? Math.max.apply(null,left.map(b=>b.x1)) : W*0.38)+W*0.01,
-    valX1:(right.length ? Math.min.apply(null,right.map(b=>b.x0)) : W*0.80)-W*0.01,
+    valX1:(right.length ? Math.min.apply(null,right.map(b=>b.x0))-W*0.01
+      : (left.length ? Math.max.apply(null,left.map(b=>b.x1)) : W*0.38)+9*pitch),
     leftX1:leftStart-W*0.005 };
 }
 /* The values are printed in neutral grey or black; the security pattern behind
@@ -2031,7 +2032,9 @@ async function readRegistration(file, say){
      matters. Read it three ways with an Arabic-only reader; the box stops at this
      row's own label when that label was read. */
   const leftEnd=i=>Math.min(L.leftX1, L.leftStartAt[i]!==undefined ? L.leftStartAt[i]-0.005*L.W : Infinity);
-  const lftBox=i=>cropCanvas(gray, Math.max(0,(L.leftX1-0.32*L.W))*f, leftY(i)-half, leftEnd(i)*f, leftY(i)+half);
+  /* sized in card units (row spacing), not photo width, so a card shot from far
+     doesn't pull the table around it into the box */
+  const lftBox=i=>cropCanvas(gray, Math.max(0,leftEnd(i)-3.2*L.pitch)*f, leftY(i)-half, leftEnd(i)*f, leftY(i)+half);
   const arw=await getAraWorker();
   raw.power=[];
   for(const prep of [c=>c, c=>clearBars(greyInk(c)), c=>clearBars(greyInk(c,true))]){
