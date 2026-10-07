@@ -837,6 +837,7 @@ $('segInsurer').querySelectorAll('button').forEach(b=>{
     buildLevels();                 /* coverage names differ per insurer */
     buildCopays();                 /* UFA prices Co-NSSF, Fidelity does not */
     paintInsurer();
+    updateSizeTag();               /* the size caption differs per insurer */
     calc();
   };
 });
@@ -878,11 +879,15 @@ function addMember(){ members.push({id:++mid, dob:null, age:null}); }
 
 /* Size bucket + caption. Kept separate so a date edit never rebuilds the rows. */
 function updateSizeTag(){
-  const autoSize = members.length>=3 ? '3+' : '1&2';
+  /* Only members with an age are priced, so only they set the size band:
+     an empty third row must not drop two people into the 3+ rates. */
+  const priced = members.filter(m=>m.age!==null && m.age>=0).length;
+  const autoSize = priced>=3 ? '3+' : '1&2';
   if(state.mode==='family'){ state.size=autoSize; paintGroup($('segSize'),autoSize); }
+  const shown = priced || members.length;
   /* UFA prices each exact size, so its band label would be meaningless. */
   $('sizeTag').textContent = state.mode!=='family' ? ''
-    : members.length+' member'+(members.length!==1?'s':'')
+    : shown+' member'+(shown!==1?'s':'')
       + (BOOK.sizeMode==='count' ? '' : ' · size '+autoSize);
 }
 
