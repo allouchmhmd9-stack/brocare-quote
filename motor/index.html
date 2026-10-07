@@ -1589,7 +1589,7 @@ function loadScript(src){
   return new Promise((ok,no)=>{
     if(window.Tesseract) return ok();
     const s=document.createElement('script'); s.src=src; s.onload=ok;
-    s.onerror=()=>no(new Error('The text reader could not be downloaded — check the connection.'));
+    s.onerror=()=>no(new Error('The text reader could not be downloaded.'));
     document.head.appendChild(s);
   });
 }
@@ -1598,6 +1598,12 @@ async function getWorker(){
   await loadScript(OCR_SRC);
   ocrWorker=await Tesseract.createWorker(['eng','ara']);
   return ocrWorker;
+}
+/* Tesseract rejects with a bare string when its worker or language files fail,
+   so never show e.message: say what happened and how to carry on by hand. */
+function dropWorker(){
+  if(ocrWorker){ try{ ocrWorker.terminate(); }catch(_){} }
+  ocrWorker=null;
 }
 function wDigits(s){
   return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -1685,9 +1691,21 @@ async function runCarScan(file){
   const st=$('scanCarStatus');
   st.textContent='Preparing the text reader (first time takes a few seconds)…';
   let w;
-  try{ w=await getWorker(); } catch(e){ st.textContent=e.message; return; }
+  try{ w=await getWorker(); }
+  catch(e){
+    dropWorker();
+    st.textContent='The text reader could not be loaded, so nothing was read. Check the connection and try again, or fill in the vehicle details by hand.';
+    return;
+  }
   st.textContent='Reading the registration…';
-  carScan=readCard((await w.recognize(file)).data.text);
+  let text;
+  try{ text=(await w.recognize(file)).data.text; }
+  catch(e){
+    dropWorker(); carScan=null; paintCarReview();
+    st.textContent='The text reader stopped before it finished. Try again, or fill in the vehicle details by hand.';
+    return;
+  }
+  carScan=readCard(text);
   const found=['year','make','model','vin'].filter(k=>carScan[k]);
   st.textContent = found.length ? 'Check what was read, correct anything wrong, then fill the form.'
     : 'Nothing usable could be read. Try a sharper, straighter photo in good light.';

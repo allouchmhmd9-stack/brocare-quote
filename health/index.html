@@ -1117,7 +1117,7 @@ function loadScript(src){
   return new Promise((ok,no)=>{
     if(window.Tesseract) return ok();
     const s=document.createElement('script'); s.src=src; s.onload=ok;
-    s.onerror=()=>no(new Error('The text reader could not be downloaded — check the connection.'));
+    s.onerror=()=>no(new Error('The text reader could not be downloaded.'));
     document.head.appendChild(s);
   });
 }
@@ -1126,6 +1126,12 @@ async function getWorker(){
   await loadScript(OCR_SRC);
   ocrWorker=await Tesseract.createWorker(['eng','ara']);
   return ocrWorker;
+}
+/* Tesseract rejects with a bare string when its worker or language files fail,
+   so never show e.message: say what happened and how to carry on by hand. */
+function dropWorker(){
+  if(ocrWorker){ try{ ocrWorker.terminate(); }catch(_){} }
+  ocrWorker=null;
 }
 function westernDigits(s){
   return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -1168,11 +1174,22 @@ async function runScan(files){
   const st=$('scanStatus');
   st.textContent='Preparing the text reader (first time takes a few seconds)…';
   let w;
-  try{ w=await getWorker(); } catch(e){ st.textContent=e.message; return; }
+  try{ w=await getWorker(); }
+  catch(e){
+    dropWorker();
+    st.textContent='The text reader could not be loaded, so nothing was read. Check the connection and try again, or type the dates of birth in by hand.';
+    return;
+  }
   scanRows=[];
   for(let i=0;i<files.length;i++){
     st.textContent='Reading image '+(i+1)+' of '+files.length+'…';
-    const text=(await w.recognize(files[i])).data.text;
+    let text;
+    try{ text=(await w.recognize(files[i])).data.text; }
+    catch(e){
+      dropWorker(); scanRows=[]; paintScanReview();
+      st.textContent='The text reader stopped before it finished. Try again, or type the dates of birth in by hand.';
+      return;
+    }
     const src=files.length>1 ? 'Image '+(i+1) : 'Image';
     if(scanMode==='id'){
       const d=idCardDob(text);
