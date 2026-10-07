@@ -1049,6 +1049,18 @@ function offeredPlans(book){
 }
 
 /* ---------- eligibility ---------- */
+/* The insurer's driver-age rule for this value, or null. Shared by the quote
+   screen and the Fidelity-vs-UFA panel so neither prices a refused driver. */
+function driverBlock(book){
+  if(S.value===null || S.driverAge===null) return null;
+  for(const r of book.driverRules){
+    if(S.value>=r.min && S.value<=r.max && S.driverAge<r.age){
+      const range = r.max===Infinity ? 'above $100,000' : '$'+r.min.toLocaleString()+'–$'+r.max.toLocaleString();
+      return 'No claim is covered for a driver under '+r.age+' on a vehicle valued '+range+'. This risk cannot be quoted here.';
+    }
+  }
+  return null;
+}
 function eligibility(){
   if(S.sports){
     let m='This make/model is on the sports & luxury list — it must be referred to '+TARIFF.name+' for a quote.';
@@ -1063,14 +1075,8 @@ function eligibility(){
     return {block:'Vehicle value is above $'+TARIFF.maxValue.toLocaleString()+
       ' — refer to '+TARIFF.name+' for a quote.'};
   }
-  if(S.value!==null && S.driverAge!==null){
-    for(const r of TARIFF.driverRules){
-      if(S.value>=r.min && S.value<=r.max && S.driverAge<r.age){
-        const range = r.max===Infinity ? 'above $100,000' : '$'+r.min.toLocaleString()+'–$'+r.max.toLocaleString();
-        return {block:'No claim is covered for a driver under '+r.age+' on a vehicle valued '+range+'. This risk cannot be quoted here.'};
-      }
-    }
-  }
+  const db=driverBlock(TARIFF);
+  if(db) return {block:db};
   return {block:null, note:(S.brand && TARIFF.makeNotes && TARIFF.makeNotes[S.brand]) || ''};
 }
 
@@ -1391,6 +1397,8 @@ function crossQuote(insurerKey){
   if(S.sports) return {plans:[], why:'On the sports & luxury referral list.'};
   const rr=referReason(book);
   if(rr) return {plans:[], why:rr};
+  const db=driverBlock(book);
+  if(db) return {plans:[], why:db};
   offeredPlans(book).forEach(function(p){
     const q=quote(p,S.value,S.year,book);
     if(q.premium===undefined) return;
