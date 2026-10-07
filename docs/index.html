@@ -168,11 +168,11 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet.card .hd .r{text-align:right;}
 .sheet.card .hd .r .k{font-size:7.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.45);}
 .sheet.card .hd .r .v{font-size:10.5px;font-weight:600;color:#4FC3F7;margin-top:3px;letter-spacing:.03em;}
-.sheet.card .who{margin-top:38px;position:relative;}
+.sheet.card .who{margin-top:26px;position:relative;}
 .sheet.card .who .k{font-size:7.5px;letter-spacing:.19em;text-transform:uppercase;color:rgba(255,255,255,.45);}
 .sheet.card .who .n{font-family:'Syne';font-weight:700;font-size:19px;color:#fff;margin-top:6px;}
 .sheet.card .who .s{font-size:11px;color:rgba(255,255,255,.62);margin-top:4px;}
-.sheet.card .figw{margin-top:30px;padding:24px 0 22px;border-top:1px solid rgba(79,195,247,.28);
+.sheet.card .figw{margin-top:20px;padding:20px 0 18px;border-top:1px solid rgba(79,195,247,.28);
   border-bottom:1px solid rgba(255,255,255,.10);position:relative;}
 .sheet.card .figw .k{font-size:7.5px;letter-spacing:.19em;text-transform:uppercase;color:rgba(255,255,255,.45);}
 .sheet.card .figw .fig{font-family:'InterV',system-ui,sans-serif;font-weight:700;font-size:29px;line-height:1.05;
@@ -183,6 +183,8 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet.card .chips{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:9px;position:relative;}
 .sheet.card .chip{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);padding:9px 11px;}
 .sheet.card .chip.wide{grid-column:1 / -1;}
+/* three detail chips (the health quoter's Insurer / Plan / Out-patient) sit on one row */
+.sheet.card .chips.c3{grid-template-columns:repeat(3,1fr);}
 .sheet.card .chip.hl{background:rgba(79,195,247,.10);border-color:rgba(79,195,247,.34);}
 .sheet.card .chip .k{font-size:7.5px;letter-spacing:.15em;text-transform:uppercase;color:#4FC3F7;}
 .sheet.card .chip .v{font-size:11px;color:#fff;font-weight:500;margin-top:3px;}
@@ -471,7 +473,7 @@ function tplCard(){
     '<div class="figw"><div class="k">'+esc(D.priceLabel)+'</div>'+
       '<div class="fig tab"><span class="cur">USD</span>'+money(D.price)+
       '<span class="per">'+esc(D.per)+'</span></div></div>'+
-    '<div class="chips">'+chips+'</div>'+
+    '<div class="chips'+(D.chips.length===3?' c3':'')+'">'+chips+'</div>'+
     '<div class="valid">Valid until '+validTo+' &middot; subject to underwriting acceptance</div>'+
     '<div class="cta"><div class="l"><div class="t">Reply to confirm</div>'+
       '<div class="p tab">+961 81 82 33 00</div></div>'+
