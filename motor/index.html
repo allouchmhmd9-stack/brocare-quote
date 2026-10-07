@@ -172,6 +172,7 @@
   .scanbox button.scanbtn{width:100%;border:1px solid var(--accent);background:var(--surface);color:var(--accent);
     font:700 13px/1.2 inherit;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer;margin-top:7px}
   .scanbox button.scanbtn:hover{background:var(--accent);color:var(--accent-ink)}
+  .scanpair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .scanstatus{font-size:12.5px;color:var(--ink2);margin-top:7px;line-height:1.4}
   .scanstatus:empty{display:none}
   .scanrev{margin-top:9px;display:grid;grid-template-columns:110px 1fr;gap:7px 9px;align-items:center;font-size:12.5px}
@@ -293,9 +294,13 @@
     <div class="stepbody">
       <div class="scanbox">
         <label class="lbl">Fill from the car registration (دفتر السيارة)</label>
-        <button type="button" class="scanbtn" id="scanCar">Scan the registration photo</button>
+        <div class="scanpair">
+          <button type="button" class="scanbtn" id="scanCarCam">Take a photo</button>
+          <button type="button" class="scanbtn" id="scanCar">Choose or paste a photo</button>
+        </div>
+        <input type="file" id="scanCarCamFile" accept="image/*" capture="environment" hidden>
         <input type="file" id="scanCarFile" accept="image/*" hidden>
-        <div class="hint" style="margin-top:6px">Reads the make, model, year and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card, so add it in Step 2.</div>
+        <div class="hint" style="margin-top:6px">Photograph the side titled أوصاف المركبة الآلية, any way round. It reads the make, model, year, fuel (كهرباء means electric) and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card, so add it in Step 2.</div>
         <div class="scanstatus" id="scanCarStatus"></div>
         <div class="scanrev hidden" id="scanCarReview"></div>
       </div>
@@ -1214,7 +1219,17 @@ function renderFinder(model){
     return;
   }
   if(!model){ out.innerHTML=''; return; }
-  const matched=matchModel(rows,S.brand,model);
+  /* a registration's model often carries trim words the listings never mention
+     ("I4 EDRIVE 35" vs "i4"), so fall back to fewer words, and say so */
+  const full=model;
+  let matched=matchModel(rows,S.brand,model);
+  const words=model.split(/\s+/).filter(Boolean);
+  for(let k=words.length-1; !matched.length && k>=1; k--){
+    const shorter=words.slice(0,k).join(' '), m=matchModel(rows,S.brand,shorter);
+    if(m.length){ matched=m; model=shorter; }
+  }
+  const narrowed = model!==full
+    ? '<div class="vc-note">No listing names "'+esc(full)+'", so these are all '+esc(S.brand+' '+model)+' listings, whatever the trim.</div>' : '';
   if(!matched.length){
     const byModel={}; rows.filter(r=>r.mk===makeKey(S.brand)).forEach(r=>{ byModel[r.model]=(byModel[r.model]||0)+1; });
     const top=Object.keys(byModel).sort((a,b)=>byModel[b]-byModel[a]).slice(0,8);
@@ -1236,7 +1251,7 @@ function renderFinder(model){
       '<div class="vc-range">'+c.n+' listings ('+esc(vcSources(exact))+') · range '+money(c.lo)+'–'+money(c.hi)+
         (c.ignored?' · '+c.ignored+' ignored as probable typos':'')+'</div>'+
       '<button type="button" class="vc-use" data-use="'+c.value+'">Use '+money(c.value)+' in the value field</button>'+
-      vcTable(exact)+vcFresh());
+      narrowed+vcTable(exact)+vcFresh());
     return;
   }
   if(c.kind==='spread'){
@@ -1245,7 +1260,7 @@ function renderFinder(model){
       '<div class="vc-groups">'+c.groups.map(g=>'<button type="button" data-use="'+g.price+'" title="Use '+money(g.price)+'"><b>'+g.count+'</b> × '+money(g.price)+'</button>').join('')+'</div>'+
       '<div class="vc-note">Tap a price to use it. Trim, mileage and condition explain the gap. Open the listings and judge which sits closest to this car.'+
         (c.n>=12?' <b>Tip:</b> add the trim to the model (for example “C300”, “AMG”, “Limited”, “Hybrid”) to narrow it down.':'')+'</div>'+
-      vcTable(exact)+vcFresh());
+      narrowed+vcTable(exact)+vcFresh());
     return;
   }
   const near=[S.year-1,S.year+1].map(function(y){
@@ -1255,7 +1270,7 @@ function renderFinder(model){
     '<div class="vc-note">'+(exact.length?'Only '+exact.length+' listing'+(exact.length===1?'':'s')+' for '+S.year:'No '+S.year+' listings')+
     ', too few to name a value. <b>Call the agency for a valuation.</b>'+
     (near.length?' For reference only, nearby years: '+esc(near.join(' · '))+'.':'')+'</div>'+
-    (exact.length?vcTable(exact):'')+vcFresh());
+    narrowed+(exact.length?vcTable(exact):'')+vcFresh());
 }
 $('valueResult').addEventListener('click', function(e){
   const use=e.target.closest('[data-use]');
@@ -1603,7 +1618,16 @@ async function getWorker(){
    so never show e.message: say what happened and how to carry on by hand. */
 function dropWorker(){
   if(ocrWorker){ try{ ocrWorker.terminate(); }catch(_){} }
-  ocrWorker=null;
+  if(engWorker){ try{ engWorker.terminate(); }catch(_){} }
+  ocrWorker=null; engWorker=null;
+}
+let engWorker=null;
+async function getEngWorker(){       /* English only, one line at a time: for the values on the card */
+  if(engWorker) return engWorker;
+  await loadScript(OCR_SRC);
+  engWorker=await Tesseract.createWorker('eng');
+  await engWorker.setParameters({tessedit_pageseg_mode:'7'});
+  return engWorker;
 }
 function wDigits(s){
   return String(s).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -1686,26 +1710,157 @@ function readCard(text){
   r.text=text;
   return r;
 }
+/* ---- the Lebanese registration card (دفتر السيارة, "أوصاف المركبة الآلية" side) ----
+   Two tables share each row. On the right, label then value in the middle:
+     0 الماركة make · 1 تاريخ الصنع year · 2 طرازها model · 3 نوعها type ·
+     4 وجهة إستعمالها use · 5 رقم المحرك engine no. · 6 رقم الهيكل chassis (VIN)
+   On the left, label then value at the far left:
+     0 قوة المحرك engine power, with "كهرباء" when the car is electric ·
+     1 عدد الأسطوانات cylinders (0 on a pure electric car) · 2 عدد المقاعد seats …
+   The guilloche background drowns plain OCR, so: keep only dark ink, find the
+   Arabic labels to learn the rotation, row spacing and columns, then read each
+   value row on its own (English for the middle column, Arabic for the left). */
+const arNorm = s => String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
+const CARD_RIGHT = {'الماركه':0,'تاريخ':1,'الصنع':1,'طرازها':2,'طراز':2,'نوعها':3,'استعمالها':4,'وجهه':4,'المحرك':5,'الهيكل':6};
+const CARD_LEFT  = {'قوه':0,'المحرك':0,'الاسطوانات':1,'المقاعد':2,'بجانب':3,'السائق':3,'فارغه':4,'محمولها':5,'الصافي':5,'الاجمالي':6};
+async function cardCanvas(bmp, deg, scale, inkBelow){
+  const W=Math.round((deg%180?bmp.height:bmp.width)*scale), H=Math.round((deg%180?bmp.width:bmp.height)*scale);
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const g=c.getContext('2d', {willReadFrequently:true});
+  g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+  g.translate(W/2,H/2); g.rotate(deg*Math.PI/180); g.scale(scale,scale); g.drawImage(bmp,-bmp.width/2,-bmp.height/2);
+  if(inkBelow){
+    const d=g.getImageData(0,0,W,H), p=d.data;
+    for(let i=0;i<p.length;i+=4){ const v=(0.299*p[i]+0.587*p[i+1]+0.114*p[i+2])<inkBelow?0:255; p[i]=p[i+1]=p[i+2]=v; }
+    g.putImageData(d,0,0);
+  }
+  return c;
+}
+function cropCanvas(src,x0,y0,x1,y1){
+  x0=Math.max(0,Math.round(x0)); y0=Math.max(0,Math.round(y0));
+  x1=Math.min(src.width,Math.round(x1)); y1=Math.min(src.height,Math.round(y1));
+  const c=document.createElement('canvas'); c.width=Math.max(1,x1-x0); c.height=Math.max(1,y1-y0);
+  c.getContext('2d').drawImage(src,x0,y0,c.width,c.height,0,0,c.width,c.height);
+  return c;
+}
+function ocrWords(data){
+  const out=[];
+  (data.blocks||[]).forEach(b=>b.paragraphs.forEach(p=>p.lines.forEach(l=>l.words.forEach(w=>out.push({t:w.text,b:w.bbox})))));
+  return out;
+}
+/* find the card's labels: which rows and columns sit where, in this rotation */
+function cardLayout(words, W){
+  const pts=[], right=[], left=[];
+  words.forEach(function(w){
+    const n=arNorm(w.t), xc=(w.b.x0+w.b.x1)/2, isRight=xc>W*0.55, map=isRight?CARD_RIGHT:CARD_LEFT;
+    const key=Object.keys(map).find(k=>n.indexOf(k)>=0);
+    if(!key) return;
+    pts.push({row:map[key], y:(w.b.y0+w.b.y1)/2});
+    (isRight?right:left).push(w.b);
+  });
+  const rows=new Set(pts.map(p=>p.row));
+  if(rows.size<2) return {rows:rows.size};
+  const mx=pts.reduce((s,p)=>s+p.row,0)/pts.length, my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let sxy=0, sxx=0; pts.forEach(p=>{ sxy+=(p.row-mx)*(p.y-my); sxx+=(p.row-mx)*(p.row-mx); });
+  const pitch=sxy/sxx, top=my-pitch*mx;
+  if(!(pitch>0)) return {rows:0};
+  return { rows:rows.size, top, pitch,
+    valX0:(left.length ? Math.max.apply(null,left.map(b=>b.x1)) : W*0.38)+W*0.01,
+    valX1:(right.length ? Math.min.apply(null,right.map(b=>b.x0)) : W*0.80)-W*0.01,
+    leftX1:(left.length ? Math.min.apply(null,left.map(b=>b.x0)) : W*0.20)-W*0.005 };
+}
+const lev=(a,b)=>{ const d=Array.from({length:a.length+1},(_,i)=>[i]); for(let j=1;j<=b.length;j++) d[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[a.length][b.length]; };
+function makeFromText(t){
+  const makes=[...$('brand').options].map(o=>o.value).filter(v=>v && v!=='Other make');
+  const flat=String(t).toUpperCase().replace(/[^A-Z]/g,'');
+  const exact=makes.filter(m=>flat.indexOf(m.toUpperCase().replace(/[^A-Z]/g,''))>=0).sort((a,b)=>b.length-a.length)[0];
+  if(exact) return exact;
+  const toks=String(t).toUpperCase().match(/[A-Z]{3,}/g)||[];
+  for(const tk of toks) for(const m of makes){ const mm=m.toUpperCase().replace(/[^A-Z]/g,''); if(mm.length>=3 && lev(tk,mm)<=1) return m; }
+  return null;
+}
+async function readRegistration(file, say){
+  const bmp=await createImageBitmap(file);
+  const s1=2400/Math.max(bmp.width,bmp.height);
+  const ara=await getWorker(); await ara.setParameters({tessedit_pageseg_mode:'3'});
+  const turns = bmp.height>bmp.width ? [270,90,0,180] : [0,180,270,90];
+  let best=null;
+  for(const deg of turns){
+    say('Reading the card…');
+    const c=await cardCanvas(bmp,deg,s1,130), data=(await ara.recognize(c,{},{blocks:true})).data;
+    const L=cardLayout(ocrWords(data), c.width);
+    if(!best || L.rows>best.L.rows) best={deg,L,text:data.text};
+    if(L.rows>=3) break;
+  }
+  if(!best || !best.L.pitch) return {fallbackText: best ? best.text : ''};
+  say('Reading the values…');
+  const L=best.L, f=4/3, ink=await cardCanvas(bmp,best.deg,s1*f,130);
+  const half=0.45*L.pitch*f, rowY=i=>(L.top+L.pitch*i)*f;
+  const eng=await getEngWorker();
+  const mid=async(i,src)=>(await eng.recognize(cropCanvas(src||ink, L.valX0*f, rowY(i)-half, L.valX1*f, rowY(i)+half))).data.text.trim();
+  const raw={make:await mid(0), year:await mid(1), model:await mid(2), chassis:await mid(6)};
+  await ara.setParameters({tessedit_pageseg_mode:'7'});
+  const lft=async i=>(await ara.recognize(cropCanvas(ink, 0, rowY(i)-half, L.leftX1*f, rowY(i)+half))).data.text.trim();
+  raw.power=await lft(0); raw.cylinders=await lft(1);
+  await ara.setParameters({tessedit_pageseg_mode:'3'});
+
+  const r={why:{}, layout:true};
+  const cleanVin=s=>{ const m=String(s).toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/O/g,'0').replace(/[IQ]/g,c=>c==='I'?'1':'0').match(/[A-HJ-NPR-Z0-9]{17}/); return m?m[0]:null; };
+  /* the chassis number reads differently under each cleanup; vote character by character */
+  const vins=[cleanVin(raw.chassis)];
+  for(const inkBelow of [0,110]) vins.push(cleanVin(await mid(6, await cardCanvas(bmp,best.deg,s1*f,inkBelow))));
+  const ok=vins.filter(Boolean);
+  r.vin = ok.length<2 ? (ok[0]||null) : ok[0].split('').map(function(ch,i){
+    const n={}; ok.forEach(v=>{ n[v[i]]=(n[v[i]]||0)+1; });
+    return Object.keys(n).sort((a,b)=>n[b]-n[a])[0];
+  }).join('');
+  r.make=makeFromText(raw.make);
+  if(r.make) r.why.make='read from الماركة on the card';
+  else if(r.vin && vinMake(r.vin)){ r.make=vinMake(r.vin); r.why.make='decoded from the chassis number'; }
+  const y=wDigits(raw.year).match(/\b(19[89]\d|20[0-4]\d)\b/);
+  if(y && +y[1]<=new Date().getFullYear()+1){ r.year=+y[1]; r.why.year='read from تاريخ الصنع on the card'; }
+  else if(r.vin && vinYear(r.vin)){ r.year=vinYear(r.vin); r.why.year='decoded from the chassis number, confirm it'; }
+  const mt=(raw.model.match(/[A-Za-z0-9][A-Za-z0-9.\-]*/g)||[]).filter(t=>/[A-Z0-9]/.test(t) && !(t.length===1 && /[a-z]/.test(t)));
+  if(mt.length){
+    /* I/1 and O/0 swap easily; keep the spelling a real listing uses ("14 EDRIVE" -> "I4 EDRIVE") */
+    const rows=allListings(), swaps=t=>[t, t.replace(/^1/,'I'), t.replace(/^I/,'1'), t.replace(/0/g,'O'), t.replace(/O/g,'0')];
+    if(rows && r.make){
+      const first=swaps(mt[0]).find(v=>matchModel(rows,r.make,v).length);
+      if(first) mt[0]=first;
+    }
+    r.model=mt.join(' '); r.why.model='read from طرازها on the card';
+  }
+  const electricWord=/كهرب/.test(arNorm(raw.power)), hybridWord=/هجين|هايبر/.test(arNorm(raw.power));
+  const cyl=wDigits(raw.cylinders).match(/\d+/), cylinders=cyl?+cyl[0]:null;
+  if(hybridWord || (electricWord && cylinders>0)){ r.fuel='Hybrid'; r.why.fuel='"كهرباء" next to the engine power and '+cylinders+' cylinders, so hybrid. Confirm it'; }
+  else if(electricWord){ r.fuel='Electric'; r.why.fuel='"كهرباء" next to the engine power'+(cylinders===0?' and 0 cylinders':''); }
+  else if(cylinders>0){ r.fuel='Gasoline'; r.why.fuel='no "كهرباء" next to the engine power, '+cylinders+' cylinders'; }
+  r.text='Make row: '+raw.make+'\nYear row: '+raw.year+'\nModel row: '+raw.model+'\nChassis row: '+raw.chassis+
+         '\nEngine power: '+raw.power+'\nCylinders: '+raw.cylinders;
+  return r;
+}
 async function runCarScan(file){
   if(!file || !/^image\//.test(file.type)) return;
   const st=$('scanCarStatus');
   st.textContent='Preparing the text reader (first time takes a few seconds)…';
-  let w;
-  try{ w=await getWorker(); }
+  try{ await getWorker(); }
   catch(e){
     dropWorker();
     st.textContent='The text reader could not be loaded, so nothing was read. Check the connection and try again, or fill in the vehicle details by hand.';
     return;
   }
-  st.textContent='Reading the registration…';
-  let text;
-  try{ text=(await w.recognize(file)).data.text; }
+  try{
+    const r=await readRegistration(file, m=>{ st.textContent=m; });
+    /* a photo that isn't the standard card still gets the general reader */
+    carScan = r.layout ? r : readCard(r.fallbackText||'');
+  }
   catch(e){
     dropWorker(); carScan=null; paintCarReview();
     st.textContent='The text reader stopped before it finished. Try again, or fill in the vehicle details by hand.';
     return;
   }
-  carScan=readCard(text);
   const found=['year','make','model','vin'].filter(k=>carScan[k]);
   st.textContent = found.length ? 'Check what was read, correct anything wrong, then fill the form.'
     : 'Nothing usable could be read. Try a sharper, straighter photo in good light.';
@@ -1723,7 +1878,7 @@ function paintCarReview(){
     '<label for="scM">Make</label><select id="scM">'+makeOpts+'</select>'+why('make')+
     '<label for="scMo">Model</label><input type="text" id="scMo" value="'+esc(r.model||'')+'" placeholder="not read, type it">'+why('model')+
     '<label for="scF">Fuel</label><select id="scF">'+['Gasoline','Hybrid','Electric'].map(f=>'<option'+((r.fuel||S.fuel)===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'+
-    (r.fuel?'':'<div class="why">not stated on the card, check</div>')+
+    (r.fuel ? why('fuel') : '<div class="why">not stated on the card, check</div>')+
     '<label>Chassis no.</label><span style="font-family:monospace">'+esc(r.vin||'not found')+'</span>'+
     '<details class="full"><summary class="hint" style="cursor:pointer">Show the text it read</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">'+esc(r.text)+'</pre></details>'+
     '<div class="full"><button type="button" class="scanapply" id="scApply">Fill the vehicle details</button></div>';
@@ -1739,7 +1894,8 @@ function applyCarScan(){
   $('scanCarStatus').textContent='Vehicle filled from the registration. Check the value below, then add the driver age.';
 }
 $('scanCar').onclick=()=>$('scanCarFile').click();
-$('scanCarFile').addEventListener('change', e=>{ runCarScan(e.target.files[0]); e.target.value=''; });
+$('scanCarCam').onclick=()=>$('scanCarCamFile').click();
+['scanCarFile','scanCarCamFile'].forEach(id=>$(id).addEventListener('change', e=>{ runCarScan(e.target.files[0]); e.target.value=''; }));
 document.addEventListener('paste', e=>{
   if(S.cover!=='allrisk') return;
   const it=[...((e.clipboardData||{}).items||[])].find(x=>x.kind==='file' && /^image\//.test(x.type));
