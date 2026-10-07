@@ -300,7 +300,7 @@
         </div>
         <input type="file" id="scanCarCamFile" accept="image/*" capture="environment" hidden>
         <input type="file" id="scanCarFile" accept="image/*" hidden>
-        <div class="hint" style="margin-top:6px">Photograph the side titled أوصاف المركبة الآلية, any way round. It reads the make, model, year, fuel (كهرباء means electric) and chassis number, then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card, so add it in Step 2.</div>
+        <div class="hint" style="margin-top:6px">Photograph the side titled أوصاف المركبة الآلية, any way round. It reads الماركة (make), تاريخ الصنع (year), طرازها (model, checked against that make's real models) and قوة المحرك (fuel: كهرباء electric, بنزين petrol), then lets you check them before filling the form. You can also paste a screenshot (Ctrl+V). The photo is read inside this browser and never uploaded. Driver age isn't on the card, so add it in Step 2.</div>
         <div class="scanstatus" id="scanCarStatus"></div>
         <div class="scanrev hidden" id="scanCarReview"></div>
       </div>
@@ -1774,12 +1774,116 @@ const lev=(a,b)=>{ const d=Array.from({length:a.length+1},(_,i)=>[i]); for(let j
   return d[a.length][b.length]; };
 function makeFromText(t){
   const makes=[...$('brand').options].map(o=>o.value).filter(v=>v && v!=='Other make');
+  /* make names carry no digits, so a digit there is a misread letter: CHEVR0LET, B MW */
+  t=String(t||'').toUpperCase().replace(/0/g,'O').replace(/1/g,'I').replace(/5/g,'S').replace(/8/g,'B').replace(/2/g,'Z');
   const flat=String(t).toUpperCase().replace(/[^A-Z]/g,'');
   const exact=makes.filter(m=>flat.indexOf(m.toUpperCase().replace(/[^A-Z]/g,''))>=0).sort((a,b)=>b.length-a.length)[0];
   if(exact) return exact;
   const toks=String(t).toUpperCase().match(/[A-Z]{3,}/g)||[];
   for(const tk of toks) for(const m of makes){ const mm=m.toUpperCase().replace(/[^A-Z]/g,''); if(mm.length>=3 && lev(tk,mm)<=1) return m; }
   return null;
+}
+/* Base models per make, so a misread طرازها can only land on a real model.
+   Each entry: [name used for valuation, pattern on the card text with spaces and
+   dashes removed, upper case]. Order matters: specific names before general ones.
+   Cards print trims and engine codes ("320I", "C200", "I4 EDRIVE 35"), so the
+   patterns map those to the base model the listings use. */
+const CAR_MODELS = {
+  'BMW':[['iX1','^IX1'],['iX3','^IX3'],['iX','^IX'],['i3','^I3'],['i4','^I4'],['i5','^I5'],['i7','^I7'],['i8','^I8'],
+    ['X1','^X1'],['X2','^X2'],['X3','^X3'],['X4','^X4'],['X5','^X5'],['X6','^X6'],['X7','^X7'],['XM','^XM'],['Z4','^Z4'],
+    ['M2','^M2'],['M3','^M3'],['M4','^M4'],['M5','^M5'],['M8','^M8'],
+    ['1 Series','^1(SERIES|\\d\\d)'],['2 Series','^2(SERIES|\\d\\d)'],['3 Series','^3(SERIES|\\d\\d)'],['4 Series','^4(SERIES|\\d\\d)'],
+    ['5 Series','^5(SERIES|\\d\\d)'],['6 Series','^6(SERIES|\\d\\d)'],['7 Series','^7(SERIES|\\d\\d)'],['8 Series','^8(SERIES|\\d\\d)']],
+  'Mercedes':[['EQA','^EQA'],['EQB','^EQB'],['EQC','^EQC'],['EQE','^EQE'],['EQS','^EQS'],['CLA','^CLA'],['CLS','^CLS'],['CLE','^CLE'],
+    ['GLA','^GLA'],['GLB','^GLB'],['GLC','^GLC'],['GLE','^GLE'],['GLS','^GLS'],['GL','^GL\\d'],['ML','^ML'],['SL','^SL'],['SLK','^SLK'],
+    ['A-Class','^A(CLASS|\\d{3})'],['B-Class','^B(CLASS|\\d{3})'],['C-Class','^C(CLASS|\\d{3})'],['E-Class','^E(CLASS|\\d{3})'],
+    ['S-Class','^S(CLASS|\\d{3})'],['G-Class','^G(CLASS|\\d{3}|WAGON)'],['V-Class','^V(CLASS|\\d{3})'],['Sprinter','SPRINTER'],['Vito','VITO']],
+  'Audi':[['Q4 e-tron','^Q4'],['Q8 e-tron','^Q8ETRON'],['e-tron GT','^ETRONGT'],['e-tron','^ETRON'],
+    ['A1','^A1'],['A3','^A3'],['A4','^A4'],['A5','^A5'],['A6','^A6'],['A7','^A7'],['A8','^A8'],
+    ['Q2','^Q2'],['Q3','^Q3'],['Q5','^Q5'],['Q7','^Q7'],['Q8','^Q8'],['TT','^TT'],['R8','^R8'],['RS','^RS\\d'],['S','^S[3-8]']],
+  'Toyota':[['Land Cruiser Prado','PRADO'],['Land Cruiser','^(LANDCRUISER|LC\\d{3})'],['FJ Cruiser','^FJ'],['Corolla Cross','^COROLLACROSS'],
+    ['Corolla','^COROLLA'],['Camry','^CAMRY'],['Yaris','^YARIS'],['RAV4','^RAV4'],['Hilux','^HILUX'],['Fortuner','^FORTUNER'],['C-HR','^CHR'],
+    ['Highlander','^HIGHLANDER'],['4Runner','^4RUNNER'],['Avalon','^AVALON'],['Prius','^PRIUS'],['Rush','^RUSH'],['Sequoia','^SEQUOIA'],
+    ['Tacoma','^TACOMA'],['Tundra','^TUNDRA'],['Avanza','^AVANZA'],['Hiace','^HIACE'],['Crown','^CROWN'],['Supra','^SUPRA'],['bZ4X','^BZ4X'],['Veloz','^VELOZ']],
+  'Lexus':[['ES','^ES'],['IS','^IS'],['GS','^GS'],['LS','^LS'],['RX','^RX'],['NX','^NX'],['UX','^UX'],['LX','^LX'],['GX','^GX'],['LC','^LC'],['RC','^RC'],['LM','^LM'],['RZ','^RZ'],['LBX','^LBX']],
+  'Honda':[['Civic','^CIVIC'],['Accord','^ACCORD'],['CR-V','^CRV'],['HR-V','^HRV'],['ZR-V','^ZRV'],['Pilot','^PILOT'],['City','^CITY'],['Jazz','^JAZZ'],['Odyssey','^ODYSSEY'],['Passport','^PASSPORT']],
+  'Hyundai':[['Santa Fe','^SANTAFE'],['Ioniq 5','^IONIQ5'],['Ioniq 6','^IONIQ6'],['Ioniq','^IONIQ'],['Accent','^ACCENT'],['Elantra','^ELANTRA'],['Sonata','^SONATA'],
+    ['Tucson','^TUCSON'],['Creta','^CRETA'],['Kona','^KONA'],['Palisade','^PALISADE'],['i10','^I10'],['i20','^I20'],['i30','^I30'],['Azera','^AZERA'],
+    ['Veloster','^VELOSTER'],['Venue','^VENUE'],['Staria','^STARIA'],['H-1','^H1']],
+  'Kia':[['Picanto','^PICANTO'],['Rio','^RIO'],['Cerato','^CERATO'],['K5','^(K5|OPTIMA)'],['K8','^(K8|CADENZA)'],['Sportage','^SPORTAGE'],['Sorento','^SORENTO'],
+    ['Seltos','^SELTOS'],['Soul','^SOUL'],['Carnival','^CARNIVAL'],['Stinger','^STINGER'],['Telluride','^TELLURIDE'],['EV6','^EV6'],['EV9','^EV9'],['Niro','^NIRO'],
+    ['Mohave','^MOHAVE'],['Pegas','^PEGAS'],['Stonic','^STONIC'],['Sonet','^SONET']],
+  'Nissan':[['X-Trail','^XTRAIL'],['Sunny','^SUNNY'],['Sentra','^SENTRA'],['Altima','^ALTIMA'],['Maxima','^MAXIMA'],['Micra','^MICRA'],['Kicks','^KICKS'],['Juke','^JUKE'],
+    ['Qashqai','^QASHQAI'],['Rogue','^ROGUE'],['Murano','^MURANO'],['Pathfinder','^PATHFINDER'],['Patrol','^PATROL'],['Navara','^NAVARA'],['Leaf','^LEAF'],
+    ['Tiida','^TIIDA'],['Note','^NOTE'],['Armada','^ARMADA'],['GT-R','^GTR'],['370Z','^370Z'],['350Z','^350Z']],
+  'Infiniti':[['QX50','^QX50'],['QX55','^QX55'],['QX60','^QX60'],['QX70','^QX70'],['QX80','^QX80'],['Q50','^Q50'],['Q60','^Q60'],['Q70','^Q70'],['FX','^FX'],['EX','^EX'],['JX','^JX'],['G37','^G37'],['G35','^G35']],
+  'Mitsubishi':[['Eclipse Cross','^ECLIPSECROSS'],['Lancer','^LANCER'],['Pajero','^(PAJERO|MONTERO)'],['Outlander','^OUTLANDER'],['ASX','^ASX'],['Attrage','^ATTRAGE'],
+    ['Mirage','^MIRAGE'],['L200','^L200'],['Xpander','^XPANDER']],
+  'Mazda':[['CX-30','^CX30'],['CX-3','^CX3'],['CX-50','^CX50'],['CX-5','^CX5'],['CX-60','^CX60'],['CX-90','^CX90'],['CX-9','^CX9'],['MX-5','^MX5'],
+    ['Mazda2','^(MAZDA)?2'],['Mazda3','^(MAZDA)?3'],['Mazda6','^(MAZDA)?6']],
+  'Suzuki':[['Grand Vitara','^GRANDVITARA'],['Vitara','^VITARA'],['Swift','^SWIFT'],['Jimny','^JIMNY'],['Ciaz','^CIAZ'],['Dzire','^DZIRE'],['Ertiga','^ERTIGA'],
+    ['Celerio','^CELERIO'],['Alto','^ALTO'],['Baleno','^BALENO'],['S-Presso','^SPRESSO'],['SX4','^SX4'],['Ignis','^IGNIS']],
+  'Subaru':[['Impreza','^IMPREZA'],['Forester','^FORESTER'],['Outback','^OUTBACK'],['XV','^XV'],['Crosstrek','^CROSSTREK'],['Legacy','^LEGACY'],['WRX','^WRX'],['BRZ','^BRZ']],
+  'Mini':[['Countryman','COUNTRYMAN'],['Clubman','CLUBMAN'],['Paceman','PACEMAN'],['Cooper','COOPER']],
+  'Volkswagen':[['T-Roc','^TROC'],['ID.4','^ID4'],['ID.3','^ID3'],['ID.6','^ID6'],['Golf','^GOLF'],['Polo','^POLO'],['Passat','^PASSAT'],['Jetta','^JETTA'],
+    ['Tiguan','^TIGUAN'],['Touareg','^TOUAREG'],['Teramont','^TERAMONT'],['Atlas','^ATLAS'],['Arteon','^ARTEON'],['Beetle','^BEETLE'],['Scirocco','^SCIROCCO']],
+  'Porsche':[['Cayenne','^CAYENNE'],['Macan','^MACAN'],['Panamera','^PANAMERA'],['911','^911'],['Taycan','^TAYCAN'],['Boxster','^BOXSTER'],['Cayman','^CAYMAN']],
+  'Land Rover':[['Discovery Sport','DISCOVERYSPORT'],['Discovery','DISCOVERY'],['Defender','DEFENDER'],['Freelander','FREELANDER'],['Evoque','EVOQUE'],['Velar','VELAR'],
+    ['Range Rover Sport','(RANGEROVERSPORT|^SPORT)'],['Range Rover','(RANGEROVER|VOGUE)']],
+  'Jeep':[['Grand Cherokee','GRANDCHEROKEE'],['Grand Wagoneer','GRANDWAGONEER'],['Cherokee','^CHEROKEE'],['Wrangler','^WRANGLER'],['Compass','^COMPASS'],
+    ['Renegade','^RENEGADE'],['Gladiator','^GLADIATOR'],['Commander','^COMMANDER'],['Wagoneer','^WAGONEER'],['Patriot','^PATRIOT'],['Liberty','^LIBERTY']],
+  'Ford':[['Mustang','^MUSTANG'],['Explorer','^EXPLORER'],['Expedition','^EXPEDITION'],['Escape','^ESCAPE'],['Edge','^EDGE'],['F-150','^F150'],['Ranger','^RANGER'],
+    ['Bronco','^BRONCO'],['Focus','^FOCUS'],['Fiesta','^FIESTA'],['Fusion','^FUSION'],['Taurus','^TAURUS'],['EcoSport','^ECOSPORT'],['Territory','^TERRITORY'],
+    ['Everest','^EVEREST'],['Kuga','^KUGA']],
+  'Chevrolet':[['Spark','^SPARK'],['Aveo','^AVEO'],['Cruze','^CRUZE'],['Malibu','^MALIBU'],['Impala','^IMPALA'],['Camaro','^CAMARO'],['Corvette','^CORVETTE'],
+    ['Captiva','^CAPTIVA'],['Equinox','^EQUINOX'],['Traverse','^TRAVERSE'],['Tahoe','^TAHOE'],['Suburban','^SUBURBAN'],['Silverado','^SILVERADO'],['Trax','^TRAX'],
+    ['Trailblazer','^TRAILBLAZER'],['Blazer','^BLAZER'],['Sonic','^SONIC'],['Optra','^OPTRA'],['Groove','^GROOVE'],['Tracker','^TRACKER']],
+  'GMC':[['Yukon','^YUKON'],['Sierra','^SIERRA'],['Acadia','^ACADIA'],['Terrain','^TERRAIN'],['Envoy','^ENVOY'],['Savana','^SAVANA']],
+  'Cadillac':[['Escalade','^ESCALADE'],['XT4','^XT4'],['XT5','^XT5'],['XT6','^XT6'],['CT4','^CT4'],['CT5','^CT5'],['CTS','^CTS'],['ATS','^ATS'],['SRX','^SRX'],['Lyriq','^LYRIQ']],
+  'Dodge':[['Charger','^CHARGER'],['Challenger','^CHALLENGER'],['Durango','^DURANGO'],['Ram','^RAM'],['Journey','^JOURNEY'],['Viper','^VIPER']],
+  'Renault':[['Clio','^CLIO'],['Megane','^MEGANE'],['Logan','^LOGAN'],['Sandero','^SANDERO'],['Duster','^DUSTER'],['Koleos','^KOLEOS'],['Captur','^CAPTUR'],
+    ['Kadjar','^KADJAR'],['Fluence','^FLUENCE'],['Symbol','^SYMBOL'],['Talisman','^TALISMAN'],['Arkana','^ARKANA'],['Austral','^AUSTRAL']],
+  'Peugeot':[['2008','^2008'],['3008','^3008'],['5008','^5008'],['208','^208'],['301','^301'],['308','^308'],['408','^408'],['508','^508'],['Partner','^PARTNER'],['Rifter','^RIFTER'],['Expert','^EXPERT']],
+  'Citroen':[['C3 Aircross','^C3AIRCROSS'],['C5 Aircross','^C5AIRCROSS'],['C-Elysee','ELYSEE'],['C3','^C3'],['C4','^C4'],['C5','^C5'],['Berlingo','^BERLINGO']],
+  'Fiat':[['500','^500'],['Tipo','^TIPO'],['Panda','^PANDA'],['Punto','^PUNTO'],['Doblo','^DOBLO'],['Fiorino','^FIORINO']],
+  'Volvo':[['XC40','^XC40'],['XC60','^XC60'],['XC90','^XC90'],['EX30','^EX30'],['EX90','^EX90'],['C40','^C40'],['S60','^S60'],['S90','^S90'],['V40','^V40'],['V60','^V60'],['V90','^V90']],
+  'Skoda':[['Octavia','^OCTAVIA'],['Superb','^SUPERB'],['Fabia','^FABIA'],['Kodiaq','^KODIAQ'],['Karoq','^KAROQ'],['Kamiq','^KAMIQ'],['Scala','^SCALA'],['Rapid','^RAPID'],['Enyaq','^ENYAQ']],
+  'Seat':[['Ibiza','^IBIZA'],['Leon','^LEON'],['Arona','^ARONA'],['Ateca','^ATECA'],['Tarraco','^TARRACO']],
+  'Tesla':[['Model 3','^(MODEL)?3'],['Model Y','^(MODEL)?Y'],['Model S','^(MODEL)?S'],['Model X','^(MODEL)?X'],['Cybertruck','^CYBERTRUCK']],
+  'BYD':[['Atto 3','^ATTO3'],['Seal','^SEAL$|^SEAL[^I]'],['Sealion','^SEALION'],['Dolphin','^DOLPHIN'],['Han','^HAN'],['Tang','^TANG'],['Song','^SONG'],['Qin','^QIN'],['Yuan','^YUAN'],['Seagull','^SEAGULL'],['F3','^F3']],
+  'Chery':[['Tiggo 2','^TIGGO2'],['Tiggo 3','^TIGGO3'],['Tiggo 4','^TIGGO4'],['Tiggo 7','^TIGGO7'],['Tiggo 8','^TIGGO8'],['Arrizo','^ARRIZO']],
+  'MG':[['MG3','^(MG)?3'],['MG4','^(MG)?4'],['MG5','^(MG)?5'],['MG6','^(MG)?6'],['ZS','^ZS'],['HS','^HS'],['RX5','^RX5'],['RX8','^RX8'],['GT','^GT'],['Marvel R','^MARVEL'],['One','^ONE']],
+  'Geely':[['Coolray','^COOLRAY'],['Emgrand','^EMGRAND'],['Tugella','^TUGELLA'],['Monjaro','^MONJARO'],['Azkarra','^AZKARRA'],['Okavango','^OKAVANGO'],['Geometry C','^GEOMETRY']],
+  'Genesis':[['GV60','^GV60'],['GV70','^GV70'],['GV80','^GV80'],['G70','^G70'],['G80','^G80'],['G90','^G90']],
+  'Isuzu':[['D-Max','^DMAX'],['MU-X','^MUX'],['Trooper','^TROOPER']],
+  'Acura':[['MDX','^MDX'],['RDX','^RDX'],['TLX','^TLX'],['ILX','^ILX'],['TSX','^TSX']],
+  'Maserati':[['Ghibli','^GHIBLI'],['Levante','^LEVANTE'],['Quattroporte','^QUATTROPORTE'],['Grecale','^GRECALE'],['MC20','^MC20']]
+};
+CAR_MODELS['Range Rover']=CAR_MODELS['Land Rover'];
+/* Read the card's طرازها, then land on that make's real model list. */
+function snapModel(make, text){
+  const cleaned=String(text||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const list=CAR_MODELS[make];
+  if(!cleaned) return {};
+  if(list){
+    const noMake=cleaned.replace(new RegExp('^'+make.toUpperCase().replace(/[^A-Z]/g,'')), '');
+    /* letters and digits OCR swaps: I/1, O/0, S/5, B/8, Z/2 */
+    const tries=[noMake, noMake.replace(/^1/,'I'), noMake.replace(/^I/,'1'), noMake.replace(/O/g,'0'), noMake.replace(/0/g,'O'),
+                 noMake.replace(/5/g,'S'), noMake.replace(/8/g,'B'), noMake.replace(/2/g,'Z')];
+    for(const t of tries) for(const [name,pat] of list) if(new RegExp(pat).test(t))
+      return {model:name, why:'read from طرازها ("'+String(text).trim()+'"), matched to '+make+' '+name};
+    /* small misspellings of the longer names: "C0ROLLA", "TUCS0N" */
+    const word=noMake.replace(/\d/g,'');
+    let best=null, bd=9;
+    for(const [name] of list){ const n=name.toUpperCase().replace(/[^A-Z]/g,'');
+      /* only near-misses of the whole name, plus at most a short trim suffix ("XLI") */
+      if(n.length<5 || word.length<n.length-1 || word.length-n.length>3) continue;
+      const d=lev(word.slice(0,n.length), n), allowed=n.length>=7?2:1;
+      if(d<=allowed && d<bd){ bd=d; best=name; } }
+    if(best)
+      return {model:best, why:'read from طرازها ("'+String(text).trim()+'"), closest '+make+' model is '+best};
+  }
+  return {model:String(text).trim(), why:'read from طرازها; not in the model list'+(make?' for '+make:'')+', check it'};
 }
 async function readRegistration(file, say){
   const bmp=await createImageBitmap(file);
@@ -1800,45 +1904,41 @@ async function readRegistration(file, say){
   const half=0.45*L.pitch*f, rowY=i=>(L.top+L.pitch*i)*f;
   const eng=await getEngWorker();
   const mid=async(i,src)=>(await eng.recognize(cropCanvas(src||ink, L.valX0*f, rowY(i)-half, L.valX1*f, rowY(i)+half))).data.text.trim();
-  const raw={make:await mid(0), year:await mid(1), model:await mid(2), chassis:await mid(6)};
+  /* only what a quote needs: الماركة, تاريخ الصنع, طرازها, and قوة المحرك for the fuel */
+  const raw={make:await mid(0), year:await mid(1), model:await mid(2)};
   await ara.setParameters({tessedit_pageseg_mode:'7'});
   const lft=async i=>(await ara.recognize(cropCanvas(ink, 0, rowY(i)-half, L.leftX1*f, rowY(i)+half))).data.text.trim();
   raw.power=await lft(0); raw.cylinders=await lft(1);
   await ara.setParameters({tessedit_pageseg_mode:'3'});
 
   const r={why:{}, layout:true};
-  const cleanVin=s=>{ const m=String(s).toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/O/g,'0').replace(/[IQ]/g,c=>c==='I'?'1':'0').match(/[A-HJ-NPR-Z0-9]{17}/); return m?m[0]:null; };
-  /* the chassis number reads differently under each cleanup; vote character by character */
-  const vins=[cleanVin(raw.chassis)];
-  for(const inkBelow of [0,110]) vins.push(cleanVin(await mid(6, await cardCanvas(bmp,best.deg,s1*f,inkBelow))));
-  const ok=vins.filter(Boolean);
-  r.vin = ok.length<2 ? (ok[0]||null) : ok[0].split('').map(function(ch,i){
-    const n={}; ok.forEach(v=>{ n[v[i]]=(n[v[i]]||0)+1; });
-    return Object.keys(n).sort((a,b)=>n[b]-n[a])[0];
-  }).join('');
+  const yearOf=t=>{ const m=wDigits(t).match(/(19[89]\d|20[0-4]\d)/); return m && +m[1]<=new Date().getFullYear()+1 ? +m[1] : null; };
+  /* a row that doesn't parse gets re-read under a lighter and a heavier cleanup */
+  let others=null;
+  const retry=async(i,ok)=>{
+    others=others||[await cardCanvas(bmp,best.deg,s1*f,0), await cardCanvas(bmp,best.deg,s1*f,165)];
+    for(const c of others){ const t=await mid(i,c); if(ok(t)) return t; }
+    return null;
+  };
+  if(!makeFromText(raw.make)){ const t=await retry(0,makeFromText); if(t) raw.make=t; }
+  if(!yearOf(raw.year)){ const t=await retry(1,yearOf); if(t) raw.year=t; }
+  if(!/[A-Z0-9]{2}/i.test(raw.model)){ const t=await retry(2,s=>/[A-Z0-9]{2}/i.test(s)); if(t) raw.model=t; }
   r.make=makeFromText(raw.make);
   if(r.make) r.why.make='read from الماركة on the card';
-  else if(r.vin && vinMake(r.vin)){ r.make=vinMake(r.vin); r.why.make='decoded from the chassis number'; }
-  const y=wDigits(raw.year).match(/\b(19[89]\d|20[0-4]\d)\b/);
-  if(y && +y[1]<=new Date().getFullYear()+1){ r.year=+y[1]; r.why.year='read from تاريخ الصنع on the card'; }
-  else if(r.vin && vinYear(r.vin)){ r.year=vinYear(r.vin); r.why.year='decoded from the chassis number, confirm it'; }
-  const mt=(raw.model.match(/[A-Za-z0-9][A-Za-z0-9.\-]*/g)||[]).filter(t=>/[A-Z0-9]/.test(t) && !(t.length===1 && /[a-z]/.test(t)));
-  if(mt.length){
-    /* I/1 and O/0 swap easily; keep the spelling a real listing uses ("14 EDRIVE" -> "I4 EDRIVE") */
-    const rows=allListings(), swaps=t=>[t, t.replace(/^1/,'I'), t.replace(/^I/,'1'), t.replace(/0/g,'O'), t.replace(/O/g,'0')];
-    if(rows && r.make){
-      const first=swaps(mt[0]).find(v=>matchModel(rows,r.make,v).length);
-      if(first) mt[0]=first;
-    }
-    r.model=mt.join(' '); r.why.model='read from طرازها on the card';
-  }
-  const electricWord=/كهرب/.test(arNorm(raw.power)), hybridWord=/هجين|هايبر/.test(arNorm(raw.power));
+  if(yearOf(raw.year)){ r.year=yearOf(raw.year); r.why.year='read from تاريخ الصنع on the card'; }
+  const snap=snapModel(r.make, raw.model);
+  if(snap.model){ r.model=snap.model; r.why.model=snap.why; }
+  /* كهرباء beside the engine power = electric or hybrid; both carry it, so the
+     cylinder count (0 on a pure electric car) tells them apart */
+  const pw=arNorm(raw.power), electricWord=/كهرب/.test(pw), hybridWord=/هجين|هايبر/.test(pw);
+  const petrolWord=/بنزين|بنزبن|بنزن/.test(pw), dieselWord=/مازوت|ديزل/.test(pw);
   const cyl=wDigits(raw.cylinders).match(/\d+/), cylinders=cyl?+cyl[0]:null;
-  if(hybridWord || (electricWord && cylinders>0)){ r.fuel='Hybrid'; r.why.fuel='"كهرباء" next to the engine power and '+cylinders+' cylinders, so hybrid. Confirm it'; }
-  else if(electricWord){ r.fuel='Electric'; r.why.fuel='"كهرباء" next to the engine power'+(cylinders===0?' and 0 cylinders':''); }
-  else if(cylinders>0){ r.fuel='Gasoline'; r.why.fuel='no "كهرباء" next to the engine power, '+cylinders+' cylinders'; }
-  r.text='Make row: '+raw.make+'\nYear row: '+raw.year+'\nModel row: '+raw.model+'\nChassis row: '+raw.chassis+
-         '\nEngine power: '+raw.power+'\nCylinders: '+raw.cylinders;
+  if(petrolWord && !electricWord){ r.fuel='Gasoline'; r.why.fuel='"بنزين" (petrol) next to the engine power'; }
+  else if(dieselWord && !electricWord){ r.fuel='Gasoline'; r.why.fuel='diesel next to the engine power; neither insurer prices diesel separately'; }
+  else if(hybridWord || (electricWord && cylinders>0)){ r.fuel='Hybrid'; r.why.fuel='"كهرباء" next to the engine power, and the car has '+cylinders+' cylinders, so hybrid. Confirm it'; }
+  else if(electricWord){ r.fuel='Electric'; r.why.fuel='"كهرباء" next to the engine power'+(cylinders===0?', and 0 cylinders':''); }
+  else if(/\d/.test(wDigits(raw.power))){ r.fuel='Gasoline'; r.why.fuel='no "كهرباء" next to the engine power'; }
+  r.text='Make row: '+raw.make+'\nYear row: '+raw.year+'\nModel row: '+raw.model+'\nEngine power: '+raw.power+'\nCylinders: '+raw.cylinders;
   return r;
 }
 async function runCarScan(file){
@@ -1879,7 +1979,6 @@ function paintCarReview(){
     '<label for="scMo">Model</label><input type="text" id="scMo" value="'+esc(r.model||'')+'" placeholder="not read, type it">'+why('model')+
     '<label for="scF">Fuel</label><select id="scF">'+['Gasoline','Hybrid','Electric'].map(f=>'<option'+((r.fuel||S.fuel)===f?' selected':'')+'>'+f+'</option>').join('')+'</select>'+
     (r.fuel ? why('fuel') : '<div class="why">not stated on the card, check</div>')+
-    '<label>Chassis no.</label><span style="font-family:monospace">'+esc(r.vin||'not found')+'</span>'+
     '<details class="full"><summary class="hint" style="cursor:pointer">Show the text it read</summary><pre style="white-space:pre-wrap;font-size:11px;margin:6px 0 0">'+esc(r.text)+'</pre></details>'+
     '<div class="full"><button type="button" class="scanapply" id="scApply">Fill the vehicle details</button></div>';
   $('scApply').onclick=applyCarScan;
