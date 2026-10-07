@@ -254,11 +254,13 @@
     <div class="scanbox">
       <label class="lbl">Fill from a photo instead of typing</label>
       <div class="scanbtns">
-        <button type="button" id="scanIds">Scan ID cards</button>
+        <button type="button" id="scanCam">Take a photo of an ID</button>
+        <button type="button" id="scanIds">Choose ID photos</button>
         <button type="button" id="scanList">Scan a list of birth dates</button>
       </div>
       <input type="file" id="scanFile" accept="image/*" multiple hidden>
-      <div class="hint" style="margin-top:6px">ID cards: one photo per person, pick several at once. A list: one screenshot holding everyone's dates. You can also paste a screenshot (Ctrl+V). Images are read inside this browser and never uploaded.</div>
+      <input type="file" id="scanShot" accept="image/*" capture="environment" hidden>
+      <div class="hint" style="margin-top:6px">ID cards, driving licences or passports: one photo per person, Arabic or English. Take them one after another or pick several at once; each one is added to the list. A list: one screenshot holding everyone's dates. You can also paste a screenshot (Ctrl+V). Images are read inside this browser and never uploaded.</div>
       <div class="scanstatus" id="scanStatus"></div>
       <div class="scanrev hidden" id="scanReview"></div>
     </div>
@@ -1178,9 +1180,274 @@ function idCardDob(text){
   }
   return Object.assign({}, dates.slice().sort((a,b)=>a.iso<b.iso?-1:1)[0], {why:'earliest date on the card'});
 }
+/* ---------- read one identity document: Lebanese ID, driving licence, passport ----------
+   Photos arrive at any rotation, so each turn is tried until the card's labels read.
+   · ID card (all Arabic): the birth date sits after "تاريخ الولادة" in Arabic-Indic
+     digits. Tesseract's Arabic model cannot read those digits, so that one value is
+     cut out and read here, character by character, against reference shapes drawn
+     from the fonts on this device; only a reading that is a real birth date is kept.
+   · Driving licence: field 3 is the birth date in Western digits; 1 and 2 the name.
+   · Passport: the machine-readable lines at the bottom carry the birth date. */
+let araWorker=null, engWorker=null;
+async function getAra(){ if(araWorker) return araWorker; await loadScript(OCR_SRC); araWorker=await Tesseract.createWorker('ara'); return araWorker; }
+async function getEng(){ if(engWorker) return engWorker; await loadScript(OCR_SRC); engWorker=await Tesseract.createWorker('eng'); return engWorker; }
+function dropIdWorkers(){ [araWorker,engWorker].forEach(w=>{ if(w){ try{ w.terminate(); }catch(_){} } }); araWorker=engWorker=null; }
+const arNorm = s => String(s||'').replace(/[ً-ٰٟـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
+function turned(bmp, deg, longSide){
+  const long=Math.max(bmp.width,bmp.height), scale=longSide ? longSide/long : Math.max(1,Math.min(4,3200/long));
+  const W=Math.round((deg%180?bmp.height:bmp.width)*scale), H=Math.round((deg%180?bmp.width:bmp.height)*scale);
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const g=c.getContext('2d',{willReadFrequently:true});
+  g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+  g.translate(W/2,H/2); g.rotate(deg*Math.PI/180); g.scale(scale,scale); g.drawImage(bmp,-bmp.width/2,-bmp.height/2);
+  return c;
+}
+function cutOut(src,x0,y0,x1,y1){
+  x0=Math.max(0,Math.round(x0)); y0=Math.max(0,Math.round(y0)); x1=Math.min(src.width,Math.round(x1)); y1=Math.min(src.height,Math.round(y1));
+  const c=document.createElement('canvas'); c.width=Math.max(1,x1-x0); c.height=Math.max(1,y1-y0);
+  c.getContext('2d',{willReadFrequently:true}).drawImage(src,x0,y0,c.width,c.height,0,0,c.width,c.height);
+  return c;
+}
+function ocrLines(data){
+  const out=[];
+  (data.blocks||[]).forEach(b=>b.paragraphs.forEach(p=>p.lines.forEach(l=>out.push({t:l.text.trim(), b:l.bbox, words:l.words.map(w=>({t:w.text, b:w.bbox}))}))));
+  return out;
+}
+/* ink = dark in every channel; the card's pink, green and blue tints are bright in at least one */
+function inkOtsu(c, bias){
+  const g=c.getContext('2d',{willReadFrequently:true}), d=g.getImageData(0,0,c.width,c.height), p=d.data, h=new Array(256).fill(0), n=p.length/4, m=new Uint8Array(n);
+  for(let i=0,j=0;i<p.length;i+=4,j++){ m[j]=Math.max(p[i],p[i+1],p[i+2]); h[m[j]]++; }
+  let sum=0; for(let t=0;t<256;t++) sum+=t*h[t];
+  let sB=0,wB=0,best=0,thr=128;
+  for(let t=0;t<256;t++){ wB+=h[t]; if(!wB) continue; const wF=n-wB; if(!wF) break; sB+=t*h[t]; const v=wB*wF*Math.pow(sB/wB-(sum-sB)/wF,2); if(v>best){ best=v; thr=t; } }
+  thr+=bias;
+  for(let i=0,j=0;i<p.length;i+=4,j++){ const v=m[j]<=thr?0:255; p[i]=p[i+1]=p[i+2]=v; }
+  g.putImageData(d,0,0); return c;
+}
+/* local (Sauvola) cut-off, for print that fades along the line */
+function inkLocal(c, k){
+  const W=c.width,H=c.height,g=c.getContext('2d',{willReadFrequently:true}),d=g.getImageData(0,0,W,H),p=d.data,r=(Math.round(H*0.5)|1)>>1;
+  const v=new Float64Array(W*H); for(let i=0;i<W*H;i++) v[i]=Math.max(p[i*4],p[i*4+1],p[i*4+2]);
+  const S=new Float64Array((W+1)*(H+1)),Q=new Float64Array((W+1)*(H+1));
+  for(let y=0;y<H;y++){ let rs=0,rq=0; for(let x=0;x<W;x++){ const a=v[y*W+x]; rs+=a; rq+=a*a; S[(y+1)*(W+1)+x+1]=S[y*(W+1)+x+1]+rs; Q[(y+1)*(W+1)+x+1]=Q[y*(W+1)+x+1]+rq; } }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const x0=Math.max(0,x-r),y0=Math.max(0,y-r),x1=Math.min(W,x+r+1),y1=Math.min(H,y+r+1),n=(x1-x0)*(y1-y0);
+    const s=S[y1*(W+1)+x1]-S[y0*(W+1)+x1]-S[y1*(W+1)+x0]+S[y0*(W+1)+x0], q=Q[y1*(W+1)+x1]-Q[y0*(W+1)+x1]-Q[y1*(W+1)+x0]+Q[y0*(W+1)+x0];
+    const m=s/n, sd=Math.sqrt(Math.max(0,q/n-m*m)), o=v[y*W+x]<=m*(1+k*(sd/128-1))?0:255, i=(y*W+x)*4; p[i]=p[i+1]=p[i+2]=o;
+  }
+  g.putImageData(d,0,0); return c;
+}
+/* connected ink shapes (8-neighbour) of a black-on-white canvas */
+function inkShapes(c){
+  const W=c.width,H=c.height,p=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data, lab=new Int32Array(W*H).fill(-1), out=[];
+  for(let i=0;i<W*H;i++){
+    if(p[i*4]!==0 || lab[i]!==-1) continue;
+    const id=out.length, st=[i], px=[]; lab[i]=id; let x0=W,y0=H,x1=0,y1=0;
+    while(st.length){ const k=st.pop(), x=k%W, y=(k-x)/W; px.push(k);
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ const xx=x+dx,yy=y+dy; if(xx<0||yy<0||xx>=W||yy>=H) continue; const kk=yy*W+xx; if(lab[kk]===-1 && p[kk*4]===0){ lab[kk]=id; st.push(kk); } } }
+    out.push({x0,y0,x1,y1,n:px.length,px,W});
+  }
+  return out;
+}
+const GRID=24;
+function shapeGrid(s){
+  const w=s.x1-s.x0+1,h=s.y1-s.y0+1,m=Math.max(w,h),ox=(m-w)/2,oy=(m-h)/2,a=new Float32Array(GRID*GRID);
+  s.px.forEach(k=>{ const x=k%s.W-s.x0+ox, y=Math.floor(k/s.W)-s.y0+oy; a[Math.min(GRID-1,Math.floor(y/m*GRID))*GRID+Math.min(GRID-1,Math.floor(x/m*GRID))]+=1; });
+  let mx=0; for(const v of a) mx=Math.max(mx,v); for(let i=0;i<a.length;i++) a[i]/=mx||1;
+  const o=new Float32Array(GRID*GRID);   /* soften, so small differences between typefaces don't count */
+  for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){ let s2=0,n=0;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ const yy=y+dy,xx=x+dx; if(yy<0||xx<0||yy>=GRID||xx>=GRID) continue; const wt=dx||dy?0.5:1; s2+=a[yy*GRID+xx]*wt; n+=wt; }
+    o[y*GRID+x]=s2/n; }
+  return o;
+}
+const AR_DIGITS='٠١٢٣٤٥٦٧٨٩';
+let digitShapes=null;
+function referenceShapes(){
+  if(digitShapes) return digitShapes;
+  digitShapes=[];
+  ['Arial','Tahoma','Segoe UI','Times New Roman','Traditional Arabic','Simplified Arabic','Geeza Pro','Noto Naskh Arabic','Noto Sans Arabic','Roboto','sans-serif','serif'].forEach(function(f){
+    const one=[];
+    (AR_DIGITS+'/').split('').forEach(function(ch){
+      const c=document.createElement('canvas'); c.width=c.height=160; const g=c.getContext('2d',{willReadFrequently:true});
+      g.fillStyle='#fff'; g.fillRect(0,0,160,160); g.fillStyle='#000'; g.font='90px "'+f+'"'; g.fillText(ch,40,120);
+      const d=g.getImageData(0,0,160,160); for(let i=0;i<d.data.length;i+=4){ const v=d.data[i]<128?0:255; d.data[i]=d.data[i+1]=d.data[i+2]=v; } g.putImageData(d,0,0);
+      const s=inkShapes(c).sort((a,b)=>b.n-a.n)[0]; if(!s) return;
+      one.push({ch, g:shapeGrid(s), h:s.y1-s.y0+1, ar:(s.x1-s.x0+1)/(s.y1-s.y0+1)});
+    });
+    const hs=one.filter(t=>'٢٣٤'.includes(t.ch)).map(t=>t.h).sort((a,b)=>a-b), ref=hs[1]||hs[0];
+    if(ref) one.forEach(t=>{ t.rh=t.h/ref; digitShapes.push(t); });
+  });
+  return digitShapes;
+}
+function inkIn(s, fromY, toY){
+  const w=s.x1-s.x0+1, set=new Set(s.px); let ink=0,n=0;
+  for(let y=Math.round(fromY);y<=Math.round(toY);y++) for(let x=s.x0+Math.floor(w/3);x<=s.x0+Math.floor(2*w/3);x++){ n++; if(set.has(y*s.W+x)) ink++; }
+  return n?ink/n:0;
+}
+function charScores(s, lineH){
+  const h=s.y1-s.y0+1, w=s.x1-s.x0+1, rh=h/lineH, ar=w/h, g=shapeGrid(s), best={};
+  referenceShapes().forEach(function(t){
+    let a=0,na=0,nb=0; for(let i=0;i<g.length;i++){ a+=g[i]*t.g[i]; na+=g[i]*g[i]; nb+=t.g[i]*t.g[i]; }
+    const sc=a/Math.sqrt(na*nb+1e-9) - 0.35*Math.abs(Math.log((rh+0.05)/(t.rh+0.05))) - 0.15*Math.abs(Math.log((ar+0.05)/(t.ar+0.05)));
+    if(best[t.ch]===undefined || sc>best[t.ch]) best[t.ch]=sc;
+  });
+  /* the strokes that tell ٨ (open below), ٧ (open above) and ٥ (closed) apart */
+  const top=inkIn(s, s.y0, s.y0+h*0.3), bot=inkIn(s, s.y1-h*0.3, s.y1);
+  if(best['٨']!==undefined) best['٨']+=(bot<0.08?0.2:-0.2)+(top>0.08?0.05:-0.2);
+  if(best['٧']!==undefined) best['٧']+=(top<0.08?0.2:-0.2)+(bot>0.08?0.05:-0.2);
+  if(best['٥']!==undefined) best['٥']+=(bot>0.08?0.1:-0.3);
+  return Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,3);
+}
+function birthIso(y,mo,d){
+  const now=new Date();
+  if(mo<1||mo>12||d<1||d>31||y<now.getFullYear()-105||y>now.getFullYear()) return null;
+  const iso=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'), dt=new Date(iso+'T00:00:00');
+  return (dt.getDate()!==d || dt>now) ? null : iso;
+}
+/* the date as printed: a 4-digit year at one end, the day at the other */
+function digitsToIso(str){
+  const parts=westernDigits(str).split('/');
+  if(parts.length!==3 || parts.some(x=>!x || x.length>4)) return null;
+  if(parts[0].length===4 && parts[1].length<=2 && parts[2].length<=2) return birthIso(+parts[0],+parts[1],+parts[2]);
+  if(parts[2].length===4 && parts[0].length<=2 && parts[1].length<=2) return birthIso(+parts[2],+parts[1],+parts[0]);
+  return null;
+}
+function readArabicDate(bin){
+  let sh=inkShapes(bin); if(!sh.length) return null;
+  const maxH=Math.max(...sh.map(s=>s.y1-s.y0+1));
+  sh=sh.filter(s=>s.n>=Math.max(8,0.012*maxH*maxH)).sort((a,b)=>a.x0-b.x0);
+  const join=(a,b)=>({x0:Math.min(a.x0,b.x0),x1:Math.max(a.x1,b.x1),y0:Math.min(a.y0,b.y0),y1:Math.max(a.y1,b.y1),n:a.n+b.n,px:a.px.concat(b.px),W:a.W});
+  const m=[];   /* pieces stacked in the same columns are one character */
+  sh.forEach(s=>{ const p=m[m.length-1]; if(p){ const ov=Math.min(p.x1,s.x1)-Math.max(p.x0,s.x0)+1, nw=Math.min(p.x1-p.x0,s.x1-s.x0)+1; if(ov>0.5*nw){ m[m.length-1]=join(p,s); return; } } m.push(s); });
+  if(!m.length) return null;
+  const hs=m.map(s=>s.y1-s.y0+1).sort((a,b)=>a-b), big=hs.filter(v=>v>0.5*hs[hs.length-1]), H=big[Math.floor(big.length/2)];
+  const ys=m.filter(s=>s.y1-s.y0+1>0.5*H).map(s=>(s.y0+s.y1)/2).sort((a,b)=>a-b), mid=ys[Math.floor(ys.length/2)];
+  const gl=m.filter(s=>Math.abs((s.y0+s.y1)/2-mid)<0.8*H);
+  if(gl.length<6 || gl.length>16) return null;
+  const one=gl.map(s=>charScores(s,H));
+  const two=gl.map((s,i)=>{ const n=gl[i+1]; return n && n.x0-s.x1<=0.35*H ? charScores(join(s,n),H) : null; });   /* a character broken in two */
+  /* beam search over the readings: only prefixes that can still become d/m/yyyy or
+     yyyy/m/d survive, and only the best few hundred, so it never blows up */
+  const shapeOk=s=>/^(\d{1,4})(\/\d{0,2}(\/\d{0,4})?)?$/.test(westernDigits(s));
+  let best=null;
+  for(let a=0;a<=2;a++){   /* a stray mark at either end is not part of the date */
+    let beam=[{i:a,str:'',sc:0}];
+    while(beam.length){
+      const next=[];
+      beam.forEach(function(b){
+        if(b.i>=gl.length-2){   /* may stop here, dropping up to two trailing marks */
+          const iso=digitsToIso(b.str);
+          if(iso){ const avg=b.sc/(b.i-a)-0.1*(a+gl.length-b.i); if(!best || avg>best.avg) best={avg,iso,str:b.str}; }
+        }
+        if(b.i>=gl.length) return;
+        one[b.i].forEach(([ch,s])=>{ const str=b.str+ch; if(shapeOk(str)) next.push({i:b.i+1,str,sc:b.sc+s}); });
+        if(two[b.i]) two[b.i].forEach(([ch,s])=>{ const str=b.str+ch; if(shapeOk(str)) next.push({i:b.i+2,str,sc:b.sc+2*s}); });
+      });
+      beam=next.sort((x,y)=>y.sc/Math.max(1,y.i-a)-x.sc/Math.max(1,x.i-a)).slice(0,300);
+    }
+  }
+  return best && best.avg>0.45 ? best : null;
+}
+function arabicDob(canvas, line){
+  const lab=line.words.find(w=>/الولاده|الميلاد/.test(arNorm(w.t))) || line.words[0];
+  const h=lab.b.y1-lab.b.y0, yc=(lab.b.y0+lab.b.y1)/2;
+  const raw=cutOut(canvas, lab.b.x0-8*h, yc-0.9*h, lab.b.x0+0.6*h, yc+0.7*h);
+  let best=null;
+  [c=>inkLocal(c,0.2), c=>inkOtsu(c,-5), c=>inkOtsu(c,-15), c=>inkLocal(c,0.3)].forEach(function(f){
+    const r=readArabicDate(f(cutOut(raw,0,0,raw.width,raw.height)));
+    if(r && (!best || r.avg>best.avg)) best=r;
+  });
+  return best;
+}
+const arName = s => (String(s||'').split(/[:：]/).slice(1).join(' ')||'').replace(/[^ء-ي\s]/g,' ').replace(/\s+/g,' ').trim();
+function readIdName(lines){
+  const at=re=>lines.find(l=>re.test(arNorm(l.t)));
+  const first=at(/^\s*الاسم/), family=at(/^\s*الشهره/);
+  return [first&&arName(first.t), family&&arName(family.t)].filter(Boolean).join(' ');
+}
+function readLicence(text){
+  const ls=westernDigits(text).split('\n'), re=/(?:^|\s)3\s*[.,]\s*(\d{1,2})\s*[\/.\-]\s*(\d{1,2})\s*[\/.\-]\s*(\d{4})/;
+  const i=ls.findIndex(l=>re.test(l));
+  if(i<0) return null;
+  const m=ls[i].match(re), iso=birthIso(+m[3],+m[2],+m[1]);
+  if(!iso) return null;
+  /* fields 2 (given name) and 1 (surname) sit just above, in capitals */
+  const words=ls.slice(Math.max(0,i-4),i).reverse().map(l=>((l||'').match(/\b[A-Z][A-Z'\-]{2,}(?:\s+[A-Z][A-Z'\-]{2,})*/)||[''])[0]).filter(Boolean);
+  return {iso, name:words.slice(0,2).join(' '), why:'driving licence, field 3'};
+}
+function readPassport(text){
+  const t=text.replace(/ /g,'').toUpperCase();
+  const m=t.match(/[A-Z0-9<]{9}[0-9<][A-Z<]{3}([0-9OQ]{6})[0-9<][MF<]/);
+  if(!m) return null;
+  const d=m[1].replace(/[OQ]/g,'0'), yy=+d.slice(0,2), now=new Date().getFullYear()%100;
+  const iso=birthIso((yy>now?1900:2000)+yy, +d.slice(2,4), +d.slice(4,6));
+  if(!iso) return null;
+  const n=t.match(/P[A-Z<][A-Z<]{3}([A-Z<]+)/), parts=n ? n[1].split('<<') : [];
+  return {iso, name:parts.length>1 ? (parts[1].replace(/<+/g,' ')+' '+parts[0].replace(/<+/g,' ')).trim() : '', why:'passport, machine-readable lines'};
+}
+const CARD_WORDS=/الجمهوريه|اللبنانيه|الاسم|الشهره|الولاده|بطاقه|هويه|رخصه|سوق|الداخليه|جواز|سفر/g;
+const LATIN_WORDS=/REPUBLI|LEBAN|LIBAN|DRIVING|LICEN[CS]E|PERMIS|CONDUIRE|PASSPORT|PASSEPORT|NATIONALITY/g;
+async function readDocument(file, say){
+  const bmp=await createImageBitmap(file);
+  const turns = bmp.height>bmp.width ? [270,90,0,180] : [0,180,270,90];
+  const ara=await getAra(), eng=await getEng();
+  /* which way is up: a quick read of a small copy, Arabic labels first, then English ones */
+  let deg=null, engSmall='';
+  for(let k=0;k<turns.length && deg===null;k++){
+    say('finding which way is up ('+(k+1)+' of 4)');
+    const small=turned(bmp, turns[k], 1500);
+    if((arNorm((await ara.recognize(small)).data.text).match(CARD_WORDS)||[]).length>=2){ deg=turns[k]; break; }
+    engSmall=(await eng.recognize(small)).data.text;
+    /* a turned card reads as noise in English, so even one clean date means upright */
+    const latin=(engSmall.toUpperCase().match(LATIN_WORDS)||[]).length + (findDates(engSmall).length ? 2 : 0);
+    if(latin>=2 || readLicence(engSmall) || readPassport(engSmall)) deg=turns[k];
+  }
+  if(deg===null) return null;
+  say('reading the card');
+  const c=turned(bmp, deg);
+  const data=(await ara.recognize(c,{},{blocks:true})).data, lines=ocrLines(data);
+  /* ID card: Arabic label, Arabic-Indic digits */
+  const dobLine=lines.find(l=>/تاريخ/.test(arNorm(l.t)) && /الولاده|الميلاد/.test(arNorm(l.t)));
+  let fallback=null;
+  if(dobLine){
+    const d=arabicDob(c, dobLine), name=readIdName(lines);
+    if(d) return {iso:d.iso, name, why:'ID card'};
+    const w=findDates(dobLine.t).filter(x=>isDob(x.iso))[0];   /* a card printed in Western digits */
+    if(w) return {iso:w.iso, amb:w.amb, name, why:'ID card'};
+    fallback={iso:'', name, why:'ID card, the birth date could not be read, type it'};
+  }
+  /* driving licence, passport, or any card in Latin print */
+  const text=(await eng.recognize(c)).data.text;
+  const r=readLicence(text) || readPassport(text) || readLicence(engSmall) || readPassport(engSmall);
+  if(r) return r;
+  if(fallback) return fallback;
+  const d=idCardDob(text+'\n'+data.text);
+  return d ? {iso:d.iso, amb:d.amb, name:'', why:d.why} : null;
+}
+/* ID photos add to the list, so a family can be photographed one card at a time */
+async function runIdScan(files){
+  const st=$('scanStatus');
+  st.textContent='Preparing the reader (the first time takes a few seconds)…';
+  try{ await getAra(); }
+  catch(e){ dropIdWorkers(); st.textContent='The text reader could not be loaded, so nothing was read. Check the connection and try again, or type the dates of birth in by hand.'; return; }
+  for(let i=0;i<files.length;i++){
+    const tag=(files.length>1?'Card '+(i+1)+' of '+files.length:'Card');
+    let r;
+    try{ r=await readDocument(files[i], s=>{ st.textContent=tag+': '+s+'…'; }); }
+    catch(e){ dropIdWorkers(); st.textContent='The text reader stopped before it finished. Try again, or type the date of birth in by hand.'; paintScanReview(); return; }
+    const who=r && r.name ? r.name+' · ' : '';
+    scanRows.push(r && r.iso ? {iso:r.iso, amb:!!r.amb, note:who+r.why} : {iso:'', amb:false, note:who+(r?r.why:'no birth date found, type it')});
+  }
+  st.textContent = scanRows.length
+    ? 'Check these before applying. Each one is editable. Add more cards for a family.'
+    : 'No birth date could be read. Try a sharper, straighter photo, or type it in.';
+  paintScanReview();
+}
 async function runScan(files){
   files=[...files].filter(f=>/^image\//.test(f.type));
   if(!files.length) return;
+  if(scanMode==='id') return runIdScan(files);
   const st=$('scanStatus');
   st.textContent='Preparing the text reader (first time takes a few seconds)…';
   let w;
@@ -1245,6 +1512,8 @@ function applyScan(){
   $('levels').scrollIntoView({behavior:'smooth', block:'center'});
 }
 $('scanIds').onclick=()=>{ scanMode='id'; $('scanFile').click(); };
+$('scanCam').onclick=()=>{ scanMode='id'; $('scanShot').click(); };
+$('scanShot').addEventListener('change', e=>{ runScan(e.target.files); e.target.value=''; });
 $('scanList').onclick=()=>{ scanMode='list'; $('scanFile').click(); };
 $('scanFile').addEventListener('change', e=>{ runScan(e.target.files); e.target.value=''; });
 document.addEventListener('paste', e=>{
