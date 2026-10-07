@@ -1577,15 +1577,19 @@ function paintIntervals(){
   out.innerHTML='<p><b>'+esc(TARIFF.name)+' · model year '+S.year+' · '+esc(S.fuel)+'</b></p>'+plans.map(function(p){
     const iv=intervalsFor(p, S.year, TARIFF);
     if(!iv) return '<p><b>'+esc(p.name)+'</b>: not offered for '+S.year+'.</p>';
-    let prevEnd=null;
+    /* multipliers, not premiums: the rate is the share of the car value charged,
+       and the % is how much that rate moves from the band before */
+    let prevRate=null;
+    const pct=v=>(v>=0?'+':'−')+Math.abs(Math.round(v*100))+'%';
     const rows=iv.map(function(x){
       const range=money(x.lo)+' – '+(x.hi>=TARIFF.maxValue?money(TARIFF.maxValue):money(x.hi));
-      if(x.na) return '<span>'+range+'</span><b>not offered</b>';
-      const startP=x.flat||Math.max(x.lo*x.rate/100,p.min), endP=x.flat||x.hi*x.rate/100;
-      const drop=prevEnd!==null && startP<prevEnd-0.5;
-      prevEnd=endP;
-      return '<span>'+range+'</span><b>'+(x.flat ? money(x.flat)+' flat (minimum)' : x.rate.toFixed(2)+'% → '+money(startP)+'–'+money(endP))+'</b>'+
-        (drop?'<em class="ivdrop">↓ premium drops at '+money(x.lo)+', the rate falls to '+x.rate.toFixed(2)+'%</em>':'');
+      if(x.na){ prevRate=null; return '<span>'+range+'</span><b>not offered</b>'; }
+      if(x.flat) return '<span>'+range+'</span><b>minimum premium, flat</b>';
+      const step=prevRate!==null && x.rate!==prevRate ? ' · rate '+pct(x.rate/prevRate-1) : '';
+      const drop=prevRate!==null && x.rate<prevRate;
+      prevRate=x.rate;
+      return '<span>'+range+'</span><b>'+x.rate.toFixed(2)+'% of value'+step+'</b>'+
+        (drop?'<em class="ivdrop">↓ the rate falls here, so a slightly dearer car can cost less to insure</em>':'');
     }).join('');
     return '<p style="margin-top:6px"><b>'+esc(p.name)+'</b>'+(p.agency?' · agency repair':'')+'</p><div class="ivgrid">'+rows+'</div>';
   }).join('');

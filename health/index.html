@@ -1098,9 +1098,19 @@ function paintBands(){
   });
   const ctx=state.level+' · '+(state.amb==='none'?'no out-patient':state.amb+'% out-patient')+' · '+
     (BOOK.sizeMode==='count' ? 'family of '+Math.min(familySize(),6) : 'size '+state.size)+' · '+(state.biz==='new'?'new business':'renewal');
-  out.innerHTML='<p><b>'+esc(ctx)+'</b>: price per person per year. Moving into the next band changes the price.</p>'+
-    '<div class="bandgrid">'+bands.map(b=>'<span>'+(b.from===b.to?'Age '+b.from:'Ages '+b.from+'–'+b.to)+'</span><b>'+
-      (b.v===null?'not sold':money(b.v))+'</b>').join('')+'</div>'+
+  /* multipliers, not prices: ×N against the youngest band that is sold, and the
+     step from the band before (other factors move the price; the shape stays) */
+  const base=(bands.find(b=>b.v)||{}).v;
+  let prev=null;
+  const pct=x=>(x>=0?'+':'−')+Math.abs(Math.round(x*100))+'%';
+  out.innerHTML='<p><b>'+esc(ctx)+'</b>: how the price moves with age. ×1.00 is the youngest band; the % is the jump from the band before.</p>'+
+    '<div class="bandgrid">'+bands.map(function(b){
+      const lab='<span>'+(b.from===b.to?'Age '+b.from:'Ages '+b.from+'–'+b.to)+'</span>';
+      if(!b.v || !base){ prev=null; return lab+'<b>not sold</b>'; }
+      const step=prev ? ' · '+pct(b.v/prev-1) : ' · base';
+      prev=b.v;
+      return lab+'<b>×'+(b.v/base).toFixed(2)+step+'</b>';
+    }).join('')+'</div>'+
     '<p class="hint">Excludes the one-off cost of policy.</p>';
 }
 const calcOnly=calc;
