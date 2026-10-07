@@ -943,6 +943,7 @@ function wordGrams(s){
 }
 function matchModel(rows, brand, modelText){
   const toks=String(modelText||'').toLowerCase().split(/\s+/).map(normStr).filter(Boolean);
+  if(!toks.length) return [];          /* punctuation only: no word to match, never "every listing" */
   const mk=makeKey(brand);
   const own=rows.filter(r => r.mk===mk && toks.every(t => r.mgrams.has(t)));
   if(own.length) return own;            /* the listing's own model field matches: trust only those */
@@ -1003,9 +1004,12 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 
 /* ---------- rating engine ---------- */
 function bandIndex(product, value){
+  /* Bands are whole dollars (0-19,999 then 20,000-...), so a typed value with
+     cents is placed by its next whole dollar instead of falling between bands. */
+  const v=Math.ceil(value);
   for(let i=0;i<product.bands.length;i++){
     const b=product.bands[i];
-    if(value>=b[0] && value<=b[1]) return i;
+    if(v>=b[0] && v<=b[1]) return i;
   }
   return -1;
 }
@@ -1053,8 +1057,9 @@ function offeredPlans(book){
    screen and the Fidelity-vs-UFA panel so neither prices a refused driver. */
 function driverBlock(book){
   if(S.value===null || S.driverAge===null) return null;
+  const v=Math.ceil(S.value);     /* whole dollars, like the rule bands */
   for(const r of book.driverRules){
-    if(S.value>=r.min && S.value<=r.max && S.driverAge<r.age){
+    if(v>=r.min && v<=r.max && S.driverAge<r.age){
       const range = r.max===Infinity ? 'above $100,000' : '$'+r.min.toLocaleString()+'–$'+r.max.toLocaleString();
       return 'No claim is covered for a driver under '+r.age+' on a vehicle valued '+range+'. This risk cannot be quoted here.';
     }
