@@ -2093,8 +2093,10 @@ async function runCarScan(file){
     return;
   }
   const found=['year','make','model','vin'].filter(k=>carScan[k]);
-  st.textContent = found.length ? 'Check what was read, correct anything wrong, then fill the form.'
-    : 'Nothing usable could be read. Try a sharper, straighter photo in good light.';
+  /* a weak photo is the commonest cause of a wrong reading: say so before it is trusted */
+  let qn=''; try{ const q=BrocareCamera.quality(await createImageBitmap(file)); if(q.problems.length) qn=' The photo looks '+q.problems.join('; ')+', so check every value carefully.'; }catch(_){}
+  st.textContent = (found.length ? 'Check what was read, correct anything wrong, then fill the form.'
+    : 'Nothing usable could be read. Try a sharper, straighter photo in good light.')+qn;
   paintCarReview();
 }
 function paintCarReview(){
@@ -2124,7 +2126,19 @@ function applyCarScan(){
   $('scanCarStatus').textContent='Vehicle filled from the registration. Check the value below, then add the driver age.';
 }
 $('scanCar').onclick=()=>$('scanCarFile').click();
-$('scanCarCam').onclick=()=>$('scanCarCamFile').click();
+$('scanCarCam').onclick=async()=>{
+  let files=null;
+  try{
+    files=await BrocareCamera.open({title:'Photograph the registration page', aspect:1.42, multi:false, rules:[
+      ['Open the vehicle page','The page with the make, year and model: "أوصاف المركبة الآلية". The whole table must be in the photo, nothing cut off.'],
+      ['Good, even light','Daylight or a bright lamp. No shadow across the page and no shiny reflection on the lamination.'],
+      ['Flat and close','Lay the booklet flat on a table. The page must fill the frame: if it looks small, the writing cannot be read. Move closer.'],
+      ['Straight from above, hold still','Keep the phone parallel to the page, not at an angle. Wait one second until the frame turns green.']
+    ]});
+  }catch(e){ files=null; }
+  if(files===null){ $('scanCarStatus').textContent='The guided camera could not open here, so your phone camera app opens instead. Fill the frame, use good light, hold still.'; $('scanCarCamFile').click(); return; }
+  if(files.length) runCarScan(files[0]);
+};
 ['scanCarFile','scanCarCamFile'].forEach(id=>$(id).addEventListener('change', e=>{ runCarScan(e.target.files[0]); e.target.value=''; }));
 document.addEventListener('paste', e=>{
   if(S.cover!=='allrisk') return;
@@ -2138,4 +2152,5 @@ paintInsurer();
 paintCoverType();
 render();
 </script>
+<script src="../camera.js"></script>
 <script src="../shell.js"></script>

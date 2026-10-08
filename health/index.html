@@ -222,6 +222,14 @@
   .scanrow input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px;font:600 14px inherit;font-family:inherit}
   .scanrow .warn{color:var(--warn);font-weight:700}
   .scanrow button{border:0;background:transparent;color:var(--ink2);font-size:17px;cursor:pointer}
+  .scanrow .okb{color:#31d07f;font-weight:700}
+  .scanextra{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+  .scanstrip{height:34px;max-width:100%;border-radius:6px;border:1px solid var(--line);background:#fff}
+  .scanok{display:flex;gap:6px;align-items:center;font-weight:700;color:var(--ink);cursor:pointer}
+  .scanok input{width:auto;padding:0}
+  .scanapply[disabled]{opacity:.45;cursor:not-allowed}
+  .scantips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+  .scantips li{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
   .scanapply{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:700 13px/1 inherit;
     font-family:inherit;padding:10px 13px;border-radius:9px;cursor:pointer;margin-top:4px}
 </style>
@@ -261,6 +269,7 @@
       <input type="file" id="scanFile" accept="image/*" multiple hidden>
       <input type="file" id="scanShot" accept="image/*" capture="environment" hidden>
       <div class="hint" style="margin-top:6px">ID cards, driving licences or passports: one photo per person, Arabic or English. Take them one after another or pick several at once; each one is added to the list. A list: one screenshot holding everyone's dates. You can also paste a screenshot (Ctrl+V). Images are read inside this browser and never uploaded.</div>
+      <ul class="scantips" aria-label="For a clean reading"><li>☀ Good, even light</li><li>▭ Card flat, filling the frame</li><li>⌖ Close, straight from above</li><li>✦ Sharp, no reflection</li></ul>
       <div class="scanstatus" id="scanStatus"></div>
       <div class="scanrev hidden" id="scanReview"></div>
     </div>
@@ -1349,16 +1358,54 @@ function readArabicDate(bin){
   }
   return best && best.avg>0.45 ? best : null;
 }
-function arabicDob(canvas, line){
-  const lab=line.words.find(w=>/الولاده|الميلاد/.test(arNorm(w.t))) || line.words[0];
-  const h=lab.b.y1-lab.b.y0, yc=(lab.b.y0+lab.b.y1)/2;
-  const raw=cutOut(canvas, lab.b.x0-8*h, yc-0.9*h, lab.b.x0+0.6*h, yc+0.7*h);
+/* the older reader: shapes matched against the fonts on this device (a second opinion) */
+function arabicDobShapes(strip){
   let best=null;
   [c=>inkLocal(c,0.2), c=>inkOtsu(c,-5), c=>inkOtsu(c,-15), c=>inkLocal(c,0.3)].forEach(function(f){
-    const r=readArabicDate(f(cutOut(raw,0,0,raw.width,raw.height)));
+    const r=readArabicDate(f(cutOut(strip,0,0,strip.width,strip.height)));
     if(r && (!best || r.avg>best.avg)) best=r;
   });
   return best;
+}
+/* a date written as digits, Arabic-Indic or Western, with slashes or without (٢٠٠٤٠٨١٣) */
+function isoFromDigits(text){
+  const w=westernDigits(text);
+  if(/[\/.\-]/.test(w)){
+    const m=w.match(/\d{1,4}\s*[\/.\-]\s*\d{1,2}\s*[\/.\-]\s*\d{1,4}/);
+    return m ? digitsToIso(m[0].replace(/\s+/g,'').replace(/[.\-]/g,'/')) : null;
+  }
+  const d=w.replace(/\D/g,'');
+  if(d.length<8 || d.length>10) return null;
+  /* a stray mark at either end (the tail of the label, a flourish) can read as an extra digit:
+     accept an 8-digit window only when exactly one window is a real date */
+  const found=new Set();
+  for(let k=0;k+8<=d.length;k++){
+    const s=d.slice(k,k+8), iso=birthIso(+s.slice(0,4),+s.slice(4,6),+s.slice(6,8)) || birthIso(+s.slice(4,8),+s.slice(2,4),+s.slice(0,2));
+    if(iso) found.add(iso);
+  }
+  return found.size===1 ? [...found][0] : null;
+}
+/* Two independent readers look at the same strip: the PaddleOCR model (three crops)
+   and the shape matcher. "sure" only when they all agree; anything else is flagged
+   for the person to compare with the card, with the strip shown beside it. */
+async function arabicDobVote(canvas, line){
+  const lab=line.words.find(w=>/الولاده|الميلاد/.test(arNorm(w.t))) || line.words[0];
+  const h=lab.b.y1-lab.b.y0, yc=(lab.b.y0+lab.b.y1)/2;
+  const strip=cutOut(canvas, lab.b.x0-8*h, yc-0.9*h, lab.b.x0+0.6*h, yc+0.7*h);
+  const votes=[];
+  if(window.BrocarePaddle){
+    try{
+      const crops=[strip, cutOut(canvas, lab.b.x0-8*h, yc-0.8*h, lab.b.x0+0.05*h, yc+0.6*h), inkLocal(cutOut(strip,0,0,strip.width,strip.height),0.2)];
+      for(const v of crops){ const r=await BrocarePaddle.read(v), iso=isoFromDigits(r.text); if(iso) votes.push({iso, conf:r.min}); }
+    }catch(e){ /* the model could not load: the shape reader below still works */ }
+  }
+  const s=arabicDobShapes(strip);
+  if(s) votes.push({iso:s.iso, conf:s.avg});
+  if(!votes.length) return null;
+  const tally={};
+  votes.forEach(v=>{ const t=tally[v.iso]||(tally[v.iso]={iso:v.iso,n:0,conf:0}); t.n++; t.conf=Math.max(t.conf,v.conf); });
+  const ranked=Object.values(tally).sort((a,b)=>b.n-a.n || b.conf-a.conf), top=ranked[0];
+  return {iso:top.iso, status: top.n>=2 && ranked.length===1 ? 'sure' : 'check', alt:ranked.slice(1).map(x=>x.iso), strip:strip.toDataURL('image/jpeg',0.72)};
 }
 const arName = s => (String(s||'').split(/[:：]/).slice(1).join(' ')||'').replace(/[^ء-ي\s]/g,' ').replace(/\s+/g,' ').trim();
 function readIdName(lines){
@@ -1376,15 +1423,21 @@ function readLicence(text){
   const words=ls.slice(Math.max(0,i-4),i).reverse().map(l=>((l||'').match(/\b[A-Z][A-Z'\-]{2,}(?:\s+[A-Z][A-Z'\-]{2,})*/)||[''])[0]).filter(Boolean);
   return {iso, name:words.slice(0,2).join(' '), why:'driving licence, field 3'};
 }
+function mrzCheck(s, digit){   /* ICAO 9303: weights 7-3-1 over digits, letters (A=10) and < (=0) */
+  let sum=0;
+  for(let i=0;i<s.length;i++){ const c=s[i], v=c==='<'?0:/\d/.test(c)?+c:c.charCodeAt(0)-55; sum+=v*[7,3,1][i%3]; }
+  return sum%10===(digit==='<'?0:+digit);
+}
 function readPassport(text){
   const t=text.replace(/ /g,'').toUpperCase();
-  const m=t.match(/[A-Z0-9<]{9}[0-9<][A-Z<]{3}([0-9OQ]{6})[0-9<][MF<]/);
+  const m=t.match(/([A-Z0-9<]{9})([0-9<])([A-Z<]{3})([0-9OQ]{6})([0-9<])([MF<])/);
   if(!m) return null;
-  const d=m[1].replace(/[OQ]/g,'0'), yy=+d.slice(0,2), now=new Date().getFullYear()%100;
+  const d=m[4].replace(/[OQ]/g,'0'), yy=+d.slice(0,2), now=new Date().getFullYear()%100;
   const iso=birthIso((yy>now?1900:2000)+yy, +d.slice(2,4), +d.slice(4,6));
   if(!iso) return null;
   const n=t.match(/P[A-Z<][A-Z<]{3}([A-Z<]+)/), parts=n ? n[1].split('<<') : [];
-  return {iso, name:parts.length>1 ? (parts[1].replace(/<+/g,' ')+' '+parts[0].replace(/<+/g,' ')).trim() : '', why:'passport, machine-readable lines'};
+  return {iso, name:parts.length>1 ? (parts[1].replace(/<+/g,' ')+' '+parts[0].replace(/<+/g,' ')).trim() : '',
+    why:'passport, machine-readable lines', status: mrzCheck(d,m[5]) ? 'sure' : 'check'};
 }
 const CARD_WORDS=/الجمهوريه|اللبنانيه|الاسم|الشهره|الولاده|بطاقه|هويه|رخصه|سوق|الداخليه|جواز|سفر/g;
 const LATIN_WORDS=/REPUBLI|LEBAN|LIBAN|DRIVING|LICEN[CS]E|PERMIS|CONDUIRE|PASSPORT|PASSEPORT|NATIONALITY/g;
@@ -1411,33 +1464,55 @@ async function readDocument(file, say){
   const dobLine=lines.find(l=>/تاريخ/.test(arNorm(l.t)) && /الولاده|الميلاد/.test(arNorm(l.t)));
   let fallback=null;
   if(dobLine){
-    const d=arabicDob(c, dobLine), name=readIdName(lines);
-    if(d) return {iso:d.iso, name, why:'ID card'};
+    say('reading the birth date');
+    const name=readIdName(lines), d=await arabicDobVote(c, dobLine);
+    if(d) return {iso:d.iso, name, why:'ID card', status:d.status, alt:d.alt, strip:d.strip};
     const w=findDates(dobLine.t).filter(x=>isDob(x.iso))[0];   /* a card printed in Western digits */
-    if(w) return {iso:w.iso, amb:w.amb, name, why:'ID card'};
-    fallback={iso:'', name, why:'ID card, the birth date could not be read, type it'};
+    if(w) return {iso:w.iso, amb:w.amb, name, why:'ID card', status:'check'};
+    fallback={iso:'', name, why:'ID card, the birth date could not be read, type it', status:'check'};
   }
   /* driving licence, passport, or any card in Latin print */
-  const text=(await eng.recognize(c)).data.text;
-  const r=readLicence(text) || readPassport(text) || readLicence(engSmall) || readPassport(engSmall);
-  if(r) return r;
+  const engData=(await eng.recognize(c,{},{blocks:true})).data, text=engData.text;
+  let r=readLicence(text) || readPassport(text) || readLicence(engSmall) || readPassport(engSmall);
+  if(r){ if(/^driving/.test(r.why)) r=await licenceSecondOpinion(c, engData, r); return r; }
   if(fallback) return fallback;
   const d=idCardDob(text+'\n'+data.text);
-  return d ? {iso:d.iso, amb:d.amb, name:'', why:d.why} : null;
+  return d ? {iso:d.iso, amb:d.amb, name:'', why:d.why, status:'check'} : null;
+}
+/* the licence's birth date (field 3) is read a second time by the other reader */
+async function licenceSecondOpinion(c, engData, r){
+  r.status='check';
+  if(!window.BrocarePaddle) return r;
+  try{
+    const re=/(?:^|\s)3\s*[.,]\s*\d{1,2}\s*[\/.\-]\s*\d{1,2}\s*[\/.\-]\s*\d{4}/;
+    const line=ocrLines(engData).find(l=>re.test(westernDigits(l.t)));
+    if(!line) return r;
+    const dw=line.words.slice().reverse().find(w=>/\d{1,2}\s*[\/.\-]\s*\d{1,2}\s*[\/.\-]\s*\d{4}/.test(westernDigits(w.t)));
+    const h=line.b.y1-line.b.y0, strip=cutOut(c, line.b.x0-h*0.3, line.b.y0-h*0.35, (dw?dw.b.x1:line.b.x1)+h*0.4, line.b.y1+h*0.35);
+    r.strip=strip.toDataURL('image/jpeg',0.72);
+    const p=await BrocarePaddle.read(strip), iso=isoFromDigits(p.text.replace(/^[^\d]*\d\s*[.,:]\s*/,''));
+    if(iso===r.iso) r.status='sure'; else if(iso) r.alt=[iso];
+  }catch(e){ /* keep the first reading, flagged */ }
+  return r;
 }
 /* ID photos add to the list, so a family can be photographed one card at a time */
 async function runIdScan(files){
   const st=$('scanStatus');
   st.textContent='Preparing the reader (the first time takes a few seconds)…';
-  try{ await getAra(); }
+  try{ await getAra(); if(window.BrocarePaddle) BrocarePaddle.load().catch(()=>{}); }
   catch(e){ dropIdWorkers(); st.textContent='The text reader could not be loaded, so nothing was read. Check the connection and try again, or type the dates of birth in by hand.'; return; }
   for(let i=0;i<files.length;i++){
     const tag=(files.length>1?'Card '+(i+1)+' of '+files.length:'Card');
+    let q=null; try{ q=BrocareCamera.quality(await createImageBitmap(files[i])); }catch(_){}
     let r;
     try{ r=await readDocument(files[i], s=>{ st.textContent=tag+': '+s+'…'; }); }
     catch(e){ dropIdWorkers(); st.textContent='The text reader stopped before it finished. Try again, or type the date of birth in by hand.'; paintScanReview(); return; }
     const who=r && r.name ? r.name+' · ' : '';
-    scanRows.push(r && r.iso ? {iso:r.iso, amb:!!r.amb, note:who+r.why} : {iso:'', amb:false, note:who+(r?r.why:'no birth date found, type it')});
+    scanRows.push({
+      iso:r&&r.iso||'', amb:!!(r&&r.amb), note:who+(r?r.why:'no birth date found, type it'),
+      status:r&&r.iso ? (r.status||'check') : 'none', strip:r&&r.strip||'', alt:r&&r.alt||[],
+      warn:q&&q.problems.length ? 'The photo looks '+q.problems.join('; ')+'.' : '', confirmed:false
+    });
   }
   st.textContent = scanRows.length
     ? 'Check these before applying. Each one is editable. Add more cards for a family.'
@@ -1470,9 +1545,9 @@ async function runScan(files){
     const src=files.length>1 ? 'Image '+(i+1) : 'Image';
     if(scanMode==='id'){
       const d=idCardDob(text);
-      scanRows.push(d ? {iso:d.iso, amb:d.amb, note:src+' · '+d.why} : {iso:'', amb:false, note:src+' · no birth date found, type it'});
+      scanRows.push(d ? {iso:d.iso, amb:d.amb, note:src+' · '+d.why, status:'check'} : {iso:'', amb:false, note:src+' · no birth date found, type it', status:'none'});
     } else {
-      findDates(text).filter(d=>isDob(d.iso)).forEach(d=>scanRows.push({iso:d.iso, amb:d.amb, note:src}));
+      findDates(text).filter(d=>isDob(d.iso)).forEach(d=>scanRows.push({iso:d.iso, amb:d.amb, note:src, status:'check'}));
     }
   }
   st.textContent = scanRows.length
@@ -1480,21 +1555,35 @@ async function runScan(files){
     : 'No birth dates could be read. Try a sharper, straighter photo, or type them in.';
   paintScanReview();
 }
+const needsCheck = r => r.iso && r.status!=='sure' && !r.confirmed;
 function paintScanReview(){
   const box=$('scanReview');
   box.classList.toggle('hidden', !scanRows.length);
   if(!scanRows.length){ box.innerHTML=''; return; }
-  const today=new Date().toISOString().slice(0,10);
-  box.innerHTML=scanRows.map((r,i)=>
-    '<div class="scanrow"><input type="date" data-i="'+i+'" value="'+r.iso+'" min="1920-01-01" max="'+today+'">'+
-    '<span>'+(r.iso?'age '+ageFromDob(r.iso)+' · ':'')+esc(r.note)+
-      (r.amb?' · <span class="warn">day and month could be swapped, check</span>':'')+'</span>'+
-    '<button type="button" data-x="'+i+'" aria-label="Remove">×</button></div>').join('')+
+  const today=new Date().toISOString().slice(0,10), fmt=iso=>iso.split('-').reverse().join('/');
+  box.innerHTML=scanRows.map((r,i)=>{
+    const badge = !r.iso ? '' : r.status==='sure' ? '<span class="okb">✓ read twice, both agree</span>'
+      : r.confirmed ? '<span class="okb">✓ you checked it</span>' : '<span class="warn">⚠ check it against the card</span>';
+    const alt = r.alt && r.alt.length && r.status!=='sure' ? '<span class="warn">another reading gave '+r.alt.map(fmt).join(', ')+'</span>' : '';
+    const extra = (r.strip||r.warn||needsCheck(r)||alt) ?
+      '<div class="scanextra">'+(r.strip?'<img class="scanstrip" alt="The date as printed on the card" src="'+r.strip+'">':'')+alt+
+        (r.warn?'<span class="warn">'+esc(r.warn)+'</span>':'')+
+        (needsCheck(r)?'<label class="scanok"><input type="checkbox" data-ok="'+i+'"> It matches the card</label>':'')+'</div>' : '';
+    return '<div class="scanrow"><input type="date" data-i="'+i+'" value="'+r.iso+'" min="1920-01-01" max="'+today+'">'+
+      '<span>'+(r.iso?'age '+ageFromDob(r.iso)+' · ':'')+esc(r.note)+' '+badge+
+        (r.amb?' · <span class="warn">day and month could be swapped, check</span>':'')+'</span>'+
+      '<button type="button" data-x="'+i+'" aria-label="Remove">×</button>'+extra+'</div>';
+  }).join('')+
     '<div><button type="button" class="scanapply" id="scanApply">Use '+scanRows.length+
-    (scanRows.length===1?' date (individual)':' dates (family)')+'</button></div>';
-  box.querySelectorAll('input[data-i]').forEach(el=>el.addEventListener('change',()=>{ scanRows[+el.dataset.i].iso=el.value; scanRows[+el.dataset.i].amb=false; }));
+    (scanRows.length===1?' date (individual)':' dates (family)')+'</button> '+
+    (scanRows.some(needsCheck)?'<span class="hint">Tick "It matches the card" on the flagged rows first.</span>':'')+'</div>';
+  const apply=$('scanApply'); apply.disabled=scanRows.some(needsCheck);
+  box.querySelectorAll('input[data-i]').forEach(el=>el.addEventListener('change',()=>{
+    const r=scanRows[+el.dataset.i]; r.iso=el.value; r.amb=false; r.confirmed=true; r.alt=[]; paintScanReview();   /* typed by a person: that is the check */
+  }));
+  box.querySelectorAll('input[data-ok]').forEach(el=>el.addEventListener('change',()=>{ scanRows[+el.dataset.ok].confirmed=el.checked; paintScanReview(); }));
   box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ scanRows.splice(+b.dataset.x,1); paintScanReview(); });
-  $('scanApply').onclick=applyScan;
+  apply.onclick=applyScan;
 }
 function applyScan(){
   const dates=scanRows.map(r=>r.iso).filter(Boolean);
@@ -1512,7 +1601,16 @@ function applyScan(){
   $('levels').scrollIntoView({behavior:'smooth', block:'center'});
 }
 $('scanIds').onclick=()=>{ scanMode='id'; $('scanFile').click(); };
-$('scanCam').onclick=()=>{ scanMode='id'; $('scanShot').click(); };
+$('scanCam').onclick=async()=>{
+  scanMode='id';
+  let files=null;
+  try{ files=await BrocareCamera.open({title:'Photograph the front of the card', aspect:1.586, multi:true}); }catch(e){ files=null; }
+  if(files===null){   /* no camera access in this browser: hand over to the phone's own camera app */
+    $('scanStatus').textContent='The guided camera could not open here (permission refused, or not allowed by this browser), so your phone camera app opens instead. Follow the tips above.';
+    $('scanShot').click(); return;
+  }
+  if(files.length) runScan(files);
+};
 $('scanShot').addEventListener('change', e=>{ runScan(e.target.files); e.target.value=''; });
 $('scanList').onclick=()=>{ scanMode='list'; $('scanFile').click(); };
 $('scanFile').addEventListener('change', e=>{ runScan(e.target.files); e.target.value=''; });
@@ -1526,4 +1624,6 @@ document.addEventListener('paste', e=>{
 paintInsurer();
 calc();
 </script>
+<script src="../paddle-rec.js"></script>
+<script src="../camera.js"></script>
 <script src="../shell.js"></script>
