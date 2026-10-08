@@ -1,2 +1,5 @@
 # raw scraper output and caches - only motor/car-listings.js is published
 tools/car-values/*.json
+
+# insurer brand demos: they name a real insurer and use its real tariff. Never publish.
+brands/

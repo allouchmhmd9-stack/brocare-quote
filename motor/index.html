@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <title>Brocare · Motor Quoter</title>
-<script src="../users.js"></script><script src="../auth.js"></script><script>BrocareAuth.gate('../');</script>
+<script src="../users.js"></script><script src="../auth.js"></script><script src="../brand.js"></script><script>BrocareAuth.gate('../');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   :root{
@@ -216,6 +216,10 @@
   .sum-rows{padding:11px 16px 14px;display:flex;flex-direction:column;gap:7px}
   .srow{display:flex;justify-content:space-between;gap:12px;font-size:14.5px}
   .srow .k{color:var(--ink2)}
+  .bichk{display:flex;gap:10px;align-items:flex-start;margin:0 16px 12px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);font-size:13.5px;font-weight:600;cursor:pointer;line-height:1.35}
+  .bichk input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--accent);cursor:pointer}
+  .bichk b{color:var(--price);white-space:nowrap}
+  .bichk small{display:block;font-size:11.5px;font-weight:500;color:var(--ink2);margin-top:2px}
   .srow .v{font-weight:600;text-align:right}
   .srow.calc{border-top:1px solid var(--line);padding-top:9px;margin-top:2px;color:var(--ink2);font-size:13px}
   .copybtn{
@@ -363,10 +367,12 @@
   <!-- SUMMARY -->
   <section class="step off" id="s4">
     <div class="sum-head">
-      <div class="sum-sub">Annual premium</div>
+      <div class="sum-sub" id="sumSub">Annual premium</div>
       <div class="sum-big" id="sumBig">–</div>
     </div>
     <div class="sum-rows" id="sumRows"></div>
+    <label class="bichk" id="biRow"><input type="checkbox" id="biOn" checked>
+      <span>Add compulsory bodily injury (BI, إلزامي) <b id="biAmt">+$45</b><small>Almost every client takes it. Untick only if the client has it elsewhere.</small></span></label>
     <button class="copybtn" id="copyBtn" type="button">Copy quote for client</button>
   </section>
 
@@ -515,6 +521,8 @@
     /* the chosen product is what a motor comparison actually compares */
     var po = document.querySelector('#opts .opt.on .optname');
     var prod = po ? po.textContent.trim() : '';
+    var biBox = $('biOn');
+    if(prod && biBox && biBox.checked) prod += ' + compulsory BI';
     return { total: total2,
       sub: veh || 'Motor insurance',
       chips: [ {k:'Insurer', v: (typeof TARIFF!=='undefined' && TARIFF.name) || '\u2013'},
@@ -688,7 +696,7 @@
 
 <div class="foot">
     Prepared by <b>Brocare</b> · Private cars · Fidelity Motor All Risk, April 2026 · UFA Motor Tariff, July 2026.<br>
-    Rates exclude bodily injury (MBY) cover. Indicative only, no cover until risk acceptance from the insurer.
+    All Risk rates exclude bodily injury (BI, إلزامي): the quote adds it, $45 on a private car, unless you untick it. Indicative only, no cover until risk acceptance from the insurer.
   </div>
 </div>
 
@@ -729,6 +737,7 @@ const OTHER_MAKES = ['Toyota','Honda','Hyundai','Kia','Mazda','Suzuki','Renault'
 const INSURERS = {
   fidelity: {
     key:'fidelity', name:'Fidelity', tariffTag:'April 2026 tariff', maxValue:300000,
+    biPrivate:45,                 /* compulsory bodily injury (إلزامي), private car */
     referNote:'Refer to Fidelity',
     blurb:[
       ['Prime Drive','Widest cover. Agency dealer repair included, and no depreciation on new spare parts.'],
@@ -788,6 +797,7 @@ const INSURERS = {
 
   ufa: {
     key:'ufa', name:'UFA', tariffTag:'July 2026 tariff', maxValue:150000,
+    biPrivate:45,                 /* compulsory bodily injury (إلزامي), private car: Motor Tariff 01.07.2026, section I */
     referNote:'Refer to UFA',
     blurb:[
       ['Standard Plan','Comprehensive cover for cars up to USD 50,000. Spare parts depreciate, no agency repair, and SRCC or natural-hazard damage is capped at USD 1,000.'],
@@ -985,7 +995,7 @@ function consensus(rows){
 
 let TARIFF = INSURERS.fidelity;     /* the active rate book */
 
-const S = { insurer:'fidelity', cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null };
+const S = { insurer:'fidelity', cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null, bi:true };
 
 const $ = id => document.getElementById(id);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -1334,10 +1344,19 @@ function buildOptions(){
     : 'No agency-repair plan is offered for this car. ' + agencyWhyNot(TARIFF);
 }
 
+/* compulsory bodily injury (إلزامي): a flat price on a private car, sold with almost every All Risk */
+function biCost(book){ return (book||TARIFF).biPrivate||0; }
+$('biOn').addEventListener('change', e=>{ S.bi=e.target.checked; if(S.product) buildSummary(); });
+
 function buildSummary(){
   const p=TARIFF.products.find(x=>x.id===S.product);
   const q=quote(p,S.value,S.year);
-  $('sumBig').innerHTML = money(q.premium)+' <span class="per">/ year</span>';
+  const biPrice=biCost(), bi=S.bi?biPrice:0;
+  $('sumBig').innerHTML = money(q.premium+bi)+' <span class="per">/ year</span>';
+  $('sumSub').textContent = bi ? 'Annual total · All Risk + BI' : 'Annual premium · All Risk only';
+  $('biRow').style.display = biPrice ? '' : 'none';
+  $('biAmt').textContent = '+'+money(biPrice);
+  $('biOn').checked = S.bi;
   const rows=[
     ['Insurer', TARIFF.name],
     ['Vehicle', S.brand + (S.models.length?(' '+S.models.join(', ')):'') + ' · ' + S.year],
@@ -1349,6 +1368,8 @@ function buildSummary(){
   ];
   const up=agencyUplift(p);
   if(up) rows.push(['Cost of that agency repair', up.amount>0 ? '+'+money(up.amount)+' vs '+up.base : 'tariff prices it at or below '+up.base+', confirm with '+TARIFF.name]);
+  rows.push(['All Risk premium', money(q.premium)]);
+  if(biPrice) rows.push(['Compulsory BI (إلزامي)', bi ? money(bi) : 'Not included (+'+money(biPrice)+' if added)']);
   let html=rows.map(r=>'<div class="srow"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
   html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
         + '<span class="v">'+(q.atMin?('minimum '+money(p.min)):money(q.raw))+'</span></div>';
@@ -1371,9 +1392,12 @@ $('copyBtn').onclick=function(){
     'Cover: '+p.name+(p.agency?' (agency dealer repair included)':''),
     up ? (up.amount>0 ? 'Agency repair costs +'+money(up.amount)+' vs '+up.base+'.' : 'Price to be confirmed with '+TARIFF.name+'.') : '',
     '',
-    'ANNUAL PREMIUM: '+money(q.premium),
+    'All Risk premium: '+money(q.premium),
+    S.bi ? 'Compulsory bodily injury (BI): '+money(biCost()) : 'Compulsory bodily injury (BI) not included: +'+money(biCost())+' if added.',
     '',
-    'Excludes bodily injury cover. Indicative only,',
+    'ANNUAL TOTAL: '+money(q.premium+(S.bi?biCost():0)),
+    '',
+    'Indicative only,',
     'no cover until risk acceptance from '+TARIFF.name+'.',
     TARIFF.name+' motor tariff, '+TARIFF.tariffTag+'.'
   ].join('\n');

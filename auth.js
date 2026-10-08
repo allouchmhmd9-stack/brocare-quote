@@ -39,6 +39,9 @@
     /* tool pages: anyone not signed in goes to the sign-in, then comes back here */
     gate: function (hubUrl) {
       if (this.current()) return;
+      /* a brand demo has no Brocare sign-in. window.BROCARE_BRAND is set only by brands/<key>.js,
+         a file that exists only on a server that has that brand: ?brand=x on the public site loads nothing. */
+      if (window.BROCARE_BRAND && window.BROCARE_BRAND.demo === true) return;
       document.documentElement.style.visibility = 'hidden';
       location.replace(hubUrl + '?next=' + encodeURIComponent(location.pathname + location.search + location.hash));
     }

@@ -1,6 +1,6 @@
 <meta charset="utf-8">
 <title>Brocare · Health Quoter</title>
-<script src="../users.js"></script><script src="../auth.js"></script><script>BrocareAuth.gate('../');</script>
+<script src="../users.js"></script><script src="../auth.js"></script><script src="../brand.js"></script><script>BrocareAuth.gate('../');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   :root{
@@ -475,7 +475,7 @@
     if(/Essential$/i.test(l))
       return 'Full hospital network excluding AUBMC, CMC, KMC, Rizk, Saint John and Bellevue.';
     if(/Smart$/i.test(l))
-      return 'Full hospital network excluding AUBMC, CMC, Rizk, Saint John and Bellevue.';
+      return 'Full hospital network excluding AUBMC, CMC and Bellevue. Rizk and Saint John are included.';
     if(/Prime$/i.test(l))
       return isSP ? 'Full hospital network excluding Bellevue only.'
                   : 'Full hospital network, no hospital excluded.';
@@ -717,10 +717,10 @@ INSURERS.fidelity.key='fidelity';
 INSURERS.fidelity.name='Fidelity';
 INSURERS.fidelity.tariffTag='April 2026 tariff';
 INSURERS.fidelity.blurb=[
-  ['Prime','Full hospital network, no hospital excluded (Class SP loses Bellevue only). Highest limits.'],
-  ['Smart Plus','Keeps AUBMC, Rizk and Saint John. Excludes only CMC and Bellevue.'],
-  ['Smart','Also drops AUBMC, and prosthesis limits are lower.'],
-  ['Essential','Smallest network: also excludes KMC. Class SP only. Bariatric not covered.'],
+  ['Prime','Full hospital network, no hospital excluded on Classes A and B. Class SP excludes BMC (Bellevue) only. Highest limits.'],
+  ['Smart Plus','Excludes CMC and BMC (Bellevue) only. AUBMC, Rizk and Saint John are included.'],
+  ['Smart','Excludes AUBMC, CMC and BMC (Bellevue) only. Rizk and Saint John are included. Prosthesis limits are lower.'],
+  ['Essential','Class SP only. Excludes AUBMC, CMC, KMC, Rizk, Saint John and BMC (Bellevue). Bariatric not covered.'],
   ['A / B / SP','The hospitalisation class: it sets the money limits (organ transplant $60,000 / $40,000 / $20,000 a year).']
 ];
 INSURERS.ufa.key='ufa';
