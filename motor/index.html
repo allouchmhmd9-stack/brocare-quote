@@ -573,6 +573,9 @@
     window.open(STUDIO + '#data=' + btoa(bin), '_blank');
   }
 
+  /* the local calendar day: toISOString() is UTC, a day behind in Beirut until 03:00 */
+  function today(){ var d = new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+
   function refs(){
     var tail = String(Date.now()).slice(-4), yr = new Date().getFullYear();
     return { ref:(MODE==='health'?'BRC-H-':'BRC-M-') + yr + '-' + tail, invNo:'INV-' + yr + '-' + tail };
@@ -591,7 +594,7 @@
     openStudio({ type:type, line:(MODE==='health'?'medical':'motor'),
       client: ($('broClient').value||'').trim() || 'Client',
       sub: q.sub, ref: r.ref,
-      issued: new Date().toISOString().slice(0,10), validDays: 14,
+      issued: today(), validDays: 14,
       price: price, priceLabel:'Annual premium', per:'/ year',
       chips: q.chips, members: q.members,
       discounts: dl,
@@ -675,7 +678,7 @@
     openStudio({ type:'comparison', line:(MODE==='health'?'medical':'motor'),
       client: ($('broClient').value||'').trim() || 'Client',
       sub: list[0].cover || '', ref: r.ref,
-      issued: new Date().toISOString().slice(0,10), validDays: 14,
+      issued: today(), validDays: 14,
       price: list[0].price, priceLabel:'Annual premium', per:'/ year',
       chips: list[0].chips, members: list[0].members,
       discounts: [], items: [],

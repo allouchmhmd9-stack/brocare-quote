@@ -267,15 +267,17 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money = n => Number(n||0).toLocaleString('en-US');
 
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+/* dates are the local calendar day: toISOString() is UTC, a day behind in Beirut until 03:00 */
+const isoLocal = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function todayISO(){ return isoLocal(new Date()); }
 function fmtDate(iso){
   if(!iso) return '';
-  const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso;
+  const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return esc(iso);   /* it goes into the page as HTML */
   return d.getDate()+' '+d.toLocaleString('en-GB',{month:'long'})+' '+d.getFullYear();
 }
 function addDays(iso,n){
   const d=new Date(iso+'T00:00:00'); if(isNaN(d)) return iso;
-  d.setDate(d.getDate()+Number(n||0)); return d.toISOString().slice(0,10);
+  d.setDate(d.getDate()+Number(n||0)); return isoLocal(d);
 }
 
 const D = {
