@@ -1316,10 +1316,11 @@ function agencyWhyNot(book){
 function buildOptions(){
   const box=$('opts'); box.innerHTML='';
   const list=offeredPlans(TARIFF);
-  let agencyNames=[];
+  let agencyNames=[], chosenOk=false;
   list.forEach(function(p){
     const q=quote(p,S.value,S.year);
     const ok = q.premium!==undefined;
+    if(ok && p.id===S.product) chosenOk=true;
     if(p.agency && !ok) return;     /* never show an agency plan the car doesn't qualify for */
     const up = ok ? agencyUplift(p) : null;
     const btn=document.createElement('button');
@@ -1339,6 +1340,9 @@ function buildOptions(){
     }
     box.appendChild(btn);
   });
+  /* a plan chosen earlier that this car no longer gets (fuel, year or value changed) is dropped,
+     never priced on the summary */
+  if(!chosenOk){ S.product=null; box.querySelectorAll('.opt.on').forEach(x=>x.classList.remove('on')); }
   $('agencyHint').textContent = agencyNames.length
     ? 'Agency dealer repair is available on ' + agencyNames.join(' and ') + ' only. ' + (TARIFF.agencyNeedsDealer||'')
     : 'No agency-repair plan is offered for this car. ' + agencyWhyNot(TARIFF);
