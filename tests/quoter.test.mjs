@@ -1,6 +1,6 @@
 /* Quoter regression tests: the motor and medical engines checked against prices
    worked out by hand from the INSURERS tables, plus the faults found in the
-   9 October 2026 audit. Run:  node --test --test-force-exit tests/            */
+   9 October 2026 audit. Run from the repo root:  node --test --test-force-exit   */
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
