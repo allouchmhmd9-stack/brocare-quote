@@ -511,7 +511,10 @@
         cover: 'Medical insurance' };
     }
     var sb = $('sumBig');
-    var total2 = sb ? digits(sb.textContent) : 0;
+    /* only a price the summary shows now: a closed summary (plan dropped, car referred) and the
+       compulsory (TPL) screen both leave the last All Risk figure sitting in #sumBig */
+    var s4 = $('s4');
+    var total2 = (sb && s4 && !s4.classList.contains('off') && s4.style.display!=='none') ? digits(sb.textContent) : 0;
     var brand = $('brand') ? ($('brand').value||'') : '';
     var mc = document.querySelector('#modelChips [aria-pressed="true"], #modelChips .on, #modelChips .active');
     var model = mc ? mc.textContent.trim() : '';
@@ -578,18 +581,21 @@
   function go(type){
     var q = readQuote();
     var price = Number($('broFinal').value||0) || q.total;
-    if(!price){ $('broWarn').style.display='block'; return; }
+    if(!price || !q.total){ $('broWarn').style.display='block'; return; }   /* no live quote: never send a typed or stale price */
     $('broWarn').style.display='none';
     var r = refs();
+    var dl = discs.filter(function(d){ return Number(d.amt)>0; })
+                  .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; });
+    /* the invoice must total the final price confirmed above: line amount less the discounts listed */
+    var dsum = dl.reduce(function(s,d){ return s + d.amount; }, 0);
     openStudio({ type:type, line:(MODE==='health'?'medical':'motor'),
       client: ($('broClient').value||'').trim() || 'Client',
       sub: q.sub, ref: r.ref,
       issued: new Date().toISOString().slice(0,10), validDays: 14,
       price: price, priceLabel:'Annual premium', per:'/ year',
       chips: q.chips, members: q.members,
-      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
-                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
-      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: q.total || price }],
+      discounts: dl,
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: price + dsum }],
       invNo: r.invNo });
   }
 
@@ -610,7 +616,7 @@
   function currentEntry(){
     var q = readQuote();
     var price = Number($('broFinal').value||0) || q.total;
-    if(!price) return null;
+    if(!price || !q.total) return null;
     return { name:optionName(q), price:price, sub:q.sub,
              chips:q.chips, members:q.members, cover:q.cover };
   }

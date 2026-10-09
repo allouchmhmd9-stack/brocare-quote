@@ -486,18 +486,22 @@
   function readQuote(){
     if(MODE==='health'){
       var big = $('priceBig'), sub = $('priceSub');
-      var total = big ? digits(big.textContent) : 0;
+      /* an error hides the price but leaves the last figure in #priceBig: never hand that over */
+      var card = $('priceCard');
+      var total = (big && !(card && card.classList.contains('error'))) ? digits(big.textContent) : 0;
       var lvl = '', ambTxt = '';
       var on = document.querySelector('#levels [aria-pressed="true"], #levels .on, #levels .active');
       if(on) lvl = on.textContent.trim();
       var amb = document.querySelector('#segAmb [aria-pressed="true"], #segAmb .on, #segAmb .active');
       if(amb) ambTxt = amb.textContent.trim();
       var dobs = [];
-      document.querySelectorAll('#members input[type=date]').forEach(function(el){
+      /* the family rows stay in the page, hidden, after switching to an individual quote */
+      var famBox = $('familyBlock'), fam = !!famBox && !famBox.classList.contains('hidden');
+      if(fam) document.querySelectorAll('#members input[type=date]').forEach(function(el){
         var s = fmtDob(el.value); if(s) dobs.push(s);
       });
       var d1 = document.querySelector('#dob');
-      if(!dobs.length && d1){ var s1 = fmtDob(d1.value); if(s1) dobs.push(s1); }
+      if(!fam && d1){ var s1 = fmtDob(d1.value); if(s1) dobs.push(s1); }
       /* The quoter's own label ("Total owed / year") is internal wording -
          build a sub-line fit to print on a client document instead. */
       var subTxt = sub ? sub.textContent.trim() : '';
@@ -574,9 +578,13 @@
   function go(type){
     var q = readQuote();
     var price = Number($('broFinal').value||0) || q.total;
-    if(!price){ $('broWarn').style.display='block'; return; }
+    if(!price || !q.total){ $('broWarn').style.display='block'; return; }   /* no live quote: never send a typed or stale price */
     $('broWarn').style.display='none';
     var r = refs();
+    var dl = discs.filter(function(d){ return Number(d.amt)>0; })
+                  .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; });
+    /* the invoice must total the final price confirmed above: line amount less the discounts listed */
+    var dsum = dl.reduce(function(s,d){ return s + d.amount; }, 0);
     openStudio({ type:type, line:(MODE==='health'?'medical':'motor'),
       client: ($('broClient').value||'').trim() || 'Client',
       sub: q.sub, ref: r.ref,
@@ -584,9 +592,8 @@
       price: price, priceLabel:'Annual premium', per:'/ year',
       chips: q.chips, members: q.members,
       desc: q.network || '', descLabel:'Hospitals covered',
-      discounts: discs.filter(function(d){ return Number(d.amt)>0; })
-                      .map(function(d){ return {label:d.label||'Discount', amount:Number(d.amt)}; }),
-      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: q.total || price }],
+      discounts: dl,
+      items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: price + dsum }],
       invNo: r.invNo });
   }
 
@@ -607,7 +614,7 @@
   function currentEntry(){
     var q = readQuote();
     var price = Number($('broFinal').value||0) || q.total;
-    if(!price) return null;
+    if(!price || !q.total) return null;
     return { name:optionName(q), price:price, sub:q.sub,
              chips:q.chips, members:q.members, network:q.network, cover:q.cover };
   }
@@ -1072,7 +1079,8 @@ function calc(){
   const lines=[];
   for(let i=0;i<members.length;i++){
     const m=members[i];
-    if(m.age===null || m.age<0) continue;
+    if(m.age!==null && m.age<0){ fail('Member '+(i+1)+': the date of birth is in the future.'); return; }
+    if(m.age===null) continue;
     const p=pricePerson(m.age);
     if(p.err){ fail('Member '+(i+1)+': '+p.err); return; }
     sumIp+=p.ip; sumAmb+=p.amb;

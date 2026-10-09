@@ -130,7 +130,7 @@
         var k = r.querySelector('.k'), v = r.querySelector('.v');
         if (k && v && k.textContent.trim() !== 'Insurer') rows.push([k.textContent.trim(), v.textContent.trim()]);
       });
-      ok = /\d/.test(price) && !$('s4').classList.contains('off');
+      ok = /\d/.test(price) && !$('s4').classList.contains('off') && $('s4').style.display !== 'none';   /* not on the TPL screen */
     } else {
       price = $('priceBig').textContent.replace(/\s+/g, ' ').trim(); sub = $('priceSub').textContent.trim() || 'Price per year';
       document.querySelectorAll('#priceRows .prow:not(.total)').forEach(function (r) {   /* the total row repeats the price */
