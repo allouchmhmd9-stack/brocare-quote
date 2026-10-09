@@ -159,7 +159,10 @@
   /* only come back to a page on this site: never an outside address */
   function nextPage(){
     var n=new URLSearchParams(location.search).get('next')||'';
-    return /^\/(?!\/)/.test(n) ? n : null;
+    if(!/^\/(?!\/)/.test(n)) return null;
+    /* "/\evil" and "/<tab>/evil" pass that test but browsers read them as //evil: resolve it and check */
+    try{ var u=new URL(n, location.href); return u.origin===location.origin ? u.pathname+u.search+u.hash : null; }
+    catch(e){ return null; }
   }
   function show(){
     var me=BrocareAuth.current();
