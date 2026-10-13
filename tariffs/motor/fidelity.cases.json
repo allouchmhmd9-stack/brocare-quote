@@ -1,0 +1,32 @@
+{
+  "insurer": "fidelity",
+  "line": "motor",
+  "source": "Fidelity Motor All Risk tariff, April 1st 2026, and its electric-car tariff. Prices worked by hand from the rate tables.",
+  "checkedBy": "Brocare (hand-worked)",
+  "cases": [
+    { "year": 2024, "value": 25000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 813, "note": "25,000 x 3.25% = 812.50" },
+    { "year": 2025, "value": 18000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 785, "note": "18,000 x 3.75% = 675, below the $785 minimum" },
+    { "year": 2021, "value": 60000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 1800, "note": "2020-2022 row, 50,000-99,999 band: 3.00%" },
+    { "year": 2019, "value": 40000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 1800, "note": "2018-2019 row, 20,000-49,999 band: 4.50%" },
+    { "year": 2019, "value": 15000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": "refused", "note": "Prime is not sold under 20,000 on 2018-2019 cars" },
+    { "year": 2026, "value": 300000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 7500, "note": "top band 2.50%" },
+    { "year": 2023, "value": 100000, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 2500, "note": "first dollar of the 100,000+ band: 2.50%" },
+    { "year": 2023, "value": 99999, "fuel": "Gasoline", "make": "Toyota", "plan": "Prime Drive", "expect": 2650, "note": "last dollar of the 50,000-99,999 band: 2.65% = 2,649.97" },
+    { "year": 2015, "value": 60000, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": 1950, "note": "2010-2017 row, 3.25%" },
+    { "year": 2022, "value": 45000, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": 1350, "note": "2020-2022 row, 3.00%" },
+    { "year": 2010, "value": 20000, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": 760, "note": "oldest year sold, 3.80%" },
+    { "year": 2024, "value": 20000, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": 675, "note": "20,000 x 2.50% = 500, below the $675 minimum" },
+    { "year": 2009, "value": 20000, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": "refused", "note": "Smart is not sold on cars made before 2010" },
+    { "year": 2024, "value": 49999.5, "fuel": "Gasoline", "make": "Toyota", "plan": "Smart Drive", "expect": 1125, "note": "a value with cents goes to the next whole dollar: 50,000 band, 2.25% = 1,124.99" },
+    { "year": 2016, "value": 10000, "fuel": "Gasoline", "make": "Toyota", "plan": "Collision", "expect": 405, "note": "10,000 x 1.75% = 175, below the $405 minimum" },
+    { "year": 2012, "value": 40000, "fuel": "Gasoline", "make": "Toyota", "plan": "Collision", "expect": 800, "note": "2005-2015 row, 2.00%" },
+    { "year": 2020, "value": 50000, "fuel": "Gasoline", "make": "Toyota", "plan": "Total Loss", "expect": 625, "note": "1.25%" },
+    { "year": 2008, "value": 30000, "fuel": "Gasoline", "make": "Toyota", "plan": "Total Loss", "expect": 525, "note": "2005-2015 row, 1.75%" },
+    { "year": 2021, "value": 40000, "fuel": "Electric", "make": "Kia", "plan": "Electric Drive", "expect": 1500, "note": "electric tariff, 3.75%" },
+    { "year": 2025, "value": 80000, "fuel": "Electric", "make": "Kia", "plan": "Electric Drive", "expect": 2600, "note": "electric tariff, 50,000+ band 3.25%" },
+    { "year": 2024, "value": 60000, "fuel": "Electric", "make": "Kia", "plan": "Electric Drive Plus", "expect": 1590, "note": "electric tariff with agency repair, 2.65%" },
+    { "year": 2024, "value": 120000, "fuel": "Gasoline", "make": "Toyota", "driverAge": 24, "plan": "Prime Drive", "expect": "refused", "note": "no driver under 26 on a car above $100,000" },
+    { "year": 2024, "value": 70000, "fuel": "Gasoline", "make": "Toyota", "driverAge": 20, "plan": "Smart Drive", "expect": "refused", "note": "no driver under 21 on a car of $50,000-$100,000" },
+    { "year": 2024, "value": 30000, "fuel": "Electric", "make": "Tesla", "plan": "Electric Drive", "expect": "refused", "note": "Tesla is excluded from Fidelity's electric tariff" }
+  ]
+}

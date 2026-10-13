@@ -1,0 +1,18 @@
+{
+  "insurer": "ufa",
+  "line": "health",
+  "source": "UFA medical tariff, 15.10.2025 (PDF). Prices worked by hand from the rate tables; UFA has no policy cost and prices each exact family size.",
+  "checkedBy": "Brocare (hand-worked)",
+  "cases": [
+    { "biz": "new", "ages": [35, 40, 5], "level": "A Optimum", "amb": "85", "expect": 4070, "note": "family of 3 = size-3 column: (1,287+298) + (1,432+338) + (573+142)" },
+    { "biz": "new", "ages": [35], "level": "A Optimum", "amb": "85", "expect": 1716, "note": "size-1 column: 1,393 + 323" },
+    { "biz": "new", "ages": [30], "level": "A Standard", "amb": "85", "expect": 1168, "note": "958 + 210" },
+    { "biz": "new", "ages": [44, 41], "level": "B Optimum", "amb": "100", "expect": 3188, "note": "size-2 column, 100% out-patient: (1,034+560) x 2" },
+    { "biz": "new", "ages": [38, 36, 9, 7], "level": "SP Standard", "amb": "85", "expect": 2192, "note": "SP is flat by size; out-patient size-4 column: (533+229) x 2 + (241+93) x 2" },
+    { "biz": "new", "ages": [52], "level": "A Standard", "amb": "85", "exclHosp": true, "expect": 2029, "note": "out-patient excluding hospitals: 1,744 + 285" },
+    { "biz": "new", "ages": [25], "level": "B Standard", "amb": "none", "expect": 509, "note": "no out-patient" },
+    { "biz": "new", "ages": [35], "level": "A Optimum", "amb": "85", "copay": "Co-NSSF", "expect": 1577, "note": "NSSF co-pay in-patient: 1,254 + 323" },
+    { "biz": "renewal", "ages": [70], "level": "A Optimum", "amb": "85", "expect": 7582, "note": "renewal rates: 6,631 + 951" },
+    { "biz": "new", "ages": [70], "level": "A Optimum", "amb": "85", "expect": "refused", "note": "UFA does not take new business above 65" }
+  ]
+}

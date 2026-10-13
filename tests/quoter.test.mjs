@@ -214,6 +214,46 @@ test('hub: ?next= cannot send a signed-in person to another site', () => {
   assert.equal(at('https://evil.example/'), null);
 });
 
+/* ---------- every published tariff's case file (tariffs/<line>/<insurer>.cases.json) ---------- */
+test('tariff case files: sheet price = app price = independent calculation', async () => {
+  const { caseFiles, loadTariff, reference, runCase, verdict } = await import('./cases.mjs');
+  const files = caseFiles().filter((f) => !f.brand);      /* demos in brands/ are checked with tools/check-tariff.mjs */
+  assert.ok(files.length >= 4, 'case files found: ' + files.length);
+  for (const spec of files) {
+    const { book } = loadTariff(spec.line, spec.insurer, null);
+    for (const c of JSON.parse(fs.readFileSync(spec.file, 'utf8')).cases) {
+      const v = verdict(c, await runCase(b, spec, c), reference(spec.line, book, c));
+      assert.ok(v.pass, spec.insurer + ' ' + spec.line + ': ' + JSON.stringify(c) + ' -> app ' + v.app + ', calc ' + v.ref);
+    }
+  }
+});
+
+/* ---------- insurer demos (brand.js + tariffs/load.js) ---------- */
+const DEMO = "window.BROCARE_BRAND={key:'test',name:'Testco',legalName:'Testco SAL',insurer:'ufa',demo:true," +
+  "palette:{scheme:'light',bg:'#fff',surface:'#fff',surface2:'#eee',ink:'#111',ink2:'#555',line:'#ccc',accent:'#123',tag:'#38f'}," +
+  "contact:{address:'Test Street',phone:'+961 1 111 111',whatsapp:'+961 70 111 111'},agent:{name:'Test Agent'}};";
+test('insurer demo: only its own tariff is on the page, with no comparison against another insurer', async () => {
+  await b.goto('motor/index.html', { preload: DEMO });
+  const r = await b.evaluate(`({ins:[...document.querySelectorAll('#segInsurer button')].map(x=>x.dataset.v),
+    loaded:Object.keys(window.BROCARE_TARIFFS.motor), cross:getComputedStyle(document.getElementById('crossBox')).display,
+    pdf:[...document.querySelectorAll('#broPanel .btns button')].some(x=>x.textContent==='Quote PDF')})`);
+  assert.deepEqual(r.ins, ['ufa']);
+  assert.deepEqual(r.loaded, ['ufa']);
+  assert.equal(r.cross, 'none');
+  assert.ok(r.pdf);
+});
+test('insurer demo: the quote document is in the insurer letterhead, with no Brocare name, prefix or invoice', async () => {
+  await studio({ type: 'card', client: 'A', ref: 'BRC-M-2026-0001', price: 1000 }, { preload: DEMO });
+  await b.sleep(300);
+  const r = await b.evaluate(`({html:document.getElementById('scaler').innerHTML, ref:D.ref,
+    inv:getComputedStyle(document.querySelector('[data-t="invoice"]')).display})`);
+  assert.doesNotMatch(r.html, /BroCare|Brocare|Mousaitbeh/);
+  assert.match(r.html, /Testco SAL/);
+  assert.match(r.html, /\+961 70 111 111/);
+  assert.equal(r.ref, 'TES-M-2026-0001');
+  assert.equal(r.inv, 'none');
+});
+
 /* ---------- phone width ---------- */
 test('every tool page fits a 375px phone without sideways scrolling', async () => {
   for (const p of ['index.html', 'motor/index.html', 'health/index.html', 'docs/index.html']) {

@@ -1,0 +1,23 @@
+{
+  "insurer": "ufa",
+  "line": "motor",
+  "source": "UFA Motor Tariff, 01.07.2026. Prices worked by hand from the rate tables.",
+  "checkedBy": "Brocare (hand-worked)",
+  "cases": [
+    { "year": 2019, "value": 85000, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan", "expect": 2040, "note": "70,001-100,000 band 2.40%" },
+    { "year": 2012, "value": 15000, "fuel": "Gasoline", "make": "Toyota", "plan": "Standard Plan", "expect": 615, "note": "600 is below the $615 minimum" },
+    { "year": 2010, "value": 30000, "fuel": "Gasoline", "make": "Toyota", "plan": "Total Loss", "expect": 525, "note": "2001-2016 row, 1.75%" },
+    { "year": 2025, "value": 45000, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan + Agency Repair", "expect": 1260, "note": "2.80%" },
+    { "year": 2024, "value": 40000, "fuel": "Gasoline", "make": "Toyota", "plan": "Standard Plan", "expect": 1000, "note": "20,001-50,000 band 2.50%" },
+    { "year": 2016, "value": 50000, "fuel": "Gasoline", "make": "Toyota", "plan": "Standard Plan", "expect": 1450, "note": "2014-2017 row, 2.90%" },
+    { "year": 2026, "value": 150000, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan", "expect": 3300, "note": "top band, 2.20%" },
+    { "year": 2013, "value": 60000, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan", "expect": 1680, "note": "2011-2013 row, 2.80%" },
+    { "year": 2024, "value": 70001, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan", "expect": 1610, "note": "first dollar of the 70,001 band: 2.30% = 1,610.02" },
+    { "year": 2023, "value": 45000, "fuel": "Electric", "make": "Kia", "plan": "Lux Plan (Electric)", "expect": 1125, "note": "electric tariff 2.50%" },
+    { "year": 2021, "value": 45000, "fuel": "Electric", "make": "Kia", "plan": "Lux Plan (Electric)", "expect": "refused", "note": "electric cars up to 2021 need UFA special approval" },
+    { "year": 2020, "value": 80000, "fuel": "Gasoline", "make": "Toyota", "plan": "Total Loss", "expect": 1040, "note": "1.30%" },
+    { "year": 2024, "value": 30000, "fuel": "Gasoline", "make": "BYD", "plan": "Lux Plan", "expect": "refused", "note": "Chinese cars need UFA special approval" },
+    { "year": 2024, "value": 160000, "fuel": "Gasoline", "make": "Toyota", "plan": "Lux Plan", "expect": "refused", "note": "above UFA's $150,000 maximum" },
+    { "year": 2009, "value": 20000, "fuel": "Gasoline", "make": "Toyota", "plan": "Standard Plan", "expect": "refused", "note": "Standard is not sold on cars made before 2010" }
+  ]
+}

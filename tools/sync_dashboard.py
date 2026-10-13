@@ -12,7 +12,8 @@ import argparse, filecmp, shutil, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ["index.html", "brocare-theme.css", "shell.js", "users.js", "auth.js", "brand.js", "brocare-logo.png", "camera.js", "paddle-rec.js",
+FILES = ["index.html", "brocare-theme.css", "shell.js", "users.js", "auth.js", "brand.js", "tariffs/load.js",
+         "tariffs/motor/fidelity.js", "tariffs/motor/ufa.js", "tariffs/health/fidelity.js", "tariffs/health/ufa.js", "brocare-logo.png", "camera.js", "paddle-rec.js",
          "models/arabic_PP-OCRv5_mobile_rec.onnx", "models/arabic_PP-OCRv5_mobile_rec.dict.json", "models/README.txt", "models/arabic_PP-OCRv5_mobile_rec.yml",
          "health/index.html", "motor/index.html", "motor/car-listings.js", "docs/index.html"]
 

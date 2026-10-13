@@ -1,0 +1,18 @@
+{
+  "insurer": "fidelity",
+  "line": "health",
+  "source": "Fidelity medical tariff, April 2026 (Excel). Prices worked by hand from the rate tables; the policy cost is $30.",
+  "checkedBy": "Brocare (hand-worked)",
+  "cases": [
+    { "biz": "new", "ages": [35], "level": "A Prime", "amb": "85", "expect": 1635, "note": "1,290 in-patient + 315 out-patient + 30" },
+    { "biz": "new", "ages": [35, 40], "level": "A Prime", "amb": "85", "expect": 3365, "note": "two people use the 1&2 rates: (1,290+315) + (1,360+370) + 30" },
+    { "biz": "new", "ages": [35, 40, 5], "level": "A Prime", "amb": "85", "expect": 3730, "note": "three people use the 3+ rates: (1,125+315) + (1,190+370) + (570+130) + 30" },
+    { "biz": "new", "ages": [28], "level": "A Smart Plus", "amb": "85", "expect": 1455, "note": "1,110 + 315 + 30" },
+    { "biz": "new", "ages": [50], "level": "B Smart", "amb": "85", "expect": 1465, "note": "1,105 + 330 + 30" },
+    { "biz": "new", "ages": [42], "level": "A Prime", "amb": "100", "expect": 2090, "note": "100% out-patient: 1,440 + 620 + 30" },
+    { "biz": "new", "ages": [60], "level": "SP Essential", "amb": "none", "expect": 1420, "note": "no out-patient: 1,390 + 30" },
+    { "biz": "new", "ages": [45, 43, 12], "level": "A Smart", "amb": "85", "expect": 3215, "note": "3+ rates: (1,030+300) + (1,030+300) + (430+95) + 30" },
+    { "biz": "new", "ages": [0], "level": "B Prime", "amb": "85", "expect": 590, "note": "a newborn: 430 + 130 + 30" },
+    { "biz": "renewal", "ages": [70], "level": "A Prime", "amb": "85", "expect": 8890, "note": "renewal rates: 7,980 + 880 + 30" }
+  ]
+}

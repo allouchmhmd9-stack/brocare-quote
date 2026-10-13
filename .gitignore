@@ -3,3 +3,6 @@ tools/car-values/*.json
 
 # insurer brand demos: they name a real insurer and use its real tariff. Never publish.
 brands/
+
+# tariff-check reports (tools/check-tariff.mjs): they print an insurer's prices
+reports/
