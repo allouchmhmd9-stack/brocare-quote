@@ -1,107 +1,18 @@
 <meta charset="utf-8">
 <title>Brocare · Tools</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>
-  :root{
-    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
-    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
-    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
-    --brand:#12324B;
-    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
-      --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
-      --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
-      --brand:#E8EDF5;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
-    }
-  }
-  :root[data-theme="light"]{
-    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
-    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
-    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
-    --brand:#12324B;
-    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
-  }
-  :root[data-theme="dark"]{
-    --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
-    --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
-    --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
-    --brand:#E8EDF5;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{
-    background:var(--bg); color:var(--ink);
-    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:20px 16px calc(28px + env(safe-area-inset-bottom));
-  }
-  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-
-  .brandbar{display:flex;align-items:center;gap:11px;padding:4px 2px 2px}
-  .logo{
-    width:42px;height:42px;border-radius:12px;flex:none;
-    background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--brand)));
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:800;font-size:21px;letter-spacing:-.02em;box-shadow:var(--shadow);
-  }
-  .brandtext{display:flex;flex-direction:column;line-height:1.15}
-  .brandname{font-size:21px;font-weight:800;letter-spacing:-.01em;color:var(--brand)}
-  .brandname b{color:var(--accent);font-weight:800}
-  .brandsub{font-size:12.5px;font-weight:600;color:var(--ink2)}
-
-  .tiles{display:flex;flex-direction:column;gap:11px}
-  a.tile{
-    display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    padding:16px;box-shadow:var(--shadow);
-    transition:border-color .12s,transform .12s;
-  }
-  a.tile:hover{border-color:var(--accent);transform:translateY(-1px)}
-  a.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .ico{
-    width:42px;height:42px;border-radius:11px;flex:none;background:var(--accent-soft);
-    display:flex;align-items:center;justify-content:center;font-size:21px;
-  }
-  .tname{display:block;font-size:16.5px;font-weight:700;letter-spacing:-.01em}
-  .tdesc{display:block;font-size:13px;color:var(--ink2);margin-top:2px;line-height:1.35}
-  .chev{margin-left:auto;color:var(--ink2);font-size:20px;font-weight:700;flex:none}
-
-  .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:4px 8px 0;line-height:1.5}
-  .foot b{font-weight:700}
-  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-
-  .signin{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;
-    box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
-  .signin .sh{font-size:18px;font-weight:800;margin-bottom:6px}
-  .signin label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
-  .signin input{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;
-    padding:12px;font:600 16px/1.2 inherit;font-family:inherit;margin-bottom:6px}
-  .signin input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .signin button{margin-top:6px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;
-    padding:13px;font:800 15px/1 inherit;font-family:inherit;cursor:pointer}
-  .signin button:disabled{opacity:.6;cursor:wait}
-  .serr{font-size:13px;font-weight:600;color:#E0565B;min-height:18px}
-  .hello{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-  .hello h1{font-size:22px;line-height:1.25;margin:0;letter-spacing:-.01em}
-  .signout{margin-left:auto;flex:none;border:1px solid var(--line);background:transparent;color:var(--ink2);
-    border-radius:9px;padding:8px 11px;font:700 12.5px/1 inherit;font-family:inherit;cursor:pointer}
-  .signout:hover{border-color:var(--accent);color:var(--ink)}
-</style>
-<link rel="stylesheet" href="brocare-theme.css">
-
-<div class="wrap">
-  <div class="brandbar">
-    <img class="brandlogo" src="brocare-logo.png" alt="BroCare Insurance Brokerage">
-    <div class="brandtext">
-      <span class="brandsub">Broker tools</span>
-    </div>
-  </div>
-
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="quoter-ui.css">
+<link rel="stylesheet" href="home-ui.css">
+<div class="brandbar">
+  <a class="brandhome" href="./" aria-label="Home"><img class="brandlogo" src="brocare-logo.png" alt="BroCare Insurance Brokerage"></a>
+  <div class="brandtext"><span class="brandsub">Broker tools</span></div>
+  <span class="spacer"></span>
+  <span class="tariff-tag">April 2026 tariffs</span>
+  <span class="qavatar" id="qAvatar" hidden></span>
+</div>
+<div class="home">
   <!-- SIGN-IN -->
   <form class="signin" id="signin" hidden autocomplete="on">
     <div class="sh">Sign in</div>
@@ -114,45 +25,33 @@
   </form>
 
   <!-- SIGNED IN -->
-  <div id="home" hidden>
-  <div class="hello"><h1 id="hello"></h1>
+  <div id="home" class="home-in" hidden>
+  <div class="hello"><div><h1 id="hello"></h1><div class="sub">Pick what you are quoting.</div></div>
     <button type="button" class="signout" id="signout">Sign out</button></div>
   <nav class="tiles">
-    <a class="tile" href="health/">
-      <span class="ico" aria-hidden="true">🏥</span>
-      <span>
-        <span class="tname">Health Quoter</span>
-        <span class="tdesc">Individual or whole-family medical premiums: age, class, ambulatory, new or renewal.</span>
-      </span>
-      <span class="chev" aria-hidden="true">›</span>
-    </a>
-
-    <a class="tile" href="motor/">
-      <span class="ico" aria-hidden="true">🚗</span>
-      <span>
-        <span class="tname">Motor Quoter</span>
-        <span class="tdesc">Motor All Risk premiums by vehicle value and year, with eligibility checks.</span>
-      </span>
-      <span class="chev" aria-hidden="true">›</span>
-    </a>
-
-    <a class="tile" href="docs/">
-      <span class="ico" aria-hidden="true">📄</span>
-      <span>
-        <span class="tname">Document Studio</span>
-        <span class="tdesc">Build invoices and offers from the Brocare templates.</span>
-      </span>
-      <span class="chev" aria-hidden="true">›</span>
-    </a>
+    <a class="tile" href="motor/"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-5h9L18 17M7.5 12l1.6-3.6A2 2 0 0 1 10.9 7h2.2a2 2 0 0 1 1.8 1.4L16.5 12"/><circle cx="8" cy="17.5" r="1.5"/><circle cx="16" cy="17.5" r="1.5"/></svg></span>
+      <span class="tname">Motor quote</span>
+      <span class="tdesc">All Risk by vehicle value and year, with the eligibility checks built in. Scan the registration card or type the car.</span></a>
+    <a class="tile" href="health/"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.7-7 10-7 10z"/></svg></span>
+      <span class="tname">Health quote</span>
+      <span class="tdesc">One person or a whole family: age, cover level, out-patient, new or renewal. Scan the ID cards.</span></a>
+    <a class="tile" href="docs/"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+      <span class="tname">Document Studio</span>
+      <span class="tdesc">Offers, comparisons and invoices on the Brocare templates.</span></a>
   </nav>
+  <section class="box" aria-labelledby="mq">
+    <div class="bh"><h2 id="mq">My quotes</h2><span class="count" id="cnt">0</span></div>
+    <input class="find" id="find" type="search" placeholder="Search by client name" aria-label="Search saved quotes" hidden>
+    <div id="list"></div>
+  </section>
   </div>
-
   <div class="foot">
     <b>Brocare</b> · April 2026 tariffs · rates indicative and non-binding.
   </div>
 </div>
 <script src="users.js"></script>
 <script src="auth.js"></script>
+<script src="brand.js"></script>
 <script>
 (function(){
   var $=function(i){ return document.getElementById(i); };
@@ -168,6 +67,8 @@
     var me=BrocareAuth.current();
     $('signin').hidden=!!me; $('home').hidden=!me;
     if(me) $('hello').textContent='Hi '+me.first+', what are we working on today?';
+    var av=$('qAvatar'); av.hidden=!me;
+    if(me){ av.textContent=me.name.split(/\s+/).map(function(w){return w.charAt(0);}).join('').slice(0,2).toUpperCase(); av.title=me.name; paintQuotes(); }
     else setTimeout(function(){ $('su').focus(); },0);
   }
   $('signin').addEventListener('submit', async function(e){
@@ -182,6 +83,35 @@
     if(n) location.replace(n); else show();
   });
   $('signout').onclick=function(){ BrocareAuth.signOut(); show(); };
+
+  /* ---------- My quotes: saved on this device from the quoters' Save button ---------- */
+  var esc=BrocareBrand.esc, openRem=null;
+  function sender(){ var me=BrocareAuth.current();
+    return { key:'brocare', name:'BroCare', legalName:'BroCare Insurance Brokerage s.a.r.l', agent:{ name:me?me.name:'', phone:me?me.whatsapp:'' } }; }
+  function when(iso){ var d=new Date(iso); return d.getDate()+' '+d.toLocaleString('en-GB',{month:'short'})+' '+d.getFullYear(); }
+  function paintQuotes(){
+    var all=BrocareBrand.quotes('brocare'), term=$('find').value.trim().toLowerCase();
+    var list=all.filter(function(q){ return !term || (q.client||'').toLowerCase().indexOf(term)>=0; });
+    $('cnt').textContent=all.length; $('find').hidden=all.length<4;
+    if(!all.length){ $('list').innerHTML='<div class="empty">Nothing saved yet. Make a quote, press <b>Save</b>, and it appears here with a one-tap resend and a renewal reminder.</div>'; return; }
+    if(!list.length){ $('list').innerHTML='<div class="empty">No saved quote for that name.</div>'; return; }
+    $('list').innerHTML=list.map(function(q){
+      return '<div class="q" data-id="'+esc(q.id)+'"><div class="qt"><span class="qc">'+esc(q.client||'No name')+'</span><span class="qp">'+esc(q.price)+'</span></div>'+
+        '<div class="qm">'+esc(q.type)+' · '+esc(when(q.t))+'</div>'+
+        '<div class="qa"><button class="go" data-a="send">Send again</button><button data-a="rem">Renewal reminder</button><button class="del" data-a="del">Delete</button></div>'+
+        '<div class="rem'+(openRem===q.id?' on':'')+'"><label>Policy starts <input type="date" value="'+new Date().toISOString().slice(0,10)+'"></label><button data-a="ics">Add to calendar</button><span>Reminds you 30 days before it renews.</span></div></div>';
+    }).join('');
+  }
+  $('list').addEventListener('click',function(e){
+    var b=e.target.closest('button[data-a]'); if(!b) return;
+    var row=b.closest('.q'), id=row.dataset.id, q=BrocareBrand.quotes('brocare').filter(function(x){return x.id===id;})[0]; if(!q) return;
+    var a=b.dataset.a;
+    if(a==='send') window.open(BrocareBrand.waUrl(BrocareBrand.message(sender(),q),q.phone),'_blank','noopener');
+    else if(a==='del'){ if(confirm('Delete this saved quote?')){ BrocareBrand.remove(id,'brocare'); paintQuotes(); } }
+    else if(a==='rem'){ openRem=openRem===id?null:id; paintQuotes(); }
+    else if(a==='ics'){ var text=BrocareBrand.ics(q,row.querySelector('input[type=date]').value,30); if(text) BrocareBrand.download('renewal-'+(q.client||'client').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.ics',text); }
+  });
+  $('find').addEventListener('input',paintQuotes);
   show();
 })();
 </script>

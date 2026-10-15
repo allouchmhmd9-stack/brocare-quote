@@ -2,441 +2,158 @@
 <title>Brocare · Health Quoter</title>
 <script src="../users.js"></script><script src="../auth.js"></script><script src="../brand.js"></script><script src="../tariffs/load.js" data-line="health"></script><script>BrocareAuth.gate('../');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>
-  :root{
-    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
-    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
-    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
-    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A;
-    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
-      --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
-      --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
-      --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E;
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
-    }
-  }
-  :root[data-theme="light"]{
-    --bg:#F4F6F9; --surface:#FFFFFF; --surface2:#EBEFF4;
-    --ink:#16233A; --ink2:#5A6B85; --line:#D8DFE9;
-    --accent:#0E7C86; --accent-ink:#FFFFFF; --accent-soft:#0E7C8618;
-    --brand:#12324B; --price:#0B7A4B; --warn:#B4540A;
-    --shadow:0 1px 2px rgba(22,35,58,.06),0 4px 16px rgba(22,35,58,.07);
-  }
-  :root[data-theme="dark"]{
-    --bg:#0D1522; --surface:#16202F; --surface2:#1E2A3C;
-    --ink:#E8EDF5; --ink2:#8FA0B8; --line:#2A3850;
-    --accent:#3BC9CF; --accent-ink:#08222A; --accent-soft:#3BC9CF1F;
-    --brand:#E8EDF5; --price:#4ADE93; --warn:#F0A35E;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{
-    background:var(--bg); color:var(--ink);
-    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    -webkit-font-smoothing:antialiased;
-    padding:16px 16px calc(28px + env(safe-area-inset-bottom));
-  }
-  .wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../quoter-ui.css">
 
-  /* brand header */
-  .backlink{
-    align-self:flex-start;text-decoration:none;color:var(--ink2);
-    font-size:13px;font-weight:700;padding:2px 2px 0;margin-bottom:-6px;
-  }
-  .backlink:hover{color:var(--accent)}
-  .backlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
-  .brandbar{display:flex;align-items:center;gap:11px;padding:4px 2px 2px}
-  .logo{
-    width:38px;height:38px;border-radius:11px;flex:none;
-    background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--brand)));
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:800;font-size:19px;letter-spacing:-.02em;
-    box-shadow:var(--shadow);
-  }
-  .brandtext{display:flex;flex-direction:column;line-height:1.15}
-  .brandname{font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--brand)}
-  .brandname b{color:var(--accent);font-weight:800}
-  .brandsub{font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.02em}
-  .tariff-tag{margin-left:auto;font-size:10.5px;color:var(--ink2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;text-align:right}
-  /* insurer switch — deliberately the loudest control on the page */
-  .insurerbox{background:var(--surface);border:2px solid var(--accent);border-radius:14px;
-    padding:13px;box-shadow:var(--shadow)}
-  .insurerlbl{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-    color:var(--accent);margin-bottom:9px}
-  .insurerseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .insurerseg button{border:1px solid var(--line);background:var(--surface2);color:var(--ink);
-    font:800 17px/1 inherit;font-family:inherit;padding:15px 8px;border-radius:11px;cursor:pointer;
-    letter-spacing:-.01em;transition:background .12s,border-color .12s,color .12s}
-  .insurerseg button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-  .insurerseg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .chk{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.4;
-    color:var(--ink);cursor:pointer;padding:3px 0}
-  .chk input{width:auto;margin:2px 0 0}
-  .chk b{font-weight:700}
-
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
-  .field{display:flex;flex-direction:column;gap:7px}
-  .field + .field{margin-top:13px}
-  label.lbl{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
-  .lbl .aux{float:right;text-transform:none;letter-spacing:0;font-weight:600;color:var(--accent)}
-
-  .seg{display:flex;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
-  .seg button{
-    flex:1;border:0;background:transparent;color:var(--ink2);
-    font:600 14px/1 inherit;font-family:inherit;padding:11px 4px;border-radius:8px;cursor:pointer;
-    transition:background .12s,color .12s;white-space:nowrap;
-  }
-  .seg button.on{background:var(--accent);color:var(--accent-ink)}
-  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-
-  .levels{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-  .levels button{
-    border:1px solid var(--line);background:var(--surface2);color:var(--ink);
-    font:600 14px/1.2 inherit;font-family:inherit;padding:12px 8px;border-radius:10px;cursor:pointer;
-    transition:border-color .12s,background .12s,color .12s;
-  }
-  .levels button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-  .levels button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-
-  .agegrid{display:grid;grid-template-columns:110px 1fr;gap:8px}
-  input[type=number],input[type=date]{
-    width:100%;border:1px solid var(--line);background:var(--surface2);color:var(--ink);
-    border-radius:10px;padding:11px 12px;font:600 16px/1 inherit;font-family:inherit;
-    font-variant-numeric:tabular-nums;
-  }
-  input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
-  .agehint{font-size:12px;color:var(--ink2);margin-top:5px;min-height:15px}
-
-  /* family members */
-  #members{display:flex;flex-direction:column;gap:8px}
-  .mrow{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;align-items:center}
-  /* 16px keeps iOS from auto-zooming the page when this input is focused */
-  .mrow .mage{
-    width:100%;font-size:16px;font-weight:600;color:var(--ink);text-align:center;
-    background:var(--surface2);border:1px solid var(--line);border-radius:10px;
-    padding:11px 4px;font-family:inherit;font-variant-numeric:tabular-nums;
-  }
-  .mrow .mage::-webkit-outer-spin-button,
-  .mrow .mage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .mrow .mage{-moz-appearance:textfield;appearance:textfield}
-  .mrow .mage::placeholder{color:var(--ink2);font-weight:600}
-  .mrow .mage.bad{color:var(--warn)}
-  .mrow .mdel{
-    border:1px solid var(--line);background:var(--surface2);color:var(--ink2);
-    border-radius:10px;padding:11px 0;font:600 16px/1 inherit;cursor:pointer;
-  }
-  .mrow .mdel:hover{color:var(--warn);border-color:var(--warn)}
-  .mrow .mdel:disabled{opacity:.35;cursor:not-allowed}
-  .addmember{
-    margin-top:9px;width:100%;border:1px dashed var(--line);background:transparent;color:var(--accent);
-    font:700 14px/1 inherit;font-family:inherit;padding:12px;border-radius:10px;cursor:pointer;
-  }
-  .addmember:hover{background:var(--accent-soft)}
-
-  /* "More information" — plain-language guide to the four care tiers */
-  details.info{
-    margin-top:9px;border:1px solid var(--line);border-radius:10px;
-    background:var(--surface2);overflow:hidden;
-  }
-  details.info summary{
-    cursor:pointer;list-style:none;padding:11px 12px;
-    font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--accent);display:flex;align-items:center;
-  }
-  details.info summary::-webkit-details-marker{display:none}
-  details.info summary::after{content:"▾";margin-left:auto;font-size:10px;transition:transform .15s}
-  details.info[open] summary::after{transform:rotate(180deg)}
-  details.info summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-  .infobody{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}
-  .infobody p{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
-  .infobody p.tier b{color:var(--accent);font-weight:800}
-  .infobody p.note{
-    color:var(--ink2);font-size:12px;border-top:1px solid var(--line);padding-top:9px;margin-top:1px;
-  }
-
-  details.adv{border-top:1px solid var(--line);margin-top:13px;padding-top:11px}
-  details.adv summary{
-    cursor:pointer;list-style:none;font-size:12px;font-weight:700;letter-spacing:.07em;
-    text-transform:uppercase;color:var(--ink2);display:flex;align-items:center;gap:6px;
-  }
-  details.adv summary::-webkit-details-marker{display:none}
-  details.adv summary::after{content:"▾";font-size:10px;transition:transform .15s}
-  details.adv[open] summary::after{transform:rotate(180deg)}
-  details.adv .field:first-of-type{margin-top:12px}
-  .adv .field.locked{opacity:.5;pointer-events:none}
-  .lockmsg{font-size:11.5px;color:var(--ink2);margin-top:8px;font-style:italic;display:none}
-
-  /* price panel */
-  .price-card{
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;
-    box-shadow:var(--shadow);overflow:hidden;
-  }
-  .price-head{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
-  .price-sub{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2)}
-  .price-big{
-    font-size:40px;font-weight:800;letter-spacing:-.02em;color:var(--price);
-    font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px;
-  }
-  .price-big .per{font-size:15px;font-weight:600;color:var(--ink2);letter-spacing:0}
-  .price-rows{padding:10px 16px 13px;display:flex;flex-direction:column;gap:7px}
-  .prow{display:flex;justify-content:space-between;font-size:14.5px;gap:12px}
-  .prow .k{color:var(--ink2)}
-  .prow .v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .prow.member .k{color:var(--ink)}
-  .prow.sub{border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
-  .prow.total{border-top:1px solid var(--line);padding-top:9px;margin-top:2px}
-  .prow.total .k{color:var(--ink);font-weight:700}
-  .prow.total .v{font-weight:800}
-  .prow .muted{color:var(--ink2);font-weight:500}
-  .needmsg{font-size:13.5px;color:var(--ink2);line-height:1.45}
-  .hint{font-size:12px;color:var(--ink2);line-height:1.4}
-  .hint:empty{display:none}
-
-  .msg{padding:16px;font-size:14.5px;color:var(--warn);font-weight:600;display:none}
-  .price-card.error .msg{display:block}
-  .price-card.error .price-head,.price-card.error .price-rows{display:none}
-
-  .foot{font-size:11.5px;color:var(--ink2);text-align:center;padding:0 8px}
-  .foot b{color:var(--ink2);font-weight:700}
-  .hidden{display:none!important}
-  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
-
-  .bandgrid{display:grid;grid-template-columns:1fr auto;gap:4px 14px;font-size:13px;font-variant-numeric:tabular-nums}
-  .bandgrid b{text-align:right;color:var(--price)}
-
-  /* scan IDs / birth-date lists */
-  .scanbox{border:1px dashed var(--accent);border-radius:12px;padding:11px;background:var(--accent-soft);margin-bottom:12px}
-  .scanbtns{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
-  .scanbtns button{flex:1 1 140px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);
-    font:700 13px/1.2 inherit;font-family:inherit;padding:10px;border-radius:10px;cursor:pointer}
-  .scanbtns button:hover{background:var(--accent);color:var(--accent-ink)}
-  .scanstatus{font-size:12.5px;color:var(--ink2);margin-top:7px;line-height:1.4}
-  .scanstatus:empty{display:none}
-  .scanrev{margin-top:9px;display:flex;flex-direction:column;gap:6px}
-  .scanrow{display:grid;grid-template-columns:150px 1fr auto;gap:8px;align-items:center;font-size:12px;color:var(--ink2)}
-  .scanrow input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px;font:600 14px inherit;font-family:inherit}
-  .scanrow .warn{color:var(--warn);font-weight:700}
-  .scanrow button{border:0;background:transparent;color:var(--ink2);font-size:17px;cursor:pointer}
-  .scanrow .okb{color:#31d07f;font-weight:700}
-  .scanextra{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
-  .scanstrip{height:34px;max-width:100%;border-radius:6px;border:1px solid var(--line);background:#fff}
-  .scanok{display:flex;gap:6px;align-items:center;font-weight:700;color:var(--ink);cursor:pointer}
-  .scanok input{width:auto;padding:0}
-  .scanapply[disabled]{opacity:.45;cursor:not-allowed}
-  .scantips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;padding:0;list-style:none}
-  .scantips li{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
-  .scanapply{border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:700 13px/1 inherit;
-    font-family:inherit;padding:10px 13px;border-radius:9px;cursor:pointer;margin-top:4px}
-</style>
-<link rel="stylesheet" href="../brocare-theme.css">
-
+<div class="brandbar">
+  <a class="brandhome" href="../" aria-label="Home"><img class="brandlogo" src="../brocare-logo.png" alt="BroCare Insurance Brokerage"></a>
+  <div class="brandtext"><span class="brandsub">Health Insurance Quoter</span></div>
+  <span class="vr"></span>
+  <nav class="qlines" aria-label="Quoter"><a href="../motor/" data-line="motor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-5h9L18 17M7.5 12l1.6-3.6A2 2 0 0 1 10.9 7h2.2a2 2 0 0 1 1.8 1.4L16.5 12"/><circle cx="8" cy="17.5" r="1.5"/><circle cx="16" cy="17.5" r="1.5"/></svg><span>Motor</span></a><a href="../health/" data-line="health"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.7-7 10-7 10z"/></svg><span>Health</span></a></nav>
+  <span class="spacer"></span>
+  <span class="tariff-tag" id="tariffTag">April 2026 tariff</span>
+  <span class="qavatar" id="qAvatar" hidden></span>
+</div>
 <div class="wrap">
   <a class="backlink" href="../">‹ All Brocare tools</a>
-  <div class="brandbar">
-    <img class="brandlogo" src="../brocare-logo.png" alt="BroCare Insurance Brokerage">
-    <div class="brandtext">
-      <span class="brandsub">Health Insurance Quoter</span>
-    </div>
-    <span class="tariff-tag" id="tariffTag">April 2026<br>tariff</span>
-  </div>
 
-  <!-- INSURER -->
+  <!-- INSURER AND BUSINESS -->
   <section class="insurerbox">
-    <div class="insurerlbl">Insurer: rates come from whichever you pick</div>
-    <div class="insurerseg" id="segInsurer" role="group" aria-label="Insurer">
-    </div>
+    <div class="ctxcol"><div class="insurerlbl">Insurer</div>
+      <div class="insurerseg" id="segInsurer" role="group" aria-label="Insurer"></div></div>
+    <div class="ctxcol"><div class="insurerlbl">Business</div>
+      <div class="insurerseg" id="segBiz" role="group" aria-label="Business type">
+        <button data-v="new" class="on">New</button>
+        <button data-v="renewal">Renewal</button>
+      </div></div>
     <details class="info">
-      <summary>More information</summary>
+      <summary>About these plans</summary>
       <div class="infobody" id="insurerBlurb"></div>
     </details>
   </section>
 
-  <div class="card">
-    <div class="scanbox">
-      <label class="lbl">Fill from a photo instead of typing</label>
-      <div class="scanbtns">
-        <button type="button" id="scanCam">Take a photo of an ID</button>
-        <button type="button" id="scanIds">Choose ID photos</button>
-        <button type="button" id="scanList">Scan a list of birth dates</button>
-      </div>
-      <input type="file" id="scanFile" accept="image/*" multiple hidden>
-      <input type="file" id="scanShot" accept="image/*" capture="environment" hidden>
-      <div class="hint" style="margin-top:6px">ID cards, driving licences or passports: one photo per person, Arabic or English. Take them one after another or pick several at once; each one is added to the list. A list: one screenshot holding everyone's dates. You can also paste a screenshot (Ctrl+V). Images are read inside this browser and never uploaded.</div>
-      <ul class="scantips" aria-label="For a clean reading"><li>☀ Good, even light</li><li>▭ Card flat, filling the frame</li><li>⌖ Close, straight from above</li><li>✦ Sharp, no reflection</li></ul>
-      <div class="scanstatus" id="scanStatus"></div>
-      <div class="scanrev hidden" id="scanReview"></div>
-    </div>
-    <div class="field">
-      <label class="lbl">Quote for</label>
-      <div class="seg" id="segMode" role="group" aria-label="Quote mode">
-        <button data-v="individual" class="on">Individual</button>
-        <button data-v="family">Family</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label class="lbl">Business</label>
-      <div class="seg" id="segBiz" role="group" aria-label="Business type">
-        <button data-v="new" class="on">New</button>
-        <button data-v="renewal">Renewal</button>
-      </div>
-    </div>
-
-    <!-- INDIVIDUAL age input -->
-    <div class="field" id="indivBlock">
-      <label class="lbl" for="age">Age &nbsp;·&nbsp; or pick date of birth</label>
-      <div class="agegrid">
-        <input type="number" id="age" inputmode="numeric" min="0" max="99" placeholder="Age" aria-label="Age">
-        <input type="date" id="dob" aria-label="Date of birth">
-      </div>
-      <div class="agehint" id="ageHint"></div>
-    </div>
-
-    <!-- FAMILY members -->
-    <div class="field hidden" id="familyBlock">
-      <label class="lbl">Members &nbsp;·&nbsp; date of birth <em style="text-transform:none;letter-spacing:0;font-style:normal">or just the age</em> <span class="aux" id="sizeTag"></span></label>
-      <div id="members"></div>
-      <button class="addmember" id="addMember" type="button">+ Add member</button>
-    </div>
-
-    <div class="field">
-      <label class="lbl">Coverage level</label>
-      <div class="levels" id="levels" role="group" aria-label="Coverage level"></div>
-
-      <details class="info">
-        <summary>More information</summary>
-        <div class="infobody" id="levelInfoBody"></div>
-      </details>
-    </div>
-
-    <div class="field">
-      <label class="lbl">Ambulatory (out-patient)</label>
-      <div class="seg" id="segAmb" role="group" aria-label="Ambulatory cover">
-        <button data-v="none">None</button>
-        <button data-v="85" class="on">85%</button>
-        <button data-v="100">100%</button>
-      </div>
-    </div>
-
-    <details class="adv">
-      <summary>More options</summary>
-      <div class="field" id="sizeField">
-        <label class="lbl">Family size</label>
-        <div class="seg" id="segSize" role="group" aria-label="Family size">
-          <button data-v="1&2" class="on">1–2 members</button>
-          <button data-v="3+">3+ members</button>
-        </div>
+  <!-- STEP 1 -->
+  <section class="step" id="h1" data-acc>
+    <div class="stephead"><span class="stepnum">1</span><span class="steptitle">Who is covered</span><span class="stepecho" id="he1"></span></div>
+    <div class="stepbody">
+      <div class="scanbox">
+        <div class="scan-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7"/><circle cx="16.5" cy="10.5" r="1.5"/></svg></div>
+        <div class="scan-tx"><div class="scan-t">Scan IDs or a list of birth dates</div><div class="scan-s">ID cards, driving licences or passports, Arabic or English: one photo per person. Or one screenshot of a list. You can also paste a screenshot (Ctrl+V). Read on this device, never uploaded.</div></div>
+        <div class="scan-a"><button type="button" class="btn primary" id="scanCam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Take a photo</button><button type="button" class="btn" id="scanIds">Upload IDs</button><button type="button" class="btn" id="scanList">Scan a list</button></div>
+        <input type="file" id="scanFile" accept="image/*" multiple hidden>
+        <input type="file" id="scanShot" accept="image/*" capture="environment" hidden>
+        <ul class="scantips" aria-label="For a clean reading"><li>☀ Good, even light</li><li>▭ Card flat, filling the frame</li><li>⌖ Close, straight from above</li><li>✦ Sharp, no reflection</li></ul>
+        <div class="scanstatus" id="scanStatus"></div>
+        <div class="scanrev hidden" id="scanReview"></div>
       </div>
       <div class="field">
-        <label class="lbl">Co-pay</label>
-        <div class="seg" id="segCopay" role="group" aria-label="Co-pay"></div>
-        <span class="hint" id="copayNote"></span>
+        <label class="lbl">Quote for</label>
+        <div class="seg" id="segMode" role="group" aria-label="Quote mode">
+          <button data-v="individual" class="on">Individual</button>
+          <button data-v="family">Family</button>
+        </div>
       </div>
-      <div class="field" id="ufaOpts" style="display:none">
-        <label class="lbl">UFA ambulatory options</label>
-        <label class="chk"><input type="checkbox" id="ufaExcl">
-          <span>Limited network <b>excluding hospitals</b> (Standard plans, cheaper)</span></label>
-        <label class="chk"><input type="checkbox" id="ufaWait">
-          <span>Reduced waiting period</span></label>
+      <div class="field" id="indivBlock">
+        <label class="lbl" for="age">Age, or date of birth</label>
+        <div class="agegrid">
+          <input type="number" id="age" inputmode="numeric" min="0" max="99" placeholder="Age" aria-label="Age">
+          <input type="date" id="dob" aria-label="Date of birth">
+        </div>
+        <div class="agehint" id="ageHint"></div>
       </div>
-      <div class="lockmsg" id="lockMsg">In Family mode, size is set automatically from the number of members.</div>
-    </details>
-  </div>
+      <div class="field hidden" id="familyBlock">
+        <label class="lbl">Members: date of birth or just the age <span class="aux" id="sizeTag"></span></label>
+        <div id="members"></div>
+        <button class="addmember" id="addMember" type="button">+ Add member</button>
+      </div>
+    </div>
+  </section>
 
+  <!-- STEP 2 -->
+  <section class="step" id="h2" data-acc>
+    <div class="stephead"><span class="stepnum">2</span><span class="steptitle">Choose the cover</span><span class="stepecho" id="he2"></span></div>
+    <div class="stepbody">
+      <div class="levels" id="levels" role="group" aria-label="Coverage level"></div>
+      <details class="info">
+        <summary>What each level covers</summary>
+        <div class="infobody" id="levelInfoBody"></div>
+      </details>
+      <div class="field">
+        <label class="lbl">Out-patient (ambulatory)</label>
+        <div class="seg" id="segAmb" role="group" aria-label="Ambulatory cover">
+          <button data-v="none">None</button>
+          <button data-v="85" class="on">85%</button>
+          <button data-v="100">100%</button>
+        </div>
+      </div>
+      <details class="adv">
+        <summary>More options</summary>
+        <div class="field" id="sizeField">
+          <label class="lbl">Family size</label>
+          <div class="seg" id="segSize" role="group" aria-label="Family size">
+            <button data-v="1&2" class="on">1 to 2 members</button>
+            <button data-v="3+">3+ members</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl">Co-pay</label>
+          <div class="seg" id="segCopay" role="group" aria-label="Co-pay"></div>
+          <span class="hint" id="copayNote"></span>
+        </div>
+        <div class="field" id="ufaOpts" style="display:none">
+          <label class="lbl">UFA out-patient options</label>
+          <label class="chk"><input type="checkbox" id="ufaExcl">
+            <span>Limited network <b>excluding hospitals</b> (Standard plans, cheaper)</span></label>
+          <label class="chk"><input type="checkbox" id="ufaWait">
+            <span>Reduced waiting period</span></label>
+        </div>
+        <div class="lockmsg" id="lockMsg">In Family mode, size is set automatically from the number of members.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- RECEIPT -->
   <div class="price-card" id="priceCard">
     <div class="price-head">
-      <div class="price-sub" id="priceSub">Total owed / year</div>
+      <div class="sum-top"><span class="price-sub" id="priceSub">Annual total</span><span id="priceCover"></span></div>
       <div class="price-big" id="priceBig">–</div>
+      <div class="sum-line" id="priceLine"></div>
     </div>
+    <div class="qprog" id="qProg"><div class="t" id="qProgT"></div><div class="bar"><i></i></div><div class="t" id="qProgN"></div></div>
     <div class="price-rows" id="priceRows"></div>
     <div class="msg" id="msg"></div>
   </div>
 
-  <details class="info card" id="bandsBox" style="padding:0">
+  <details class="info" id="bandsBox">
     <summary>Price by age band</summary>
     <div class="infobody" id="bandsBody"></div>
   </details>
 
-  
 <!--BROCARE-DOC-HANDOFF-->
-<style>
-#broPanel{margin-top:14px}
-#broPanel .bh{font-weight:700;font-size:12px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
-#broPanel .bf{margin-bottom:10px}
-#broPanel .bf label{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:4px;font-weight:600}
-#broPanel input{width:100%;font:inherit;font-size:13px;padding:9px 11px;border-radius:9px;
-  border:1px solid var(--line);background:var(--bg);color:var(--ink);box-sizing:border-box}
-#broPanel input:focus{outline:2px solid var(--accent);outline-offset:1px}
-#broPanel .drow{display:grid;grid-template-columns:1fr 120px auto;gap:7px;align-items:center;margin-bottom:7px}
-#broPanel .x{border:0;background:transparent;color:var(--ink2);cursor:pointer;font-size:17px;padding:2px 7px;line-height:1}
-#broPanel .x:hover{color:#C0392B}
-#broPanel .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-#broPanel button.act{flex:1 1 auto;min-width:110px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;
-  padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
-#broPanel button.act:hover{border-color:var(--accent)}
-#broPanel button.act.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-#broPanel .addb{font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:8px;
-  border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
-#broPanel .tot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
-  padding:11px 0 3px;border-top:1px solid var(--line);margin-top:11px;font-size:12.5px;color:var(--ink2)}
-#broPanel .tot b{font-size:19px;color:var(--price);font-variant-numeric:tabular-nums}
-#broPanel .warn{font-size:11.5px;color:var(--warn);margin-top:8px;display:none}
-/* saved-quote basket for multi-column comparisons */
-#broCmpBox{display:none;margin-top:12px;border:1px solid var(--accent);border-radius:11px;
-  background:var(--accent-soft);padding:11px}
-#broCmpBox .cmph{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-#broCmpBox .cmph button{border:0;background:transparent;color:var(--ink2);cursor:pointer;
-  font:inherit;font-size:11px;font-weight:700;text-transform:none;letter-spacing:0;padding:2px 4px}
-#broCmpBox .cmph button:hover{color:var(--warn)}
-#broCmpBox .cmprow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;
-  font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)}
-#broCmpBox .cmprow:last-of-type{border-bottom:0}
-#broCmpBox .cmprow .p{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-#broCmpBox .cmprow button{border:0;background:transparent;color:var(--ink2);cursor:pointer;
-  font-size:16px;line-height:1;padding:0 3px}
-#broCmpBox .cmprow button:hover{color:var(--warn)}
-#broCmpBox .fin{width:100%;margin-top:9px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;
-  padding:10px;border-radius:9px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
-#broCmpBox .hintline{font-size:11px;color:var(--ink2);margin-top:7px;line-height:1.45}
-</style>
 
 <div class="card" id="broPanel">
-  <div class="bh">Discounts &amp; document</div>
-
-  <div class="bf">
-    <label for="broClient">Client name (prints on the document)</label>
-    <input id="broClient" type="text" placeholder="e.g. Rida Family">
+  <div class="bh">Send this quote</div>
+  <div class="sendgrid">
+    <div class="bf"><label for="broClient">Client name</label><input id="broClient" type="text" placeholder="e.g. Rida Family"></div>
+    <div class="bf"><label for="qPhone">WhatsApp</label><input id="qPhone" type="tel" inputmode="tel" placeholder="03 123 456"></div>
   </div>
-
-  <div id="broDiscs"></div>
-  <button type="button" class="addb" id="broAdd">+ Add discount</button>
-
-  <div class="tot"><span>Quoted price</span><span id="broQuoted">&ndash;</span></div>
-  <div class="bf" style="margin-top:10px">
-    <label for="broFinal">Final price you are confirming (USD)</label>
-    <input id="broFinal" type="number" step="1" min="0">
-  </div>
+  <button type="button" class="btn primary" id="qWhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9 10c.5 2 2 3.5 4 4l1-1.2 1.8.8"/></svg>Send on WhatsApp</button>
+  <div class="qactions n6" id="qActions"><button type="button" class="iconbtn" id="broOffer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span class="il">PDF</span></button><button type="button" class="iconbtn" id="qShow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span class="il">Show client</span></button><button type="button" class="iconbtn" id="qSave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="il">Save</span></button><button type="button" class="iconbtn" id="qCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg><span class="il">Copy</span></button><button type="button" class="iconbtn qbro" id="broCompare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/></svg><span class="il">Comparison</span></button><button type="button" class="iconbtn qbro" id="broInvoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg><span class="il">Invoice</span></button></div>
+  <div class="brandmsg" id="qMsg" aria-live="polite"></div>
   <div class="warn" id="broWarn">Get a price above first. The quoter has nothing to hand over yet.</div>
-
   <div id="broCmpBox">
     <div class="cmph"><span id="broCmpTitle">Comparison</span><button type="button" id="broCmpClear">Clear all</button></div>
     <div id="broCmpList"></div>
     <button type="button" class="fin" id="broCmpFinish">Finish &amp; compare</button>
     <div class="hintline" id="broCmpHint"></div>
   </div>
-
-  <div class="btns">
-    <button type="button" class="act pri" id="broOffer">Send offer</button>
-    <button type="button" class="act" id="broCompare">Comparison</button>
-    <button type="button" class="act" id="broInvoice">Create invoice</button>
-  </div>
+  <details class="qmore qbro"><summary>Discount or final price</summary><div class="qmorebody">
+    <div id="broDiscs"></div>
+    <button type="button" class="addb" id="broAdd">+ Add discount</button>
+    <div class="tot"><span>Quoted price</span><span id="broQuoted">&ndash;</span></div>
+    <div class="bf"><label for="broFinal">Final price you are confirming (USD)</label><input id="broFinal" type="number" step="1" min="0"></div>
+  </div></details>
 </div>
 
 <script>
@@ -474,7 +191,7 @@
       var total = (big && !(card && card.classList.contains('error'))) ? digits(big.textContent) : 0;
       var lvl = '', ambTxt = '';
       var on = document.querySelector('#levels [aria-pressed="true"], #levels .on, #levels .active');
-      if(on) lvl = on.textContent.trim();
+      if(on) lvl = on.dataset.v || on.textContent.trim();
       var amb = document.querySelector('#segAmb [aria-pressed="true"], #segAmb .on, #segAmb .active');
       if(amb) ambTxt = amb.textContent.trim();
       var dobs = [];
@@ -607,7 +324,8 @@
 
   function paintCmp(){
     var b = getBasket(), box = $('broCmpBox'), btn = $('broCompare');
-    if(!b.length){ box.style.display='none'; btn.textContent='Comparison'; btn.disabled=false; return; }
+    var lab = btn.querySelector('.il') || btn;
+    if(!b.length){ box.style.display='none'; lab.textContent='Comparison'; btn.disabled=false; return; }
     box.style.display='block';
     $('broCmpTitle').textContent = 'Comparison: ' + b.length + ' saved';
     $('broCmpList').innerHTML = b.map(function(e,i){
@@ -619,7 +337,7 @@
       x.onclick = function(){ var a=getBasket(); a.splice(+x.dataset.cx,1); setBasket(a); paintCmp(); };
     });
     var full = b.length >= MAXCOLS;
-    btn.textContent = full ? 'Comparison full' : 'Add to comparison';
+    lab.textContent = full ? 'Comparison full' : 'Add to comparison';
     btn.disabled = full;
     $('broCmpHint').textContent = full
       ? 'Maximum of ' + MAXCOLS + ' columns. Press Finish to build the document.'
@@ -750,7 +468,8 @@ function buildLevels(){
   levelsBox.innerHTML='';
   levels.forEach(lv=>{
     const b=document.createElement('button');
-    b.textContent=lv; b.dataset.v=lv;
+    b.dataset.v=lv;
+    b.innerHTML='<span class="lvn">'+esc(lv)+'</span><span class="lvp na"></span>';
     if(lv===state.level) b.classList.add('on');
     b.onclick=()=>{ state.level=lv; paintGroup(levelsBox,lv); calc(); };
     levelsBox.appendChild(b);
@@ -806,7 +525,7 @@ wireSeg('segMode','mode', switchMode);
 function paintInsurer(){
   $('segInsurer').querySelectorAll('button').forEach(b=>
     b.classList.toggle('on', b.dataset.v===state.insurer));
-  $('tariffTag').innerHTML = BOOK.tariffTag.replace(/\s*tariff$/,'') + '<br>tariff';
+  $('tariffTag').textContent = BOOK.tariffTag;
   const blurbHtml = BOOK.blurb.map(r=>
     '<p><b>'+esc(r[0])+'</b>: '+esc(r[1])+'</p>').join('');
   $('insurerBlurb').innerHTML = blurbHtml;
@@ -1004,7 +723,7 @@ function pricePerson(age){
 
 function resetPrice(sub, need){
   $('priceCard').classList.remove('error');
-  $('priceBig').textContent='–'; clearRows(); $('priceSub').textContent=sub||'Total owed / year';
+  $('priceBig').textContent='–'; clearRows(); $('priceSub').textContent=sub||'Annual total';
   if(need){
     const d=document.createElement('div');
     d.className='needmsg';
@@ -1026,7 +745,7 @@ function calc(){
     const miss=[];
     if(!haveAge) miss.push(fam ? 'a date of birth or age for at least one member' : 'an age or date of birth');
     if(state.level===null) miss.push('a coverage level');
-    resetPrice(fam?'Family total / year':'Total owed / year', 'Still needed: '+miss.join(' and ')+'.');
+    resetPrice(fam?'Family total':'Annual total', 'Still needed: '+miss.join(' and ')+'.');
     return;
   }
 
@@ -1035,7 +754,7 @@ function calc(){
     const p=pricePerson(state.age);
     if(p.err){ fail(p.err); return; }
     const total=p.ip+p.amb+cop;
-    $('priceSub').textContent='Total owed / year';
+    $('priceSub').textContent='Annual total';
     $('priceBig').innerHTML=money(total)+' <span class="per">/ year</span>';
     clearRows();
     addRow('In-patient', money(p.ip));
@@ -1047,7 +766,7 @@ function calc(){
 
   /* family */
   const valid = members.filter(m=>m.age!==null && m.age>=0);
-  if(valid.length===0){ resetPrice('Family total / year'); return; }
+  if(valid.length===0){ resetPrice('Family total'); return; }
 
   let sumIp=0,sumAmb=0;
   const lines=[];
@@ -1063,7 +782,7 @@ function calc(){
   const premium=sumIp+sumAmb;
   const total=premium+cop;
 
-  $('priceSub').textContent='Family total / year · '+valid.length+' member'+(valid.length!==1?'s':'')
+  $('priceSub').textContent='Family total · '+valid.length+' member'+(valid.length!==1?'s':'')
     + (BOOK.sizeMode==='count' ? ' · '+BOOK.name+' size '+Math.min(valid.length,6) : ' · size '+state.size);
   $('priceBig').innerHTML=money(total)+' <span class="per">/ year</span>';
   clearRows();
@@ -1109,6 +828,46 @@ function paintBands(){
 const calcOnly=calc;
 calc=function(){ calcOnly(); if($('bandsBox').open) paintBands(); };
 $('bandsBox').addEventListener('toggle', ()=>{ if($('bandsBox').open) paintBands(); });
+
+/* ---------- the makeover: steps fold into chips, each level shows its price ---------- */
+function peopleAges(){
+  return state.mode==='family' ? members.filter(m=>m.age!==null && m.age>=0).map(m=>m.age)
+                               : (state.age!==null && state.age>=0 ? [state.age] : []);
+}
+function priceFor(level, ages){
+  const keep=state.level; state.level=level;
+  let sum=BOOK.costOfPolicy||0, err=null;
+  try{
+    for(const a of ages){ const p=pricePerson(a); if(p.err){ err=p.err; break; } sum+=p.ip+p.amb; }
+  } finally { state.level=keep; }
+  return err ? null : sum;
+}
+function paintLevelPrices(){
+  const ages=peopleAges(), badAge=state.mode==='family' && members.some(m=>m.age!==null && m.age<0);
+  levelsBox.querySelectorAll('button').forEach(b=>{
+    const out=b.querySelector('.lvp'); if(!out) return;
+    if(!ages.length || badAge){ out.className='lvp na'; out.textContent=ages.length?'':'Add an age first'; return; }
+    const v=priceFor(b.dataset.v, ages);
+    out.className = v===null ? 'lvp na' : 'lvp';
+    out.innerHTML = v===null ? 'Not available' : esc(money(v))+' <small>/ year</small>';
+  });
+}
+function paintSteps(){
+  const fam=state.mode==='family', ages=peopleAges();
+  const badAge=fam && members.some(m=>m.age!==null && m.age<0);
+  const who=ages.length>0 && !badAge;
+  $('h1').classList.toggle('done', who);
+  $('he1').textContent = !who ? '' : fam
+    ? 'Family · '+ages.length+' member'+(ages.length!==1?'s':'')+' · ages '+ages.join(', ')
+    : 'Individual · age '+ages[0];
+  const lvl=state.level!==null;
+  $('h2').classList.toggle('done', lvl);
+  $('he2').textContent = !lvl ? '' : state.level+' · '+(state.amb==='none'?'No out-patient':state.amb+'% out-patient');
+  $('priceCover').textContent = lvl ? (state.amb==='none'?'In-patient only':state.amb+'% out-patient') : '';
+  $('priceLine').textContent = lvl && who ? state.level+' with '+BOOK.name : '';
+}
+const calcBase=calc;
+calc=function(){ calcBase(); paintSteps(); paintLevelPrices(); };
 
 /* ---------- fill members from photos ----------
    OCR runs in this browser with Tesseract.js (English + Arabic). The engine and
@@ -1580,6 +1339,7 @@ function applyScan(){
   }
   scanRows=[]; paintScanReview();
   $('scanStatus').textContent='Filled '+dates.length+(dates.length===1?' date of birth':' members')+'. Now choose the cover level.';
+  if(window.QuoterUI) QuoterUI.open('h2');
   $('levels').scrollIntoView({behavior:'smooth', block:'center'});
 }
 $('scanIds').onclick=()=>{ scanMode='id'; $('scanFile').click(); };
@@ -1609,3 +1369,4 @@ calc();
 <script src="../paddle-rec.js"></script>
 <script src="../camera.js"></script>
 <script src="../shell.js"></script>
+<script src="../quoter-ui.js"></script>

@@ -36,15 +36,16 @@
   }
 
   /* ---------------- saved quotes (this device only) ---------------- */
-  function storeKey() { var b = brand(); return 'brocare.brand.' + (b ? b.key : '') + '.quotes'; }
-  function quotes() { try { return JSON.parse(localStorage.getItem(storeKey()) || '[]'); } catch (e) { return []; } }
-  function put(list) { try { localStorage.setItem(storeKey(), JSON.stringify(list.slice(0, 200))); } catch (e) {} }
-  function save(q) {
+  /* one list per insurer demo, and one for Brocare's own tools ('brocare') */
+  function storeKey(k) { var b = brand(); return 'brocare.brand.' + (k || (b ? b.key : 'brocare')) + '.quotes'; }
+  function quotes(k) { try { return JSON.parse(localStorage.getItem(storeKey(k)) || '[]'); } catch (e) { return []; } }
+  function put(list, k) { try { localStorage.setItem(storeKey(k), JSON.stringify(list.slice(0, 200))); } catch (e) {} }
+  function save(q, k) {
     q.id = q.id || String(Date.now()) + Math.random().toString(36).slice(2, 6);
     q.t = q.t || new Date().toISOString();
-    var list = quotes(); list.unshift(q); put(list); return q;
+    var list = quotes(k); list.unshift(q); put(list, k); return q;
   }
-  function remove(id) { put(quotes().filter(function (q) { return q.id !== id; })); }
+  function remove(id, k) { put(quotes(k).filter(function (q) { return q.id !== id; }), k); }
 
   /* ---------------- WhatsApp ---------------- */
   /* Lebanese numbers typed any way: 03 372 190, 71297529, +961 3 372 190, 00961... */
@@ -67,7 +68,7 @@
     lines.push(b.disclaimer || 'Indicative quote, subject to underwriting.');
     var days = b.validDays || 15, until = new Date(q.t ? Date.parse(q.t) : Date.now()); until.setDate(until.getDate() + days);
     lines.push('Valid until ' + shortDate(until) + '.');
-    if (b.agent && b.agent.name) lines.push('', '— ' + b.agent.name + ', ' + b.name);
+    if (b.agent && b.agent.name) lines.push('', b.agent.name + ', ' + b.name);
     return lines.join('\n');
   }
 
@@ -105,76 +106,7 @@
       '.brand-hide{display:none!important}#crossBox{display:none!important}' +
       '.brandword{display:flex;flex-direction:column;line-height:1;gap:5px;flex:none}' +
       '.brandword b{font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--brand)}' +
-      '.brandword i{font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:' + (p.tag || 'var(--accent)') + '}' +
-      /* "Show the client": the price alone, full screen, to turn the phone around */
-      '.bshow{position:fixed;inset:0;z-index:9998;background:var(--bg);color:var(--ink);overflow:auto;display:flex;flex-direction:column;' +
-        'padding:20px 20px calc(26px + env(safe-area-inset-bottom));font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}' +
-      '.bshow .bs-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}' +
-      '.bshow .bs-x{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:9px 15px;font:700 13px/1 inherit;font-family:inherit;cursor:pointer}' +
-      '.bshow .bs-card{margin:auto;width:min(560px,100%);text-align:center;padding:24px 0}' +
-      '.bshow .bs-for{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:' + (p.tag || 'var(--ink2)') + '}' +
-      '.bshow .bs-name{font-size:24px;font-weight:800;margin:4px 0 16px;letter-spacing:-.01em}' +
-      '.bshow .bs-big{font-size:clamp(58px,17vw,104px);font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}' +
-      '.bshow .bs-per{font-size:16px;font-weight:600;color:var(--ink2);margin:8px 0 22px}' +
-      '.bshow .bs-rows{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 18px;text-align:left}' +
-      '.bshow .bs-rows div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-top:1px solid var(--line)}' +
-      '.bshow .bs-rows div:first-child{border-top:0}' +
-      '.bshow .bs-rows span{color:var(--ink2)}' +
-      '.bshow .bs-rows b{text-align:right}' +
-      '.bshow .bs-valid{margin-top:16px;font-size:13.5px;color:var(--ink2);line-height:1.5}' +
-      '.bshow .bs-agent{margin-top:14px;font-weight:700}' +
-      '.bshow .bs-wa{margin-top:18px;border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:14px 22px;font:800 15px/1 inherit;font-family:inherit;cursor:pointer}' +
-      '.brandmsg{font-size:12px;font-weight:700;color:var(--price);margin-top:8px;min-height:16px}' +
-      '.brandmsg.bad{color:var(--warn)}';
-  }
-
-  /* ---------------- the quoter pages ---------------- */
-  function readQuote(mode) {
-    var rows = [], price, sub, ok;
-    if (mode === 'motor') {
-      price = $('sumBig').textContent.replace(/\s+/g, ' ').trim(); sub = ($('sumSub') && $('sumSub').textContent.trim()) || 'Annual premium';
-      document.querySelectorAll('#sumRows .srow:not(.calc)').forEach(function (r) {
-        var k = r.querySelector('.k'), v = r.querySelector('.v');
-        if (k && v && k.textContent.trim() !== 'Insurer') rows.push([k.textContent.trim(), v.textContent.trim()]);
-      });
-      ok = /\d/.test(price) && !$('s4').classList.contains('off') && $('s4').style.display !== 'none';   /* not on the TPL screen */
-    } else {
-      price = $('priceBig').textContent.replace(/\s+/g, ' ').trim(); sub = $('priceSub').textContent.trim() || 'Price per year';
-      document.querySelectorAll('#priceRows .prow:not(.total)').forEach(function (r) {   /* the total row repeats the price */
-        var k = r.querySelector('.k'), v = r.querySelector('.v');
-        if (k && v) rows.push([k.textContent.trim(), v.textContent.trim()]);
-      });
-      ok = /\d/.test(price) && !$('priceCard').classList.contains('error');
-    }
-    return { ok: ok, type: mode === 'motor' ? 'Motor All Risk' : 'Health', mode: mode, price: price, sub: sub, lines: rows };
-  }
-
-  /* the screen the agent turns towards the client: price, what it covers, until when, from whom */
-  function showClient(b, q) {
-    var m = q.price.match(/^(.*?)\s*\/\s*year\s*$/i), big = m ? m[1] : q.price;
-    var until = new Date(); until.setDate(until.getDate() + (b.validDays || 15));
-    var rows = q.lines.filter(function (r) { return !/^Cost of that agency repair/i.test(r[0]); });
-    var mark = b.logo ? '<img src="' + esc(logoUrl(b)) + '" alt="' + esc(b.name) + '" style="height:48px">'
-      : '<div class="brandword"><b>' + esc(b.name) + '</b>' + (b.tagline ? '<i>' + esc(b.tagline) + '</i>' : '') + '</div>';
-    var el = document.createElement('div'); el.className = 'bshow'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
-    el.setAttribute('aria-label', 'Quote for the client');
-    el.innerHTML = '<div class="bs-top">' + mark + '<button type="button" class="bs-x">✕ Back</button></div>' +
-      '<div class="bs-card"><div class="bs-for">' + esc(q.type) + ' insurance quote</div>' +
-      (q.client ? '<div class="bs-name">' + esc(q.client) + '</div>' : '<div style="height:14px"></div>') +
-      '<div class="bs-big">' + esc(big) + '</div><div class="bs-per">' + (m ? 'per year' : esc(q.sub)) + '</div>' +
-      (rows.length ? '<div class="bs-rows">' + rows.map(function (r) { return '<div><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') + '</div>' : '') +
-      '<div class="bs-valid">Valid until ' + esc(shortDate(until)) + '. ' + esc(b.disclaimer || 'Indicative quote, subject to underwriting.') + '</div>' +
-      (b.agent && b.agent.name ? '<div class="bs-agent">' + esc(b.agent.name) + (b.agent.phone ? ' · ' + esc(b.agent.phone) : '') + ' · ' + esc(b.name) + '</div>' : '') +
-      '<button type="button" class="bs-wa">Send it to me on WhatsApp</button></div>';
-    var prevOverflow = document.documentElement.style.overflow;
-    var close = function () { el.remove(); document.documentElement.style.overflow = prevOverflow; document.removeEventListener('keydown', onKey); };
-    var onKey = function (e) { if (e.key === 'Escape') close(); };
-    el.querySelector('.bs-x').onclick = close;
-    el.querySelector('.bs-wa').onclick = function () { window.open(waUrl(message(b, q), q.phone), '_blank', 'noopener'); };
-    document.addEventListener('keydown', onKey);
-    document.documentElement.style.overflow = 'hidden';
-    document.body.appendChild(el);
-    el.querySelector('.bs-x').focus();
+      '.brandword i{font-style:normal;font-size:11.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:' + (p.tag || 'var(--accent)') + '}';
   }
 
   /* ---------------- the quote document (Document Studio) ----------------
@@ -292,50 +224,6 @@
       var tpl = document.querySelector('#segCoverType [data-v="mtpl"]');
       if (book && !book.mtpl && tpl) tpl.remove();
     } catch (e) {}
-
-    /* the broker's tools out, the agent's tools in */
-    var panel = $('broPanel');
-    if (panel) {
-      ['broCompare', 'broInvoice', 'broAdd', 'broDiscs', 'broCmpBox', 'broFinal'].forEach(function (id) {
-        var el = $(id); if (!el) return;
-        (id === 'broFinal' ? el.closest('.bf') : el).classList.add('brand-hide');
-      });
-      var tot = panel.querySelector('.tot'); if (tot) tot.classList.add('brand-hide');
-      var head = panel.querySelector('.bh'); if (head) head.textContent = 'Send this quote';
-      var cb = $('copyBtn'); if (cb) cb.classList.add('brand-hide');
-
-      var clientBf = $('broClient').closest('.bf');
-      clientBf.querySelector('label').textContent = 'Client name';
-      var ph = document.createElement('div'); ph.className = 'bf';
-      ph.innerHTML = '<label for="brandPhone">Client WhatsApp (optional)</label><input id="brandPhone" type="tel" inputmode="tel" placeholder="e.g. 03 123 456">';
-      clientBf.after(ph);
-
-      /* "Send offer" keeps its job (the quote document), now in the insurer's letterhead */
-      var offer = $('broOffer'), btns = offer.parentNode, wa = document.createElement('button');
-      offer.textContent = 'Quote PDF'; offer.classList.remove('pri');
-      wa.type = 'button'; wa.className = 'act pri'; wa.textContent = 'Send on WhatsApp';
-      btns.insertBefore(wa, offer);
-      var saveB = document.createElement('button'); saveB.type = 'button'; saveB.className = 'act'; saveB.textContent = 'Save quote';
-      var copyB = document.createElement('button'); copyB.type = 'button'; copyB.className = 'act'; copyB.textContent = 'Copy text';
-      var showB = document.createElement('button'); showB.type = 'button'; showB.className = 'act'; showB.textContent = 'Show the client';
-      btns.append(showB, saveB, copyB);
-      var msg = document.createElement('div'); msg.className = 'brandmsg'; msg.setAttribute('aria-live', 'polite'); btns.after(msg);
-      var say = function (t, bad) { msg.textContent = t; msg.className = 'brandmsg' + (bad ? ' bad' : ''); if (t) setTimeout(function () { if (msg.textContent === t) msg.textContent = ''; }, 3500); };
-      var build = function () {
-        var q = readQuote(mode);
-        if (!q.ok) { say('Get a price above first.', true); return null; }
-        q.client = $('broClient').value.trim(); q.phone = $('brandPhone').value.trim(); q.t = new Date().toISOString();
-        return q;
-      };
-      wa.onclick = function () { var q = build(); if (q) window.open(waUrl(message(b, q), q.phone), '_blank', 'noopener'); };
-      showB.onclick = function () { var q = build(); if (q) showClient(b, q); };
-      saveB.onclick = function () { var q = build(); if (q) { save(q); say('Saved. Find it under My quotes on the ' + b.name + ' home page.'); } };
-      copyB.onclick = function () {
-        var q = build(); if (!q) return; var t = message(b, q);
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { say('Copied.'); }, function () { window.prompt('Copy the quote:', t); });
-        else window.prompt('Copy the quote:', t);
-      };
-    }
 
     /* footer */
     var foot = document.querySelector('.foot');

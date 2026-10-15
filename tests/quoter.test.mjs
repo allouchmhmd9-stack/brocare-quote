@@ -109,7 +109,7 @@ test('motor brand demo: the TPL screen does not save the All Risk price', async 
   const brand = "window.BROCARE_BRAND={key:'test',name:'Test',insurer:'ufa',demo:true,palette:{}};";
   await motor({ preload: brand });
   const r = await b.evaluate(`(function(){ T.car('ufa',2024,30000,'Gasoline','Kia'); T.pick('Lux Plan'); T.seg('segCoverType','mtpl'); T.set('mtplPick','0');
-    [...document.querySelectorAll('#broPanel button')].find(x=>x.textContent==='Save quote').click(); return BrocareBrand.quotes().length; })()`);
+    document.getElementById('qSave').click(); return BrocareBrand.quotes().length; })()`);
   assert.equal(r, 0);
 });
 
@@ -236,7 +236,7 @@ test('insurer demo: only its own tariff is on the page, with no comparison again
   await b.goto('motor/index.html', { preload: DEMO });
   const r = await b.evaluate(`({ins:[...document.querySelectorAll('#segInsurer button')].map(x=>x.dataset.v),
     loaded:Object.keys(window.BROCARE_TARIFFS.motor), cross:getComputedStyle(document.getElementById('crossBox')).display,
-    pdf:[...document.querySelectorAll('#broPanel .btns button')].some(x=>x.textContent==='Quote PDF')})`);
+    pdf:getComputedStyle(document.getElementById('broOffer')).display!=='none'})`);
   assert.deepEqual(r.ins, ['ufa']);
   assert.deepEqual(r.loaded, ['ufa']);
   assert.equal(r.cross, 'none');

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CHROME = process.env.BROCARE_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const PROFILE = process.env.BROCARE_CHROME_PROFILE || path.join(os.tmpdir(), 'brocare-quote-tests');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.json': 'application/json', '.onnx': 'application/octet-stream' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.onnx': 'application/octet-stream' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function serve() {
