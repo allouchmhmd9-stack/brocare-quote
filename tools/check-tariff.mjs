@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { openBrowser } from '../tests/browser.mjs';
-import { ROOT, caseFiles, loadTariff, reference, runCase, verdict, brandSettings } from '../tests/cases.mjs';
+import { ROOT, caseFiles, loadTariff, bookAt, reference, runCase, verdict, brandSettings } from '../tests/cases.mjs';
 
 const args = process.argv.slice(2);
 const insurer = args.find((a) => !a.startsWith('--') && !/^\d+$/.test(a));
@@ -82,7 +82,7 @@ try {
     const rows = [];
     console.log('\n' + book.name + ' · ' + spec.line + ' · ' + doc.cases.length + ' quotes · tariff ' + file + (spec.brand ? ' · demo ' + spec.brand : ''));
     for (const c of doc.cases) {
-      const app = await runCase(b, spec, c), ref = reference(spec.line, book, c), v = verdict(c, app, ref);
+      const app = await runCase(b, spec, c), ref = reference(spec.line, bookAt(book, c.start), c), v = verdict(c, app, ref);
       rows.push({ c, v });
       if (!v.pass) bad++;
       if (v.sheet === null) missing++;

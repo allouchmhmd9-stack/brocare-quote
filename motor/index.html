@@ -102,6 +102,11 @@
         <label class="lbl">Model: tap if it matches</label>
         <div class="chips" id="modelChips"></div>
       </div>
+      <div class="field">
+        <label class="lbl" for="startDate">Policy starts</label>
+        <input type="date" id="startDate" value="" aria-describedby="startHint">
+        <span class="hint" id="startHint"></span>
+      </div>
       <div class="grid2">
         <div class="field">
           <label class="lbl" for="driverAge">Main driver's age</label>
@@ -462,7 +467,17 @@ INSURER_KEYS.forEach(function(k){
   if(!b.sports) b.sports=SPORTS;              /* the market's sports / luxury list, unless the insurer has its own */
   if(!b.otherMakes) b.otherMakes=OTHER_MAKES;
   if(b.mtpl===undefined) b.mtpl=null;         /* no compulsory tariff supplied */
+  if(b.previous){
+    const pv=b.previous; pv.key=pv.key||k;
+    if(!pv.sports) pv.sports=SPORTS;
+    if(!pv.otherMakes) pv.otherMakes=OTHER_MAKES;
+    if(pv.mtpl===undefined) pv.mtpl=null;
+  }
 });
+/* the rate book that applies to a policy starting on this date (YYYY-MM-DD) */
+function bookFor(raw, start){
+  return (raw.previous && raw.effectiveFrom && start && start < raw.effectiveFrom) ? raw.previous : raw;
+}
 if(!INSURER_KEYS.length){
   document.querySelector('.wrap').insertAdjacentHTML('afterbegin','<div class="alert">No motor tariff is loaded on this page.</div>');
   throw new Error('no motor tariff loaded');
@@ -551,9 +566,11 @@ function consensus(rows){
     groups:clusters.map(c=>({price:c.price, count:c.v.length})).sort((a,b)=>a.price-b.price)};
 }
 
-let TARIFF = INSURERS[INSURER_KEYS[0]];     /* the active rate book */
+let TARIFF = INSURERS[INSURER_KEYS[0]];     /* the active rate book, for the policy start date on screen */
+const todayISO = () => { const d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); };
 
-const S = { insurer:INSURER_KEYS[0], cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null, bi:true, pv:false };
+const S = { insurer:INSURER_KEYS[0], cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null, bi:true, pv:false, start:todayISO() };
+TARIFF = bookFor(TARIFF, S.start);     /* the tariff for today's start date, until the date is changed */
 
 const $ = id => document.getElementById(id);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -676,6 +693,15 @@ $('value').addEventListener('input', function(e){
 $('year').addEventListener('change', function(e){
   S.year=e.target.value?parseInt(e.target.value,10):null; render();
 });
+$('startDate').value = S.start;
+$('startDate').addEventListener('change', function(e){
+  S.start = e.target.value || todayISO();
+  e.target.value = S.start;
+  const raw=INSURERS[S.insurer];
+  const next=bookFor(raw, S.start);
+  if(next!==TARIFF){ TARIFF=next; S.product=null; paintInsurer(); if(S.cover==='mtpl') buildMtplPicker(); }
+  render();
+});
 $('driverAge').addEventListener('input', function(e){
   const v=parseInt(e.target.value,10);
   S.driverAge=Number.isFinite(v)?v:null; render();
@@ -721,6 +747,10 @@ function render(){
   $('s2').classList.toggle('off', !step1ok);
   const elig=eligibility();
   const step2ok = step1ok && S.brand!=='' && S.driverAge!==null && !elig.block;
+  const raw=INSURERS[S.insurer];
+  $('startHint').textContent = raw.previous ? (TARIFF===raw.previous
+      ? 'April 2026 tariff: policies starting before 1 November 2026.'
+      : raw.name+' November 2026 tariff, from 1 November 2026. Earlier starts use the April 2026 tariff.') : '';
   $('eligAlert').innerHTML = elig.block ? '<div class="alert">'+esc(elig.block)+'</div>'
     : step2ok ? '<div class="okbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><div><b>Eligible</b><p>'+esc(elig.note || 'No age, make or value limit stops this car.')+'</p></div></div>'
     : (elig.note ? '<span class="hint">'+esc(elig.note)+'</span>' : '');
@@ -971,6 +1001,7 @@ function buildSummary(){
   $('biOn').checked = S.bi;
   const rows=[
     ['Insurer', TARIFF.name],
+    ['Policy starts', new Date(S.start+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})],
     ['Vehicle', S.brand + (S.models.length?(' '+S.models.join(', ')):'') + ' · ' + S.year],
     ['Declared value', money(S.value)],
     ['Fuel', S.fuel],
@@ -1039,7 +1070,7 @@ $('segInsurer').querySelectorAll('button').forEach(function(b){
   b.onclick=function(){
     if(S.insurer===b.dataset.v) return;
     S.insurer=b.dataset.v;
-    TARIFF=INSURERS[S.insurer];
+    TARIFF=bookFor(INSURERS[S.insurer], S.start);
     S.product=null;                 /* plan names differ between insurers */
     paintInsurer();
     if(S.cover==='mtpl') buildMtplPicker();
@@ -1049,7 +1080,7 @@ $('segInsurer').querySelectorAll('button').forEach(function(b){
 
 /* ---------- Fidelity vs UFA on the same vehicle ---------- */
 function crossQuote(insurerKey){
-  const book=INSURERS[insurerKey], out=[];
+  const book=bookFor(INSURERS[insurerKey], S.start), out=[];
   if(S.sports) return {plans:[], why:'On the sports & luxury referral list.'};
   const rr=referReason(book);
   if(rr) return {plans:[], why:rr};

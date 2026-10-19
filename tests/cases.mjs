@@ -72,6 +72,12 @@ export function loadTariff(line, insurer, brand) {
   return { book, file: rel };
 }
 
+/* the rate book for a policy starting on this date: the April tariff before 1 November 2026, else the current one */
+export const DEFAULT_START = '2026-11-15';
+export function bookAt(raw, start) {
+  return raw.previous && raw.effectiveFrom && (start || DEFAULT_START) < raw.effectiveFrom ? raw.previous : raw;
+}
+
 /* ---------------- the independent calculation ---------------- */
 const refused = (why) => ({ refused: why });
 export function reference(line, book, c) {
@@ -143,6 +149,7 @@ export async function runCase(b, spec, c) {
       const seg=(id,v)=>{const x=document.querySelector('#'+id+' [data-v="'+v+'"]'); if(x && !x.classList.contains('on')) x.click(); return !!x;};
       if(!seg('segInsurer',ins)) return {refused:'insurer '+ins+' is not loaded on the page'};
       set('year',c.year); set('value',c.value); seg('segFuel',c.fuel||'Gasoline'); set('brand',c.make||'Toyota');
+      { const d=$('startDate'); d.value=c.start||'2026-11-15'; d.dispatchEvent(new Event('change')); }
       set('driverAge', c.driverAge==null?40:c.driverAge);
       const alert=$('eligAlert').textContent.trim();
       const opt=[...document.querySelectorAll('#opts .opt')].find(x=>x.querySelector('.optname').textContent===c.plan);

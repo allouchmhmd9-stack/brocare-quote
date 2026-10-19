@@ -19,7 +19,8 @@ const MOTOR = `window.T={
   seg(id,v){document.querySelector('#'+id+' [data-v="'+v+'"]').click();},
   pick(name){[...document.querySelectorAll('#opts .opt')].find(x=>x.querySelector('.optname').textContent===name).click();},
   big(){return document.getElementById('sumBig').textContent;},
-  car(ins,year,value,fuel,brand){ if(ins!=='fidelity') T.seg('segInsurer',ins); T.set('year',year); T.set('value',value);
+  start(d){const e=document.getElementById('startDate'); e.value=d; e.dispatchEvent(new Event('change'));},
+  car(ins,year,value,fuel,brand,start='2026-11-15'){ if(ins!=='fidelity') T.seg('segInsurer',ins); T.start(start); T.set('year',year); T.set('value',value);
     if(fuel!=='Gasoline') T.seg('segFuel',fuel); T.set('brand',brand); T.set('driverAge',40); },
   errs:[] };
   window.addEventListener('error',e=>T.errs.push(e.message)); 1`;
@@ -34,6 +35,16 @@ const motor = async (opts) => { await b.goto('motor/index.html', opts); await b.
 const health = async (opts) => { await b.goto('health/index.html', opts); await b.evaluate(HEALTH); };
 
 /* ---------- motor: premium = value x rate%, floored at the plan minimum, + $45 BI ---------- */
+test('motor: a policy starting before 1 November 2026 is priced on the April 2026 tariff', async () => {
+  await motor();
+  const got = await b.evaluate(`(function(){ T.car('fidelity',2024,25000,'Gasoline','Toyota','2026-10-15'); T.pick('Prime Drive');
+    return [...document.querySelectorAll('#sumRows .srow')].find(r=>r.querySelector('.k').textContent==='All Risk premium').querySelector('.v').textContent; })()`);
+  assert.equal(got, '$813');    /* April: 25,000 x 3.25% = 812.50 */
+  const now = await b.evaluate(`(function(){ T.car('fidelity',2024,25000,'Gasoline','Toyota','2026-11-01'); T.pick('Prime Drive');
+    return [...document.querySelectorAll('#sumRows .srow')].find(r=>r.querySelector('.k').textContent==='All Risk premium').querySelector('.v').textContent; })()`);
+  assert.equal(now, '$938');    /* November: 25,000 x 3.75% = 937.50, from the first day of the new tariff */
+});
+
 const MOTOR_CASES = [
   /* insurer, year, value, fuel, make, plan, expected All Risk premium (worked by hand) */
   ['fidelity', 2024, 25000, 'Gasoline', 'Toyota', 'Prime Drive', '$938'],     /* Nov 2026: 25,000 x 3.75% = 937.50 */
@@ -216,13 +227,13 @@ test('hub: ?next= cannot send a signed-in person to another site', () => {
 
 /* ---------- every published tariff's case file (tariffs/<line>/<insurer>.cases.json) ---------- */
 test('tariff case files: sheet price = app price = independent calculation', async () => {
-  const { caseFiles, loadTariff, reference, runCase, verdict } = await import('./cases.mjs');
+  const { caseFiles, loadTariff, bookAt, reference, runCase, verdict } = await import('./cases.mjs');
   const files = caseFiles().filter((f) => !f.brand);      /* demos in brands/ are checked with tools/check-tariff.mjs */
   assert.ok(files.length >= 4, 'case files found: ' + files.length);
   for (const spec of files) {
     const { book } = loadTariff(spec.line, spec.insurer, null);
     for (const c of JSON.parse(fs.readFileSync(spec.file, 'utf8')).cases) {
-      const v = verdict(c, await runCase(b, spec, c), reference(spec.line, book, c));
+      const v = verdict(c, await runCase(b, spec, c), reference(spec.line, bookAt(book, c.start), c));
       assert.ok(v.pass, spec.insurer + ' ' + spec.line + ': ' + JSON.stringify(c) + ' -> app ' + v.app + ', calc ' + v.ref);
     }
   }

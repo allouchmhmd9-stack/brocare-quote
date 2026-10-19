@@ -72,7 +72,9 @@ tools, or the one insurer whose brand is open (`?brand=<key>`).
   sportsMinAge, referMakes: { make: reason }, noAgencyMakes: { make: reason },
   agencyNeedsDealer, makeNotes: { make: note },
   mtpl: null | { options: [{ cat, label, md, bi, ... }] },  // compulsory tariff, if supplied
-  fuelHint                          // one line under the fuel buttons
+  fuelHint,                         // one line under the fuel buttons
+  effectiveFrom: 'YYYY-MM-DD',      // optional: the date this tariff applies from (policy start date)
+  previous: { ...same shape... }    // optional: the tariff before it, used for earlier policy start dates
 }
 ```
 Premium = value × rate %, floored at `min`. A value with cents goes to the next
