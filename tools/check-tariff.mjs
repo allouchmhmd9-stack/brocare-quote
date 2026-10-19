@@ -43,18 +43,20 @@ if (opt('suggest')) {
 }
 function suggestMotor(book, N) {
   const out = [];
-  const make = (p) => (p.fuels && p.fuels.indexOf('Electric') >= 0 && p.fuels.indexOf('Gasoline') < 0 ? 'Kia' : 'Toyota');
+  const evOnly = (p) => p.evTariff || (p.fuels && p.fuels.indexOf('Electric') >= 0 && p.fuels.indexOf('Gasoline') < 0);
+  const make = (p) => (evOnly(p) ? 'Kia' : 'Toyota');
+  const fuelOf = (p) => (p.evTariff ? 'Electric' : p.fuels ? p.fuels[0] : 'Gasoline');
   /* every plan, every year row, every value band; band edges first, then the middle */
   const pool = [];
   book.products.forEach((p) => p.years.forEach((y) => p.bands.forEach((b, i) => {
     if (y.rates[i] === null) return;
     const hi = Math.min(b[1], book.maxValue), lo = Math.max(b[0], 5000);
-    const fuel = p.fuels ? p.fuels[0] : 'Gasoline';
+    const fuel = fuelOf(p);
     pool.push({ year: y.to, value: hi, fuel, make: make(p), driverAge: 40, plan: p.name, expect: null, note: 'top of band ' + (i + 1) + ', ' + y.from + '-' + y.to });
     pool.push({ year: y.from, value: Math.round((lo + hi) / 2 / 500) * 500, fuel, make: make(p), driverAge: 40, plan: p.name, expect: null, note: 'middle of band ' + (i + 1) + ', ' + y.from + '-' + y.to });
   })));
   /* a quote at the minimum premium for each plan */
-  book.products.forEach((p) => { const y = p.years[0]; pool.push({ year: y.to, value: 5000, fuel: p.fuels ? p.fuels[0] : 'Gasoline', make: make(p), driverAge: 40, plan: p.name, expect: null, note: 'small value: minimum premium' }); });
+  book.products.forEach((p) => { const y = p.years[0]; pool.push({ year: y.to, value: 5000, fuel: fuelOf(p), make: make(p), driverAge: 40, plan: p.name, expect: null, note: 'small value: minimum premium' }); });
   const step = Math.max(1, Math.floor(pool.length / N));
   for (let i = 0; i < pool.length && out.length < N; i += step) out.push(pool[i]);
   return out;

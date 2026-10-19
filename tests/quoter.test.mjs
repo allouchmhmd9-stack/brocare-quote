@@ -36,10 +36,10 @@ const health = async (opts) => { await b.goto('health/index.html', opts); await 
 /* ---------- motor: premium = value x rate%, floored at the plan minimum, + $45 BI ---------- */
 const MOTOR_CASES = [
   /* insurer, year, value, fuel, make, plan, expected All Risk premium (worked by hand) */
-  ['fidelity', 2024, 25000, 'Gasoline', 'Toyota', 'Prime Drive', '$813'],     /* 25,000 x 3.25% = 812.50   */
-  ['fidelity', 2015, 60000, 'Gasoline', 'Toyota', 'Smart Drive', '$1,950'],   /* 60,000 x 3.25%            */
-  ['fidelity', 2016, 10000, 'Gasoline', 'Toyota', 'Collision', '$405'],       /* 175 is below the $405 min */
-  ['fidelity', 2021, 40000, 'Electric', 'Kia', 'Electric Drive', '$1,500'],   /* 40,000 x 3.75%            */
+  ['fidelity', 2024, 25000, 'Gasoline', 'Toyota', 'Prime Drive', '$938'],     /* Nov 2026: 25,000 x 3.75% = 937.50 */
+  ['fidelity', 2015, 60000, 'Gasoline', 'Toyota', 'Smart Drive', '$1,950'],   /* 2011-2019 row: 60,000 x 3.25% */
+  ['fidelity', 2016, 10000, 'Gasoline', 'Toyota', 'Collision', '$405'],       /* 200 is below the $405 min */
+  ['fidelity', 2023, 40000, 'Electric', 'Kia', 'Electric & Chinese Drive', '$1,600'],   /* 40,000 x 4.00% */
   ['fidelity', 2026, 300000, 'Gasoline', 'Toyota', 'Prime Drive', '$7,500'],  /* top band, 2.50%           */
   ['ufa', 2019, 85000, 'Gasoline', 'Toyota', 'Lux Plan', '$2,040'],           /* 70,001-100,000 band 2.40% */
   ['ufa', 2012, 15000, 'Gasoline', 'Toyota', 'Standard Plan', '$615'],        /* 600 is below the $615 min */

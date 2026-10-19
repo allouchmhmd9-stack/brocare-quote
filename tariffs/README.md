@@ -58,12 +58,17 @@ tools, or the one insurer whose brand is open (`?brand=<key>`).
     id, name, min,                  // minimum premium
     agency: true|false, pairWith,   // agency plan and its no-agency twin (for "agency costs +$x")
     fuels: ['Gasoline','Hybrid'] | ['Electric'],   // omit = any fuel
+    evTariff: true,                 // optional: a plan of the insurer's electric (and listed makes) tariff
+    pv: [{ min, max, add }],        // optional Political Violence: +add % of value per value band (add 0 = free)
     approvalToYear: 2021,           // optional: cars up to this year need special approval
     note,
     bands: [[0,19999],[20000,49999],...],          // vehicle value, whole dollars
     years: [{ from, to, rates: [3.75, 3.25, ...] }] // rate % per band; null = not sold
   }],
   driverRules: [{ min, max, age }], // no driver under `age` for values min..max
+  evTariffMakes: [make, ...],       // optional: makes priced on the evTariff plans whatever the fuel
+                                    //   (with it, electric cars and these makes see only evTariff plans)
+  sports: { make: 'ALL' | [models] }, // optional: the insurer's own referral list (default: the market list)
   sportsMinAge, referMakes: { make: reason }, noAgencyMakes: { make: reason },
   agencyNeedsDealer, makeNotes: { make: note },
   mtpl: null | { options: [{ cat, label, md, bi, ... }] },  // compulsory tariff, if supplied
@@ -71,7 +76,8 @@ tools, or the one insurer whose brand is open (`?brand=<key>`).
 }
 ```
 Premium = value × rate %, floored at `min`. A value with cents goes to the next
-whole dollar for the band.
+whole dollar for the band. Political Violence, when switched on, adds value × `add` %
+after the minimum; the total is rounded once.
 
 ## Medical tariff: `window.BROCARE_TARIFFS.health.<key>`
 

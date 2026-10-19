@@ -131,6 +131,7 @@
     </div>
     <div class="qprog" id="qProg"><div class="t" id="qProgT"></div><div class="bar"><i></i></div><div class="t" id="qProgN"></div></div>
     <div class="sum-rows" id="sumRows"></div>
+    <label class="bichk addon" id="pvRow" style="display:none"><div><b>Political Violence</b><small>Optional. Excludes South Lebanon, Bekaa and Dahieh; 10% deductible on a total loss.</small></div><span class="plus" id="pvAmt">+$0</span><input type="checkbox" class="sw" id="pvOn" aria-label="Add Political Violence cover"></label>
     <label class="bichk addon" id="biRow"><div><b>Compulsory bodily injury</b><small>BI, إلزامي. Almost every client takes it.</small></div><span class="plus" id="biAmt">+$45</span><input type="checkbox" class="sw" id="biOn" checked aria-label="Add compulsory bodily injury"></label>
     <button class="copybtn" id="copyBtn" type="button">Copy quote for client</button>
   </section>
@@ -444,6 +445,8 @@ const SPORTS = {
 };
 const OTHER_MAKES = ['Toyota','Honda','Hyundai','Kia','Mazda','Suzuki','Renault','Peugeot','Citroen','Fiat',
   'Volvo','Land Rover','Range Rover','Mini','Seat','Skoda','Tesla','BYD','Chery','MG','Geely',
+  'Changan','Haval','Great Wall','Jetour','JAC','Dongfeng','GAC','Exeed','Jaecoo','Omoda','Hongqi','Zeekr',
+  'Xpeng','Leapmotor','Voyah','BAIC','Xiaomi',
   'GMC','Cadillac','Lexus','Genesis','Subaru','Isuzu','Other make'];
 
 /* ============================================================
@@ -550,7 +553,7 @@ function consensus(rows){
 
 let TARIFF = INSURERS[INSURER_KEYS[0]];     /* the active rate book */
 
-const S = { insurer:INSURER_KEYS[0], cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null, bi:true };
+const S = { insurer:INSURER_KEYS[0], cover:'allrisk', value:null, year:null, fuel:'Gasoline', brand:'', models:[], sports:false, driverAge:null, product:null, bi:true, pv:false };
 
 const $ = id => document.getElementById(id);
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -572,7 +575,7 @@ $('segInsurer').innerHTML = INSURER_KEYS.map((k,i)=>'<button data-v="'+esc(k)+'"
   const g1=document.createElement('optgroup'); g1.label='Sports / luxury (referral)';
   Object.keys(TARIFF.sports).forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g1.appendChild(o); });
   const g2=document.createElement('optgroup'); g2.label='Other makes';
-  TARIFF.otherMakes.forEach(b=>{ const o=document.createElement('option'); o.value=b; o.textContent=b; g2.appendChild(o); });
+  TARIFF.otherMakes.forEach(b=>{ if(TARIFF.sports[b]) return; const o=document.createElement('option'); o.value=b; o.textContent=b; g2.appendChild(o); });
   sel.appendChild(g1); sel.appendChild(g2);
 })();
 
@@ -618,10 +621,15 @@ function agencyBlock(book){
   if(book.noAgencyMakes && book.noAgencyMakes[S.brand]) return book.noAgencyMakes[S.brand];
   return null;
 }
+function onEvTariff(book){ return S.fuel==='Electric' || (book.evTariffMakes||[]).indexOf(S.brand)>=0; }
+function sellsTo(p, book){
+  if(book.evTariffMakes) return !!p.evTariff===onEvTariff(book);
+  return !p.fuels || p.fuels.indexOf(S.fuel)>=0;
+}
 function offeredPlans(book){
   const blocked=agencyBlock(book);
   return book.products.filter(function(p){
-    if(p.fuels && p.fuels.indexOf(S.fuel)<0) return false;
+    if(!sellsTo(p, book)) return false;
     return !(p.agency && blocked);
   });
 }
@@ -865,7 +873,7 @@ function agencyUplift(p){
 function agencyWhyNot(book){
   const blocked=agencyBlock(book);
   if(blocked) return blocked;
-  const ag=book.products.filter(function(p){ return p.agency && (!p.fuels || p.fuels.indexOf(S.fuel)>=0); });
+  const ag=book.products.filter(function(p){ return p.agency && sellsTo(p, book); });
   if(!ag.length) return book.name+' has no agency-repair plan for '+S.fuel.toLowerCase()+' cars.';
   const yrs=[].concat.apply([],ag.map(function(p){ return p.years; }));
   const lo=Math.min.apply(null,yrs.map(function(y){return y.from;})), hi=Math.max.apply(null,yrs.map(function(y){return y.to;}));
@@ -931,6 +939,18 @@ function buildOptions(){
     : 'No agency-repair plan is offered for this car. ' + agencyWhyNot(TARIFF);
 }
 
+/* Political Violence: optional cover; +x% of the value, or free, by value band, as the plan's tariff says.
+   null = not offered for this value. The amount is added after the minimum premium. */
+function pvFor(p, value){
+  if(!p || !p.pv || value===null) return null;
+  const v=Math.ceil(value);
+  const r=p.pv.find(function(x){ return v>=x.min && v<=x.max; });
+  return r ? {add:r.add, free:!r.add, amount:value*r.add/100} : null;
+}
+/* what the PV line shows: the rounded total with PV minus the rounded premium, so the lines always add up */
+function pvShown(q, pv){ return Math.round(q.premium+pv.amount)-Math.round(q.premium); }
+$('pvOn').addEventListener('change', e=>{ S.pv=e.target.checked; if(S.product) buildSummary(); });
+
 /* compulsory bodily injury (إلزامي): a flat price on a private car, sold with almost every All Risk */
 function biCost(book){ return (book||TARIFF).biPrivate||0; }
 $('biOn').addEventListener('change', e=>{ S.bi=e.target.checked; if(S.product) buildSummary(); });
@@ -939,9 +959,12 @@ function buildSummary(){
   const p=TARIFF.products.find(x=>x.id===S.product);
   const q=quote(p,S.value,S.year);
   const biPrice=biCost(), bi=S.bi?biPrice:0;
-  $('sumBig').innerHTML = money(q.premium+bi)+' <span class="per">/ year</span>';
-  $('sumSub').textContent = bi ? 'Annual total' : 'Annual premium';
-  $('sumCover').textContent = bi ? 'All Risk + BI' : 'All Risk only';
+  const pv=pvFor(p,S.value), pvAmt=(pv && !pv.free && S.pv) ? pv.amount : 0;
+  $('sumBig').innerHTML = money(q.premium+pvAmt+bi)+' <span class="per">/ year</span>';
+  $('sumSub').textContent = (bi||pvAmt) ? 'Annual total' : 'Annual premium';
+  $('sumCover').textContent = 'All Risk' + ((pv && pv.free) || pvAmt ? ' + PV' : '') + (bi ? ' + BI' : '');
+  $('pvRow').style.display = pv && !pv.free ? '' : 'none';
+  if(pv && !pv.free){ $('pvAmt').textContent = '+'+money(pvShown(q,pv)); $('pvOn').checked = S.pv; }
   $('sumLine').textContent = p.name+' for a '+S.year+' '+S.brand;
   $('biRow').style.display = biPrice ? '' : 'none';
   $('biAmt').textContent = '+'+money(biPrice);
@@ -958,6 +981,7 @@ function buildSummary(){
   const up=agencyUplift(p);
   if(up) rows.push(['Cost of that agency repair', up.amount>0 ? '+'+money(up.amount)+' vs '+up.base : 'tariff prices it at or below '+up.base+', confirm with '+TARIFF.name]);
   rows.push(['All Risk premium', money(q.premium)]);
+  if(pv) rows.push(['Political Violence', pv.free ? 'Included free' : S.pv ? money(pvShown(q,pv)) : 'Not included (+'+money(pvShown(q,pv))+' if added)']);
   if(biPrice) rows.push(['Compulsory BI (إلزامي)', bi ? money(bi) : 'Not included (+'+money(biPrice)+' if added)']);
   let html=rows.map(r=>'<div class="srow'+(r[0]==='All Risk premium'?' tot':'')+'"><span class="k">'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>').join('');
   html += '<div class="srow calc"><span class="k">'+money(S.value)+' × '+q.rate.toFixed(2)+'%'+(q.atMin?' → below minimum':'')+'</span>'
@@ -982,9 +1006,10 @@ $('copyBtn').onclick=function(){
     up ? (up.amount>0 ? 'Agency repair costs +'+money(up.amount)+' vs '+up.base+'.' : 'Price to be confirmed with '+TARIFF.name+'.') : '',
     '',
     'All Risk premium: '+money(q.premium),
+    pvFor(p,S.value) ? (pvFor(p,S.value).free ? 'Political Violence: included free' : S.pv ? 'Political Violence: '+money(pvShown(q,pvFor(p,S.value))) : 'Political Violence not included: +'+money(pvShown(q,pvFor(p,S.value)))+' if added.') : '',
     S.bi ? 'Compulsory bodily injury (BI): '+money(biCost()) : 'Compulsory bodily injury (BI) not included: +'+money(biCost())+' if added.',
     '',
-    'ANNUAL TOTAL: '+money(q.premium+(S.bi?biCost():0)),
+    'ANNUAL TOTAL: '+money(q.premium+((S.pv && pvFor(p,S.value) && !pvFor(p,S.value).free)?pvFor(p,S.value).amount:0)+(S.bi?biCost():0)),
     '',
     'Indicative only,',
     'no cover until risk acceptance from '+TARIFF.name+'.',

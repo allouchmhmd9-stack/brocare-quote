@@ -11,8 +11,9 @@
    app = reference proves the quoter reads the tariff correctly; expect = app proves
    the tariff file was typed in correctly. Both must hold before a demo.
 
-   motor case: { year, value, fuel, make, driverAge, plan, expect, note }
-               expect = the All Risk premium in dollars (before BI), or "refused"
+   motor case: { year, value, fuel, make, driverAge, plan, pv, expect, note }
+               expect = the All Risk premium in dollars (before BI), or "refused";
+               with pv:true, the premium with Political Violence added
    health case: { biz:'new'|'renewal', ages:[..], level, amb:'85'|'100'|'none', copay,
                   exclHosp, reducedWait, expect, note }
                expect = the yearly total shown (policy cost included), or "refused"   */
@@ -79,7 +80,11 @@ export function reference(line, book, c) {
 function refMotor(book, c) {
   const p = book.products.find((x) => x.name === c.plan);
   if (!p) return refused('no plan named ' + c.plan);
-  if (p.fuels && p.fuels.indexOf(c.fuel || 'Gasoline') < 0) return refused(c.plan + ' is not sold for ' + c.fuel);
+  if (book.evTariffMakes) {     /* electric cars and the listed (Chinese) makes go on the electric tariff */
+    const ev = (c.fuel || 'Gasoline') === 'Electric' || book.evTariffMakes.indexOf(c.make) >= 0;
+    if (!!p.evTariff !== ev) return refused(c.plan + (ev ? ' is not the tariff for this car' : ' is for electric and listed makes only'));
+  } else if (p.fuels && p.fuels.indexOf(c.fuel || 'Gasoline') < 0) return refused(c.plan + ' is not sold for ' + c.fuel);
+  if (book.sports && book.sports[c.make] === 'ALL') return refused('sports and luxury referral list');
   if (book.referMakes && book.referMakes[c.make]) return refused(book.referMakes[c.make]);
   if (c.value > book.maxValue) return refused('above the maximum value');
   const v = Math.ceil(c.value), age = c.driverAge == null ? 40 : c.driverAge;
@@ -91,7 +96,13 @@ function refMotor(book, c) {
   if (bi < 0) return refused('value not in the tariff');
   const rate = yr.rates[bi];
   if (rate === null || rate === undefined) return refused('not available');
-  return { value: Math.round(Math.max(c.value * rate / 100, p.min)) };   /* the page shows whole dollars */
+  const prem = Math.max(c.value * rate / 100, p.min);
+  if (c.pv) {                  /* Political Violence switched on: premium + its add-on, rounded once */
+    const r = (p.pv || []).find((x) => v >= x.min && v <= x.max);
+    if (!r) return refused('Political Violence is not offered at this value');
+    return { value: Math.round(prem + c.value * r.add / 100) };
+  }
+  return { value: Math.round(prem) };   /* the page shows whole dollars */
 }
 function refHealth(book, c) {
   const biz = c.biz || 'new', T = book.books[biz], ages = c.ages, n = ages.length;
@@ -138,10 +149,18 @@ export async function runCase(b, spec, c) {
       if(!opt) return {refused: alert || 'plan not offered'};
       if(opt.disabled || opt.querySelector('.optprice.na')) return {refused: opt.querySelector('.optprice').textContent};
       opt.click();
-      const row=[...document.querySelectorAll('#sumRows .srow')].find(r=>r.querySelector('.k').textContent==='All Risk premium');
-      return {shown: row ? row.querySelector('.v').textContent : null};
+      const rowOf=k=>[...document.querySelectorAll('#sumRows .srow')].find(r=>r.querySelector('.k').textContent===k);
+      if(c.pv){
+        const sw=$('pvOn'), pvr=rowOf('Political Violence');
+        if(!pvr) return {refused:'Political Violence is not offered at this value'};
+        if(sw && $('pvRow').style.display!=='none' && !sw.checked){ sw.checked=true; sw.dispatchEvent(new Event('change')); }
+      }
+      const row=rowOf('All Risk premium'), pv=c.pv ? rowOf('Political Violence') : null;
+      return {shown: row ? row.querySelector('.v').textContent : null, pv: pv ? pv.querySelector('.v').textContent : null};
     })(${JSON.stringify(c)}, ${JSON.stringify(spec.insurer)})`);
-    return r.refused ? r : { value: num(r.shown), shown: r.shown };
+    if (r.refused) return r;
+    const pvv = r.pv == null ? 0 : (/free/i.test(r.pv) ? 0 : num(r.pv));
+    return { value: num(r.shown) + pvv, shown: r.shown + (r.pv ? ' + PV ' + r.pv : '') };
   }
   await b.goto('health/index.html' + q);
   const r = await b.evaluate(`(function(c, ins){
