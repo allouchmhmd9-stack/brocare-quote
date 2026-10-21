@@ -198,6 +198,54 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 .sheet.card .cta .l .t{font-family:'Syne';font-weight:700;font-size:12.5px;color:#fff;}
 .sheet.card .cta .l .p{font-size:11px;color:#4FC3F7;margin-top:4px;font-weight:600;letter-spacing:.02em;}
 .sheet.card .cta .rr{text-align:right;font-size:8px;color:rgba(255,255,255,.42);line-height:1.65;}
+
+/* ---- cover guide: three A4 pages ---- */
+.gpages{display:grid;gap:26px;}
+.sheet.guide .gb{padding:24px 46px 0;}
+.sheet.guide .gmeta{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding-bottom:20px;border-bottom:1px solid #E4E9F2;}
+.sheet.guide .gmeta .val{margin-top:5px;}
+.sheet.guide .gh2{font-family:'Syne';font-weight:700;font-size:19px;letter-spacing:-.01em;margin-top:24px;color:#0E1730;}
+.sheet.guide .glead{font-size:11.5px;color:#5C6D87;margin-top:6px;line-height:1.55;max-width:620px;}
+.sheet.guide .gcars{display:grid;gap:14px;margin-top:16px;}
+.sheet.guide .gcar{border-radius:13px;padding:16px 18px;background:#F4F7FB;}
+.sheet.guide .gcar.dk{background:#05081A;color:#fff;}
+.sheet.guide .gcar .n{font-family:'Syne';font-weight:700;font-size:14px;line-height:1.2;}
+.sheet.guide .gcar .y{font-size:10px;color:#8194AE;margin-top:3px;}
+.sheet.guide .gcar .p{margin-top:12px;font-size:10.5px;line-height:1.7;}
+.sheet.guide .gcar .p b{font-weight:600;}
+.sheet.guide .gcar .pr{margin-top:10px;font-size:19px;font-weight:700;white-space:nowrap;letter-spacing:-.01em;}
+.sheet.guide .gcar .pr small{font-size:9.5px;font-weight:500;color:#8194AE;}
+.sheet.guide .gar{color:#8194AE;font-size:.92em;font-weight:500;}
+.sheet.guide .gcar.dk .gar,.sheet.guide .gcv.dk .gar{color:#9AA7C4;}
+.sheet.guide .glist{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;margin-top:14px;}
+.sheet.guide .git{display:flex;gap:10px;font-size:11px;line-height:1.5;color:#0E1730;}
+.sheet.guide .git > i{flex:none;width:18px;height:18px;border-radius:50%;background:#E5EEFC;color:#1A3BDB;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:9px;margin-top:1px;}
+.sheet.guide .git.no > i{background:#F6EDE6;color:#B5651D;}
+.sheet.guide .git b{font-weight:600;}
+.sheet.guide .gt{width:100%;border-collapse:collapse;margin-top:16px;font-size:10.5px;}
+.sheet.guide .gt th{font-family:'Syne';font-weight:700;font-size:11px;text-align:left;padding:9px 9px;border-bottom:2px solid #05081A;vertical-align:bottom;}
+.sheet.guide .gt th small{display:block;font-family:'InterV';font-weight:500;font-size:8.5px;color:#8194AE;margin-top:2px;}
+.sheet.guide .gt td{padding:7px 9px;border-bottom:1px solid #EDF1F7;vertical-align:top;line-height:1.45;font-weight:500;}
+.sheet.guide .gt td:first-child{color:#5C6D87;width:38%;font-weight:400;}
+.sheet.guide .gt .gy{color:#1A3BDB;}
+.sheet.guide .gt .gd{color:#8194AE;}
+.sheet.guide .gnote{margin-top:16px;background:#F4F7FB;border-left:3px solid #4FC3F7;padding:12px 18px;font-size:10.5px;line-height:1.55;color:#5C6D87;}
+.sheet.guide .gnote b{color:#0E1730;}
+.sheet.guide .gsteps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:12px;}
+.sheet.guide .gst{border-top:1px solid #DBE3EF;padding-top:10px;}
+.sheet.guide .gst .k{font-family:'Syne';color:#4FC3F7;font-weight:700;font-size:11px;letter-spacing:.1em;}
+.sheet.guide .gst .t{font-weight:600;font-size:11.5px;margin-top:5px;}
+.sheet.guide .gst .d{font-size:10.5px;color:#5C6D87;margin-top:3px;line-height:1.5;}
+.sheet.guide .gcov{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.sheet.guide .gcv{border-radius:13px;padding:12px 17px;background:#F4F7FB;}
+.sheet.guide .gcv .h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+.sheet.guide .gcv b{font-family:'Syne';font-size:13px;font-weight:700;}
+.sheet.guide .gcv p{font-size:10.5px;color:#5C6D87;margin-top:4px;line-height:1.5;}
+.sheet.guide .gcv.dk{background:#05081A;color:#fff;}
+.sheet.guide .gcv.dk p{color:#B8C3DA;}
+.sheet.guide .gcv.wide{grid-column:span 2;}
+.sheet.guide .gpn{position:absolute;right:46px;bottom:98px;font-size:8.5px;color:#8194AE;}
+.sheet.guide .fine{right:110px;}
 </style>
 
 <style id="pageRule">@page{size:210mm 297mm;margin:0}</style>
@@ -209,6 +257,9 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
   .frame{overflow:visible !important;height:auto !important;}
   .scaler{transform:none !important;}
   .sheet{box-shadow:none !important;}
+  .gpages{display:block !important;}
+  .gpages .sheet{break-after:page;page-break-after:always;}
+  .gpages .sheet:last-child{break-after:auto;page-break-after:auto;}
   body{background:#fff;}
 }
 </style>
@@ -243,6 +294,7 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
       <button data-t="card"       aria-pressed="true">Offer card</button>
       <button data-t="comparison" aria-pressed="false">Comparison</button>
       <button data-t="invoice"    aria-pressed="false">Invoice</button>
+      <button data-t="guide"      aria-pressed="false">Cover guide</button>
     </div>
     <div id="form"></div>
   </div>
@@ -298,6 +350,14 @@ const D = {
   ],
   recommended:-1, note:'',
   steps:null, validUntil:'', mastSub:'',
+  gInsurer:'Fidelity', gHotline:'1575',
+  gCars:[
+    {name:'Toyota Land Cruiser', year:2024, plan:'Prime Drive', si:60000, price:1590, sports:'no'},
+    {name:'Kia Sportage', year:2019, plan:'Smart Drive', si:18000, price:675, sports:'no'}
+  ],
+  gStart:'The prices and limits are for cover that starts before 1 November 2026.',
+  gNote:'Starting on or after 1 November 2026? The insurer\u2019s new tariff applies from that date. The prices change, and so do some limits. If your cover starts on or after 1 November, we will send you an updated offer.',
+  gSource:'Limits from the insurer\u2019s Motor All Risk tariff for private cars, effective 1 April 2026. This is a summary; the policy wording applies in every case.',
   items:[{desc:'Annual premium, medical insurance', amount:4150}],
   discounts:[],
   invNo:'INV-2026-0001', dueDays:14,
@@ -388,6 +448,18 @@ function buildForm(){
     h += '<h2 class="sec">Next steps</h2><div class="rowlist" id="stepList"></div>';
   }
 
+  if(D.type==='guide'){
+    h += '<div class="row2">'+field('Insurer','gInsurer')+field('Insurer call center','gHotline')+'</div>';
+    h += '<h2 class="sec">Cars (up to 3)</h2><div class="rowlist" id="carList"></div>';
+    h += '<button class="sm" id="addCar" style="margin-top:8px">+ Add car</button>';
+    h += '<div class="hint">Plan: type <b>Prime Drive</b> or <b>Smart Drive</b>. Sports car: <b>yes</b> or <b>no</b>. '+
+         'The limits on page 2 follow from the plan, the year and the sum insured, on the April 2026 motor tariff.</div>';
+    h += '<h2 class="sec">Tariff wording</h2>';
+    h += field('Line under the cars (page 1)','gStart','textarea');
+    h += field('Note under the limits (page 2)','gNote','textarea');
+    h += field('Source line (page 2)','gSource','textarea');
+  }
+
   if(D.type==='invoice'){
     h += '<h2 class="sec">Invoice</h2>';
     h += '<div class="row2">'+field('Invoice number','invNo')+field('Payable within (days)','dueDays','number')+'</div>';
@@ -434,6 +506,12 @@ function buildForm(){
       D.steps=STEPS[l].map(x=>({t:x.t,d:x.d})); D.recommended=-1;
       buildForm(); render();
     });
+  }
+  if(D.type==='guide'){
+    listBlock('carList', D.gCars, [{label:'Car',key:'name'},{label:'Year',key:'year',type:'number'},{label:'Plan',key:'plan'},
+      {label:'Sum insured (USD)',key:'si',type:'number'},{label:'Price (USD)',key:'price',type:'number'},{label:'Sports car',key:'sports'}],
+      ()=>{buildForm();render();});
+    $('addCar').onclick=()=>{ if(D.gCars.length>=3) return; D.gCars.push({name:'Car',year:2024,plan:'Smart Drive',si:20000,price:0,sports:'no'}); buildForm(); render(); };
   }
   if(D.type==='invoice'){
     paintItems(); paintDiscs();
@@ -576,6 +654,113 @@ function tplComparison(){
       '<div class="sig"><div class="n">'+esc(signer().name)+'</div></div></div></div>';
 }
 
+/* Cover guide (motor). Limits follow the April 2026 private-car tariff:
+   personal accident 10,000 / 25,000, medical 5,000 / 10,000 (under / from USD 50,000),
+   replacement car 25 / 50 / 75 a day (to 49,999 / 50,000-99,999 / 100,000+),
+   total-loss allowance 500 / 1,000, agency repair and registration fees on Prime Drive only. */
+function gBand(si){ return si>=100000 ? 2 : si>=50000 ? 1 : 0; }
+function gPrime(c){ return /prime/i.test(c.plan||''); }
+function gParts(c){
+  if(gPrime(c)) return 'Paid in full, no depreciation';
+  const y=Number(c.year)||0;
+  if(y>=2021) return 'No depreciation when used parts are not available locally';
+  const n=(new Date(D.issued+'T00:00:00').getFullYear()||2026)-y+1;
+  if(n>=10) return 'Depreciation applies: on a '+y+' car it reaches the 50% maximum';
+  return 'Depreciation applies: 10% in the 2nd year, then 5% a year, up to 50%';
+}
+function gJoin(a){ return a.length<2 ? a.join('') : a.slice(0,-1).join(', ')+' and '+a[a.length-1]; }
+function gPage(title, sub, body, n, fine){
+  return '<div class="sheet a4 guide">'+
+    '<div class="mast"><img src="'+LOGO+'" alt="BroCare"><div class="r"><div class="t">'+title+'</div><div class="s">'+sub+'</div></div></div>'+
+    '<div class="gb">'+body+'</div>'+
+    (fine?'<div class="fine">'+fine+'</div>':'')+
+    '<div class="gpn">'+n+' / 3</div>'+
+    '<div class="foot"><div class="c">'+contactHtml()+'</div><div class="sig"><div class="n">BroCare Insurance</div></div></div></div>';
+}
+function tplGuide(){
+  const cars=D.gCars.slice(0,3), n=cars.length, AR=s=>' <span class="gar">('+s+')</span>';
+  const it=(b,txt,no)=>'<div class="git'+(no?' no':'')+'"><i>'+(no?'!':'&#10003;')+'</i><div><b>'+b+'</b>'+txt+'</div></div>';
+  const anyPrime=cars.some(gPrime);
+  const plans=[...new Set(cars.map(c=>gPrime(c)?'Prime Drive':'Smart Drive'))];
+  /* page 1 */
+  const cards=cars.map(c=>'<div class="gcar'+(gPrime(c)?' dk':'')+'"><div class="n">'+esc(c.name)+'</div><div class="y">'+esc(c.year)+'</div>'+
+    '<div class="p"><b>'+(gPrime(c)?'Prime Drive':'Smart Drive')+'</b>, all risk'+AR('شامل')+'<br>'+(gPrime(c)?'Agency repair included':'No agency repair')+
+    '<br>Sum insured USD '+money(c.si)+'</div><div class="pr">USD '+money(c.price)+' <small>/ year</small></div></div>').join('');
+  const core=[
+    it('Damage to your car',' from an accident, up to the car\'s value on the day of the claim'),
+    it('Fire',', up to the car\'s value on the day of the claim'),
+    it('Theft and hold-up',', up to the car\'s value on the day of the claim'),
+    it('Damage you cause to others\' property',', up to USD 1,000,000'),
+    it('Injury you cause to others',', above the compulsory limit, up to USD 400,000, as long as your compulsory policy is with the same insurer'),
+    it('Storm, tempest and flood',', up to the car\'s market value on the day of the claim'),
+    it('Hail',', up to 10% of the market value, at least USD 2,500'),
+    it('Riots, strikes and terrorism',', up to 10% of the car\'s value, at least USD 5,000, when political violence cover is not added'),
+    it('Partial theft',', up to USD 10,000, including USD 500 of personal belongings, once per policy period, with a police report'),
+    it('Road assistance',' anywhere in Lebanon, with no kilometre limit'),
+    it('Legal costs',', up to USD 5,000 in total per year')
+  ];
+  if(anyPrime) core.push(it('Registration fees on a total loss',' (Prime Drive only): up to 10% of the payout, if added to the car value when the policy is issued, with the invoices'));
+  const p1='<div class="gmeta"><div><div class="lbl">Prepared for</div><div class="val">'+esc(D.client)+'</div></div>'+
+      '<div><div class="lbl">Insurer</div><div class="val">'+esc(D.gInsurer)+'</div></div>'+
+      '<div><div class="lbl">Date</div><div class="val tab">'+fmtDate(D.issued)+'</div></div></div>'+
+    '<div class="gh2">Your car'+(n>1?'s':'')+' at a glance</div>'+
+    '<p class="glead">This guide explains, in plain words, what your '+(n>1?(n===2?'two':'three')+' cars are':'car is')+' covered for, what is not covered, and what to do if something happens. '+esc(D.gStart)+'</p>'+
+    '<div class="gcars" style="grid-template-columns:repeat('+Math.max(n,1)+',1fr)">'+cards+'</div>'+
+    '<p class="glead" style="margin-top:10px;font-size:10.5px">'+(n>1?'All '+(n===2?'two':'three')+' include':'It includes')+' compulsory bodily injury cover'+AR('إلزامي')+'.</p>'+
+    '<div class="gh2">What '+(n>1?'every car':'your car')+' is covered for</div>'+
+    (plans.length>1?'<p class="glead">Prime Drive and Smart Drive share the same core cover.</p>':'')+
+    '<div class="glist">'+core.join('')+'</div>';
+  /* page 2 */
+  const PA=[10000,25000,25000], MED=[5000,10000,10000], REP=[25,50,75], TL=[500,1000,1000];
+  const row=(label,f)=>'<tr><td>'+label+'</td>'+cars.map(c=>'<td>'+f(c)+'</td>').join('')+'</tr>';
+  const table='<table class="gt"><thead><tr><th></th>'+cars.map(c=>'<th>'+esc(c.name)+'<small>'+esc(c.year)+', '+(gPrime(c)?'Prime Drive':'Smart Drive')+'</small></th>').join('')+'</tr></thead><tbody>'+
+    row('Agency dealer repair', c=>gPrime(c)?'<span class="gy">&#10003; Included</span>':'<span class="gd">Not included</span>')+
+    row('New spare parts', c=>gParts(c))+
+    row('Personal accident, driver and family passengers (death or disability), per person, on the continental scale', c=>'USD '+money(PA[gBand(c.si)]))+
+    row('Medical expenses, driver and family passengers, per person', c=>'USD '+money(MED[gBand(c.si)]))+
+    row('Replacement car after a covered accident: 10 days, from the 3rd day of repair at the insurer\'s approved garages, once per policy period, subject to the inspector\'s report', c=>'USD '+REP[gBand(c.si)]+' a day')+
+    row('Replacement car allowance if the car is a total loss', c=>'USD '+money(TL[gBand(c.si)]))+
+    row('Vinyl wrap, if declared', c=>'Covered for the damaged parts')+
+    '</tbody></table>';
+  const sports=cars.filter(c=>/^y/i.test(String(c.sports||'')));
+  const know=[];
+  if(sports.length) know.push(it('Driver age.',' '+gJoin(sports.map(c=>'the '+esc(c.name))).replace(/^t/,'T')+(sports.length>1?' are considered sports cars':' is considered a sports car')+', so the driver must be at least 27.',1));
+  know.push(it('Inspector at the scene.',' After an accident, an inspector'+AR('خبير')+' must come to the place of the accident. Call the '+esc(D.gHotline)+' call center. Please do not move the car before.',1));
+  know.push(it('Tow truck',AR('حاضور')+' is covered only after a covered accident.',1));
+  know.push(it('Total loss',AR('خسارة كلية')+' means repairs reach 65% of the car\'s market value. You are paid the market value at the day of the claim.',1));
+  const p2=table+(D.gNote?'<div class="gnote">'+esc(D.gNote).replace(/^([^?]+\?)/,'<b>$1</b>')+'</div>':'')+
+    '<div class="gh2">Good to know</div><div class="glist">'+know.join('')+'</div>';
+  /* page 3 */
+  const st=(k,ti,d)=>'<div class="gst"><div class="k">'+k+'</div><div class="t">'+ti+'</div><div class="d">'+d+'</div></div>';
+  const me=replyNumber();
+  const cv=(b,ar,txt,cls)=>'<div class="gcv'+(cls?' '+cls:'')+'"><div class="h"><b>'+b+'</b><span class="gar">'+ar+'</span></div><p>'+txt+'</p></div>';
+  const p3='<div class="gh2" style="margin-top:6px">If something happens</div><div class="gsteps">'+
+      st('01','Call '+esc(D.gHotline),'Stay at the scene and call the insurer\'s call center on '+esc(D.gHotline)+'. They send the inspector'+AR('خبير')+'. Do not move the car.')+
+      st('02','Then call us','Our lines are always open for you, for anything urgent: <span style="white-space:nowrap">'+esc(me)+'</span>.')+
+      st('03','We handle the rest','We deal with the insurer for you, from the repair to the payment.')+'</div>'+
+    '<div class="gh2">What we do for you</div><p class="glead">We are your broker, not the insurer. Our job is to find you the right cover and to be on your side when you need it.</p>'+
+    '<div class="glist">'+
+      it('One contact for everything.',' All your policies, questions and renewals go through one person who knows your file.')+
+      it('We compare for you.',' We look at what each insurer offers and explain the difference in plain words, so you choose with a clear view.')+
+      it('We handle your claims.',' Call the insurer\'s call center first, then us. We handle the rest until the claim is paid.')+
+      it('We remind you before renewal.',' Before your policy ends, we check the market again and tell you if there is a better option.')+
+      it('Your papers in one place.',' Policies, cards and receipts, sent to you on WhatsApp or by email, and by courier (physical).')+
+    '</div>'+
+    '<div class="gh2">Other covers we arrange</div><div class="gcov">'+
+      cv('Medical insurance','تأمين صحي','For individuals, families and company staff. Hospital cover, with or without out-patient care.','dk')+
+      cv('Motor insurance','تأمين سيارات','Every type of motor cover, from all risk to compulsory <span class="gar">(إلزامي)</span>, for private cars and company fleets.')+
+      cv('Life and savings','تأمين على الحياة','Life cover for your family, and plans that save for retirement or your children\'s education.')+
+      cv('Property','تأمين الممتلكات','Your home, your business and everything you own, protected against the many risks they face, from fire to natural disasters.')+
+      cv('For companies','للشركات','Group medical and group life for your staff, workers\' compensation <span class="gar">(تعويض العمال)</span>, fleet cover, property, and marine and cargo for goods in transit. All your company covers, in one place.','dk wide')+
+    '</div>'+
+    '<div class="gnote">Have a question about your cover, or want to add one of these? Message us on WhatsApp at <b>'+esc(me)+'</b>.</div>';
+  return '<div class="gpages">'+
+    gPage('Your motor cover, explained', esc(gJoin(plans)), p1, 1, '')+
+    gPage('Your limits, car by car', 'Some benefits depend on the car’s value', p2, 2, esc(D.gSource))+
+    gPage('We are here for you', 'Claims, service and other covers', p3, 3, '')+
+  '</div>';
+}
+
 function tplInvoice(){
   const sub = D.items.reduce((s,i)=>s+Number(i.amount||0),0);
   const disc = D.discounts.reduce((s,i)=>s+Number(i.amount||0),0);
@@ -615,10 +800,10 @@ function tplInvoice(){
 }
 
 function render(){
-  $('scaler').innerHTML = D.type==='card' ? tplCard() : D.type==='comparison' ? tplComparison() : tplInvoice();
+  $('scaler').innerHTML = D.type==='card' ? tplCard() : D.type==='comparison' ? tplComparison() : D.type==='guide' ? tplGuide() : tplInvoice();
   const isCard = D.type==='card';
   $('pageRule').textContent = isCard ? '@page{size:127mm 158.75mm;margin:0}' : '@page{size:210mm 297mm;margin:0}';
-  $('sizeNote').textContent = isCard ? 'Card · 480 × 600 px (4:5)' : 'A4 · 210 × 297 mm';
+  $('sizeNote').textContent = isCard ? 'Card · 480 × 600 px (4:5)' : D.type==='guide' ? 'A4 · 3 pages' : 'A4 · 210 × 297 mm';
   checkFit();
   applyZoom();
 }
@@ -627,6 +812,16 @@ function render(){
 function checkFit(){
   const sheet=$('scaler').firstElementChild, w=$('warn');
   if(!sheet){ w.style.display='none'; return; }
+  if(D.type==='guide'){
+    /* each page: the last block must end above the source line / page number */
+    const bad=[...sheet.querySelectorAll('.sheet')].map((pg,i)=>{
+      const body=pg.querySelector('.gb'), stop=pg.querySelector('.fine')||pg.querySelector('.gpn');
+      return body.getBoundingClientRect().bottom > stop.getBoundingClientRect().top+1 ? i+1 : 0;
+    }).filter(Boolean);
+    w.style.display = bad.length ? 'block' : 'none';
+    w.textContent = bad.length ? 'Page '+bad.join(' and ')+' is too full and runs into the bottom. Shorten a note or remove a car.' : '';
+    return;
+  }
   const inner = sheet.querySelector('.in') || sheet;
   let over = inner.scrollHeight - inner.clientHeight;
   if(over<=1 && D.type!=='card'){
