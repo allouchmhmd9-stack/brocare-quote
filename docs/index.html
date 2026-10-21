@@ -297,11 +297,34 @@ const D = {
     {label:'AUBMC', values:['yes','no']}
   ],
   recommended:-1, note:'',
+  steps:null, validUntil:'', mastSub:'',
   items:[{desc:'Annual premium, medical insurance', amount:4150}],
   discounts:[],
   invNo:'INV-2026-0001', dueDays:14,
   clientAddr:'', policyRef:'', insurer:'', period:''
 };
+
+/* Comparison starters: one for medical, one for motor. Picking one loads its rows and wording. */
+const STEPS = {
+  medical:[
+    {t:'Tell us which plan', d:'Reply with your choice by email or WhatsApp.'},
+    {t:'We bind the cover', d:'We place the risk and agree inception with the insurer.'},
+    {t:'Documents issued', d:'Policy and cards delivered within 2 to 5 working days.'}],
+  motor:[
+    {t:'Confirm your choice', d:'Reply by email or WhatsApp with the vehicles you want covered.'},
+    {t:'We place the cover', d:'We confirm the terms with the insurer and agree the start date.'},
+    {t:'Documents issued', d:'Policy and cards delivered within 2 to 5 working days.'}]
+};
+const STARTER = {
+  medical:{ sub:'Medical insurance', mastSub:'',
+    options:[{name:'SP Smart Plus',tag:'Wider network',price:5835},{name:'SP Smart',tag:'Lower premium',price:4150}],
+    rows:[{label:'Members covered',values:['5','5']},{label:'Out-patient (ambulatory)',values:['85%','85%']},{label:'AUBMC',values:['yes','no']}] },
+  motor:{ sub:'Motor insurance', mastSub:'',
+    options:[{name:'Vehicle 1',tag:'Year',price:0},{name:'Vehicle 2',tag:'Year',price:0}],
+    rows:[{label:'Insurer',values:['','']},{label:'Cover',values:['','']},{label:'Agency repair',values:['yes','no']},
+          {label:'Compulsory BI (إلزامي)',values:['yes','yes']},{label:'Sum insured',values:['','']}] }
+};
+function steps(){ return D.steps || STEPS[D.line==='motor'?'motor':'medical']; }
 
 (function prefill(){
   const h = location.hash;
@@ -347,6 +370,11 @@ function buildForm(){
   }
 
   if(D.type==='comparison'){
+    h += '<h2 class="sec">Comparison for</h2><div class="seg" id="lineSeg" style="margin:0">'+
+      '<button data-l="motor" aria-pressed="'+(D.line==='motor')+'">Motor</button>'+
+      '<button data-l="medical" aria-pressed="'+(D.line!=='motor')+'">Medical</button></div>'+
+      '<div class="hint">Switching loads that line&rsquo;s starting rows and next steps. Everything stays editable.</div>';
+    h += field('Heading under "Your Options" (blank: "N plans compared")','mastSub');
     h += '<h2 class="sec">Options</h2><div class="rowlist" id="optList"></div>';
     h += '<button class="sm" id="addOpt" style="margin-top:8px">+ Add option</button>';
     h += '<div class="field" style="margin-top:14px"><label for="f_rec">Flag as recommended</label>'+
@@ -356,7 +384,8 @@ function buildForm(){
     h += '<div class="hint">Type <b>yes</b> or <b>no</b> in a cell to show a tick or a dash. Anything else prints as text.</div>';
     h += '<h2 class="sec">Callout</h2>';
     h += field('Explanatory note (leave blank to hide)','note','textarea');
-    h += field('Valid for (days)','validDays','number');
+    h += '<div class="row2">'+field('Valid for (days)','validDays','number')+field('Or valid until (exact date)','validUntil','date')+'</div>';
+    h += '<h2 class="sec">Next steps</h2><div class="rowlist" id="stepList"></div>';
   }
 
   if(D.type==='invoice'){
@@ -396,6 +425,15 @@ function buildForm(){
     D.options.forEach((o,i)=>{ const op=document.createElement('option');
       op.value=i; op.textContent=o.name||('Option '+(i+1)); sel.appendChild(op); });
     sel.value=String(D.recommended);
+    if(!D.steps) D.steps = steps().map(s=>({t:s.t,d:s.d}));
+    listBlock('stepList', D.steps, [{label:'Title',key:'t'},{label:'Line',key:'d'}], ()=>{buildForm();render();});
+    $('lineSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const l=b.dataset.l, s=STARTER[l];
+      D.line=l; D.sub=s.sub; D.mastSub=s.mastSub;
+      D.options=JSON.parse(JSON.stringify(s.options)); D.rows=JSON.parse(JSON.stringify(s.rows));
+      D.steps=STEPS[l].map(x=>({t:x.t,d:x.d})); D.recommended=-1;
+      buildForm(); render();
+    });
   }
   if(D.type==='invoice'){
     paintItems(); paintDiscs();
@@ -502,7 +540,7 @@ function tplCard(){
 }
 
 function tplComparison(){
-  const n=D.options.length, validTo=fmtDate(addDays(D.issued,D.validDays));
+  const n=D.options.length, validTo=fmtDate(D.validUntil || addDays(D.issued,D.validDays));
   const gt='1.5fr '+Array(n).fill('1fr').join(' ');
   let heads='<div class="rowlbl" style="border-bottom:2px solid #05081A"></div>';
   D.options.forEach((o,i)=>{
@@ -522,7 +560,7 @@ function tplComparison(){
   });
   return '<div class="sheet a4">'+
     '<div class="mast"><img src="'+LOGO+'" alt="BroCare">'+
-      '<div class="r"><div class="t">Your Options</div><div class="s">'+n+' plans compared</div></div></div>'+
+      '<div class="r"><div class="t">Your Options</div><div class="s">'+esc(D.mastSub || (n+' plans compared'))+'</div></div></div>'+
     '<div class="intro">'+
       '<div><div class="lbl">Prepared for</div><div class="val">'+esc(D.client)+'</div></div>'+
       '<div><div class="lbl">Cover</div><div class="val">'+esc(D.sub)+'</div></div>'+
@@ -531,9 +569,7 @@ function tplComparison(){
     '<div class="cols" style="grid-template-columns:'+gt+'">'+heads+body+'</div>'+
     (D.note?'<div class="callout">'+esc(D.note)+'</div>':'')+
     '<h3>Next steps</h3><div class="steps">'+
-      '<div class="st"><div class="n">01</div><div class="t">Tell us which plan</div><div class="d">Reply with your choice by email or WhatsApp.</div></div>'+
-      '<div class="st"><div class="n">02</div><div class="t">We bind the cover</div><div class="d">We place the risk and agree inception with the insurer.</div></div>'+
-      '<div class="st"><div class="n">03</div><div class="t">Documents issued</div><div class="d">Policy and cards delivered within 2&ndash;5 working days.</div></div>'+
+      steps().map((s,i)=>'<div class="st"><div class="n">0'+(i+1)+'</div><div class="t">'+esc(s.t)+'</div><div class="d">'+esc(s.d)+'</div></div>').join('')+
     '</div>'+
     '<div class="fine">'+DISCLAIM+'</div>'+
     '<div class="foot"><div class="c">'+contactHtml()+'</div>'+
