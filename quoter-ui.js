@@ -175,7 +175,13 @@
       panel.querySelectorAll('.qbro').forEach(function (el) { el.classList.add('hidden'); });
       $('qActions').classList.remove('n6');
     }
-    $('qWhatsApp').onclick = function () { var q = build(); if (q) window.open(BrocareBrand.waUrl(BrocareBrand.message(sender(), q), q.phone), '_blank', 'noopener'); };
+    /* WhatsApp sends the offer PDF: the document opens with a Send on WhatsApp button for this number */
+    $('qWhatsApp').onclick = function () {
+      var q = build(); if (!q) return;
+      if (!q.phone) { say('Type the client\'s WhatsApp number first.', true); if ($('qPhone')) $('qPhone').focus(); return; }
+      if (window.BrocareHandoff) window.BrocareHandoff.offer({ wa: q.phone });
+      else window.open(BrocareBrand.waUrl(BrocareBrand.message(sender(), q), q.phone), '_blank', 'noopener');
+    };
     $('qShow').onclick = function () { var q = build(); if (q) showClient(q); };
     $('qSave').onclick = function () {
       var q = build(); if (!q) return;

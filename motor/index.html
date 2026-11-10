@@ -295,7 +295,7 @@
     return { ref:(MODE==='health'?'BRC-H-':'BRC-M-') + yr + '-' + tail, invNo:'INV-' + yr + '-' + tail };
   }
 
-  function go(type){
+  function go(type, extra){
     var q = readQuote();
     var price = Number($('broFinal').value||0) || q.total;
     if(!price || !q.total){ $('broWarn').style.display='block'; return; }   /* no live quote: never send a typed or stale price */
@@ -313,8 +313,10 @@
       chips: q.chips, members: q.members,
       discounts: dl,
       items: [{ desc: q.cover + (q.sub && q.sub!==q.cover ? ', '+q.sub : ''), amount: price + dsum }],
-      invNo: r.invNo });
+      invNo: r.invNo, wa: (extra && extra.wa) || '' });
   }
+  /* Send on WhatsApp opens the offer document with the client's number on it */
+  window.BrocareHandoff = { offer: function(extra){ go('card', extra); } };
 
   /* ---------- multi-quote comparison ----------
      "Add to comparison" banks the quote on screen and reloads for a fresh one.

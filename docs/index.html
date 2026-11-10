@@ -250,6 +250,7 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
 
 <style id="pageRule">@page{size:210mm 297mm;margin:0}</style>
 <style>
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 @media print{
   .top,.rail,.stagebar{display:none !important;}
   .layout{grid-template-columns:1fr !important;}
@@ -282,6 +283,7 @@ textarea{min-height:66px;resize:vertical;line-height:1.5;}
     <div><div class="t1">Document Studio</div><div class="t2">BroCare Insurance Brokerage SARL</div></div>
   </div>
   <div class="actions">
+    <button id="btnWa" class="pri" style="display:none">Send on WhatsApp</button>
     <button id="btnPng">Download PNG</button>
     <button id="btnPdf" class="pri">Download PDF</button>
   </div>
@@ -806,6 +808,7 @@ function render(){
   $('sizeNote').textContent = isCard ? 'Card · 480 × 600 px (4:5)' : D.type==='guide' ? 'A4 · 3 pages' : 'A4 · 210 × 297 mm';
   checkFit();
   applyZoom();
+  if(typeof waPrebuild==='function') waPrebuild();
 }
 
 /* Sheets are a fixed size and clip silently — warn before anything is sent clipped. */
@@ -856,6 +859,96 @@ document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
 });
 
 $('btnPdf').onclick = ()=> window.print();
+
+/* Draws one sheet into a canvas, exactly as it looks on screen (fonts and logo embedded). */
+async function sheetCanvas(sheet, scale){
+  const w=sheet.offsetWidth, h=sheet.offsetHeight;
+  const css = $('fontCSS').textContent + $('sheetCSS').textContent;
+  const clone = sheet.cloneNode(true);
+  clone.style.boxShadow='none';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+
+    '<defs><style type="text/css">'+css.replace(/[<>&]/g,m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))+'</style></defs>'+
+    '<foreignObject x="0" y="0" width="'+w+'" height="'+h+'">'+
+    '<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+w+'px;height:'+h+'px;margin:0;padding:0;overflow:hidden;display:block">'+
+      new XMLSerializer().serializeToString(clone)+'</div></foreignObject></svg>';
+  const img=new Image();
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error('svg load failed'));
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); });
+  const c=document.createElement('canvas'); c.width=Math.round(w*scale); c.height=Math.round(h*scale);
+  const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.scale(scale,scale); ctx.drawImage(img,0,0);
+  return {canvas:c, w:w, h:h};
+}
+/* A real PDF file (one image per page) built in the browser: used to send the document on WhatsApp. */
+async function pdfBlob(){
+  const root=$('scaler').firstElementChild; if(!root) return null;
+  const sheets = root.classList.contains('sheet') ? [root] : [...root.querySelectorAll('.sheet')];
+  const enc=new TextEncoder(), parts=[], offs=[]; let len=0;
+  const put=x=>{ const b=typeof x==='string'?enc.encode(x):x; parts.push(b); len+=b.length; };
+  const obj=(n,body)=>{ offs[n]=len; put(n+' 0 obj\n'); body(); put('\nendobj\n'); };
+  const pages=[];
+  for(const s of sheets){
+    const r=await sheetCanvas(s, 2.5);
+    const jpg=atob(r.canvas.toDataURL('image/jpeg',0.92).split(',')[1]);
+    const bytes=new Uint8Array(jpg.length); for(let i=0;i<jpg.length;i++) bytes[i]=jpg.charCodeAt(i);
+    pages.push({bytes:bytes, pw:r.canvas.width, ph:r.canvas.height, w:r.w*0.75, h:r.h*0.75});
+  }
+  put('%PDF-1.4\n');
+  const n=pages.length, kids=pages.map((_,i)=>(3+i*3)+' 0 R').join(' ');
+  obj(1,()=>put('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>put('<< /Type /Pages /Kids ['+kids+'] /Count '+n+' >>'));
+  pages.forEach((p,i)=>{
+    const pg=3+i*3, im=pg+1, ct=pg+2, draw='q '+p.w.toFixed(2)+' 0 0 '+p.h.toFixed(2)+' 0 0 cm /Im0 Do Q';
+    obj(pg,()=>put('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+p.w.toFixed(2)+' '+p.h.toFixed(2)+'] '+
+      '/Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+ct+' 0 R >>'));
+    obj(im,()=>{ put('<< /Type /XObject /Subtype /Image /Width '+p.pw+' /Height '+p.ph+' /ColorSpace /DeviceRGB '+
+      '/BitsPerComponent 8 /Filter /DCTDecode /Length '+p.bytes.length+' >>\nstream\n'); put(p.bytes); put('\nendstream'); });
+    obj(ct,()=>put('<< /Length '+draw.length+' >>\nstream\n'+draw+'\nendstream'));
+  });
+  const total=3+n*3, xref=len;
+  let x='xref\n0 '+total+'\n0000000000 65535 f \n';
+  for(let i=1;i<total;i++) x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+  put(x+'trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+  return new Blob(parts,{type:'application/pdf'});
+}
+function docName(ext){ return (D.client||'document').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'-'+D.type+'.'+ext; }
+
+/* Send on WhatsApp: the PDF goes to the phone's share sheet (pick WhatsApp, then the client);
+   on a computer without sharing, the PDF is saved and the client's chat opens to attach it. */
+let waCache=null, waTimer=null;
+function waPrebuild(){
+  if(!D.wa) return;
+  clearTimeout(waTimer);
+  waTimer=setTimeout(async ()=>{ try{ waCache=await pdfBlob(); }catch(e){ waCache=null; console.warn(e); } }, 400);
+}
+if(D.wa){
+  const b=$('btnWa');
+  b.style.display='';
+  b.textContent='Send on WhatsApp';
+  b.title='To '+D.wa;
+  $('btnPdf').classList.remove('pri');
+  b.onclick=async ()=>{
+    const old=b.textContent; b.textContent='Preparing the PDF…'; b.disabled=true;
+    try{
+      const blob=waCache || await pdfBlob();
+      const file=new File([blob], docName('pdf'), {type:'application/pdf'});
+      const num=(window.BrocareBrand && BrocareBrand.waNumber) ? BrocareBrand.waNumber(D.wa) : String(D.wa).replace(/[^0-9]/g,'');
+      /* phones and tablets: the share sheet is the only way to attach a file in WhatsApp.
+         computers: save the PDF and open the chat with this exact number, ready to attach. */
+      const phone=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && /Mac/i.test(navigator.platform||''));
+      if(phone && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'Offer for '+(D.client||'')});
+      } else {
+        const a=document.createElement('a'); a.download=file.name; a.href=URL.createObjectURL(blob); a.click();
+        setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+        window.open('https://wa.me/'+num,'_blank','noopener');
+        alert('The PDF is saved in your Downloads. The WhatsApp chat with '+D.wa+' is open: attach the PDF there.');
+      }
+    }catch(e){
+      if(!(e && e.name==='AbortError')){ console.error(e); alert('The PDF could not be sent from this browser. Use Download PDF, then attach it in WhatsApp.'); }
+    }finally{ b.textContent=old; b.disabled=false; }
+  };
+}
 
 $('btnPng').onclick = async ()=>{
   const sheet=$('scaler').firstElementChild; if(!sheet) return;
