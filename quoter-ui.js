@@ -182,6 +182,7 @@
       if (window.BrocareHandoff) window.BrocareHandoff.offer({ wa: q.phone });
       else window.open(BrocareBrand.waUrl(BrocareBrand.message(sender(), q), q.phone), '_blank', 'noopener');
     };
+    $('qWhatsApp').addEventListener('pointerenter', function () { if (window.BrocareHandoff) window.BrocareHandoff.prepare(); });
     $('qShow').onclick = function () { var q = build(); if (q) showClient(q); };
     $('qSave').onclick = function () {
       var q = build(); if (!q) return;
@@ -197,6 +198,74 @@
     };
     $('qBarSend').onclick = function () { $('qWhatsApp').click(); };
   }
+
+  /* ---------------- the offer PDF, shared straight from the quoter ----------------
+     The PDF is drawn by the Document Studio in a hidden frame, so no extra page opens.
+     Browsers only allow sharing right after a click, so the PDF is prepared ahead of time. */
+  var STUDIO_URL = new URL('../docs/index.html', location.href).href;
+  var offer = { key: '', blob: null, job: null };
+  /* the reference is made fresh on every click, and the number is only where the chat goes: neither decides the PDF */
+  function offerKey(p){ return JSON.stringify(p, function (k, v) { return (k === 'ref' || k === 'invNo' || k === 'wa') ? undefined : v; }); }
+  function b64(s){ var bytes = new TextEncoder().encode(s), bin = ''; bytes.forEach(function (b) { bin += String.fromCharCode(b); }); return btoa(bin); }
+  function prepareOffer(p){
+    var k = offerKey(p);
+    if (offer.key === k && offer.job) return offer.job;
+    offer.key = k; offer.blob = null;
+    offer.job = new Promise(function (resolve, reject) {
+      var f = document.createElement('iframe');
+      f.style.cssText = 'position:fixed;left:-12000px;top:0;width:900px;height:1200px;border:0';
+      f.onload = function () {
+        var tries = 0;
+        (function wait() {                                   /* the frame draws the sheet after its script runs */
+          var w = f.contentWindow;
+          if (w && w.pdfBlob && w.document.fonts && tries++ < 60) {
+            w.document.fonts.ready.then(function () { return w.pdfBlob(); }).then(function (blob) {
+              document.body.removeChild(f); resolve(blob);
+            }, function (e) { document.body.removeChild(f); reject(e); });
+          } else if (tries < 60) setTimeout(wait, 150);
+          else { document.body.removeChild(f); reject(new Error('the offer did not draw')); }
+        })();
+      };
+      f.src = STUDIO_URL + '#data=' + b64(JSON.stringify(p));
+      document.body.appendChild(f);
+    });
+    offer.job.then(function (blob) { if (offer.key === k) offer.blob = blob; }, function () { offer.job = null; });
+    return offer.job;
+  }
+  /* the words that go with the PDF, in the chat */
+  function offerMessage(p){
+    var first = String(p.client || '').trim() || 'there';
+    var price = 'USD ' + Number(p.price || 0).toLocaleString('en-US') + ' a year';
+    return 'Hello ' + first + ', here is your offer from BroCare: ' + (p.sub || 'your cover') + ', ' + price +
+           '. The offer is attached. It is valid for 14 days. Reply here to confirm, or call us on +961 76 743 111.';
+  }
+  function saveFile(blob, name){
+    var a = document.createElement('a'); a.download = name; a.href = URL.createObjectURL(blob); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+  window.OfferSend = {
+    prepare: prepareOffer,
+    send: function (p, num) {
+      var name = (p.client || 'client').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-offer.pdf';
+      var msg = offerMessage(p);
+      var toChat = function (blob) {
+        saveFile(blob, name);                                 /* the PDF is in Downloads, ready to attach */
+        window.open(BrocareBrand.waUrl(msg, num), '_blank', 'noopener');   /* the chat with the number and the words ready */
+      };
+      var ready = (offer.key === offerKey(p) && offer.blob) ? Promise.resolve(offer.blob) : prepareOffer(p);
+      /* the share sheet has to open straight from this click: it is used only when the PDF is already ready */
+      if (offer.key === offerKey(p) && offer.blob) {
+        var file = new File([offer.blob], name, { type: 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text: msg, title: 'Offer for ' + (p.client || '') })
+            .catch(function (e) { if (!e || e.name !== 'AbortError') toChat(offer.blob); });
+          return;
+        }
+        return toChat(offer.blob);
+      }
+      ready.then(toChat, function () { alert('The offer could not be prepared. Try again.'); });
+    }
+  };
 
   /* ---------------- show the client ---------------- */
   function shortDate(d) { return d.getDate() + ' ' + d.toLocaleString('en-GB', { month: 'long' }) + ' ' + d.getFullYear(); }
