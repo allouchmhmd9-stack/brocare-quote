@@ -858,7 +858,18 @@ document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
   D.type=b.dataset.t; buildForm(); render();
 });
 
-$('btnPdf').onclick = ()=> window.print();
+$('btnPdf').onclick = async ()=>{
+  const btn=$('btnPdf'), old=btn.textContent;
+  btn.textContent='Preparing the PDF…'; btn.disabled=true;
+  try{
+    const blob=await pdfBlob();
+    const a=document.createElement('a'); a.download=docName('pdf'); a.href=URL.createObjectURL(blob); a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  }catch(e){
+    console.error(e);
+    window.print();      /* last resort: the browser's own print to PDF */
+  }finally{ btn.textContent=old; btn.disabled=false; }
+};
 
 /* Draws one sheet into a canvas, exactly as it looks on screen (fonts and logo embedded). */
 async function sheetCanvas(sheet, scale){
@@ -888,7 +899,7 @@ async function pdfBlob(){
   const obj=(n,body)=>{ offs[n]=len; put(n+' 0 obj\n'); body(); put('\nendobj\n'); };
   const pages=[];
   for(const s of sheets){
-    const r=await sheetCanvas(s, 2.5);
+    const r=await sheetCanvas(s, s.classList.contains('card') ? 2.5 : 3);
     const jpg=atob(r.canvas.toDataURL('image/jpeg',0.92).split(',')[1]);
     const bytes=new Uint8Array(jpg.length); for(let i=0;i<jpg.length;i++) bytes[i]=jpg.charCodeAt(i);
     pages.push({bytes:bytes, pw:r.canvas.width, ph:r.canvas.height, w:r.w*0.75, h:r.h*0.75});
